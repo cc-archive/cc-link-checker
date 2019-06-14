@@ -11,7 +11,7 @@ scraped_links = {}
 
 def get_all_license():
     """
-    This function scrapes all the license file in the repo 'https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode'
+    This function scrapes all the license file in the repo 'https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode'.
     """
     url = 'https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode'
     response = requests.get(url)
@@ -22,6 +22,9 @@ def get_all_license():
 
 
 def check_existing(link):
+    """
+    This function checks if the link is already present in scraped_links.
+    """
     href = link['href']
     status = scraped_links.get(href)
     if(status):
@@ -34,11 +37,11 @@ def check_existing(link):
 
 def scrape(link):
     """
-    Checks the status of the link and returns the status code 200 or the error encountered
+    Checks the status of the link and returns the status code 200 or the error encountered.
     """
     href = link['href']
     analyse = urlsplit(href)
-    if(analyse.scheme == 'https' or analyse.scheme == 'http' or analyse.scheme == ''):
+    if(analyse.scheme == '' or analyse.scheme in ['https', 'http']):
         if(analyse.scheme == ''):
             analyse = analyse._replace(scheme='https')
         if(analyse.netloc == ''):
@@ -64,13 +67,12 @@ for licens in all_links:
     print("\n")
     print("Checking:",  licens.string)
     if(check_extension[-1] == 'txt'):
-        print('Encountered txt file, skipping', licens.string)
+        print('Encountered txt file -\t skipping', licens.string)
         continue
     source_html = requests.get(page_url, headers=header)
     license_soup = BeautifulSoup(source_html.content, 'lxml')
     links_in_license = license_soup.find_all('a')
     print("No. of links found:", len(links_in_license))
-    # print(links_in_license)
     print("Errors:")
     for link in links_in_license:
         try:
@@ -84,4 +86,4 @@ for licens in all_links:
             continue
         status = check_existing(link)
         if(status != 200):
-            print(status, link)
+            print(status, "-\t", link)

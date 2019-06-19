@@ -1,0 +1,38 @@
+version: 2 # use CircleCI 2.0
+jobs: # A basic unit of work in a run
+  build: # runs not using Workflows must have a `build` job as entry point
+    # directory where steps are run
+    working_directory: ~/cc-link-checker
+    docker: # run the steps with Docker
+      # CircleCI Python images available at: https://hub.docker.com/r/circleci/python/
+      - image: circleci/python:3.6.4
+        environment:
+          PIPENV_VENV_IN_PROJECT: true
+    steps: # steps that comprise the `build` job
+      - checkout # check out source code to working directory
+      - run: sudo chown -R circleci:circleci /usr/local/bin
+      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "Pipfile.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run:
+          name: Install dependencies
+          command: |
+            sudo pip install pipenv
+            pipenv install --dev
+      - save_cache:
+          paths:
+            - ./venv
+            - "/usr/local/bin"
+            - "/usr/local/lib/python3.6/site-packages"
+          key: v1-dependencies-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: Run test
+          command: |
+            pipenv run flake8 ./
+
+      - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
+          path: test-reports
+          destination: cc-link-checker

@@ -3,6 +3,7 @@
 Creative Commons Link Checker  
 This is a python script which detects broken links in license/deeds files.
 
+![CircleCI](https://img.shields.io/circleci/build/github/creativecommons/cc-link-checker.svg) ![GitHub](https://img.shields.io/github/license/creativecommons/cc-link-checker.svg) <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 ## Code of Conduct
 
@@ -22,13 +23,12 @@ This is a python script which detects broken links in license/deeds files.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-
-## Install
-
-### Pre-requisite
+## Pre-requisite
 
 * Python3
 * UTF-8 supported console
+
+## Install
 
 1. Clone the repo: `git clone https://github.com/creativecommons/cc-link-checker.git`
 2. Run: `pip install -r requirements.txt`

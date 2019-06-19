@@ -1,6 +1,7 @@
 # cc-link-checker
 
-Creative Commons Link Checker
+Creative Commons Link Checker  
+This is a python script which detects broken links in license/deeds files.
 
 
 ## Code of Conduct
@@ -24,8 +25,16 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Install
 
-...
+### Pre-requisite
 
+* Python3
+* UTF-8 supported console
+
+1. Clone the repo: `git clone https://github.com/creativecommons/cc-link-checker.git`
+2. Run: `pip install -r requirements.txt`
+3. Run: `python ./link_checker.py`
+
+**Note**: If the console is not UTF-8 supported, the script would throw `UnicodeEncodeError`.
 
 ## License
 

@@ -7,4 +7,6 @@ exclude =
     old,
     build,
     dist,
-    venv
+    venv,
+    .venv
+    

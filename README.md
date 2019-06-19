@@ -1,5 +1,7 @@
 # cc-link-checker
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/71be9fe79f144076b5f2b29fad60d35c)](https://app.codacy.com/app/bhumijgupta/cc-link-checker_2?utm_source=github.com&utm_medium=referral&utm_content=creativecommons/cc-link-checker&utm_campaign=Badge_Grade_Dashboard)
+
 Creative Commons Link Checker  
 This is a python script which detects broken links in license/deeds files.
 

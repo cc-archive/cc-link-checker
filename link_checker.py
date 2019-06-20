@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlsplit
+import sys
+
+# Set defaults
+err_code = 0
 
 header = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
@@ -100,4 +104,7 @@ for licens in all_links:
             continue
         status = check_existing(link)
         if status not in [200, "ignore"]:
+            err_code = 1
             print(status, "-\t", link)
+
+sys.exit(err_code)

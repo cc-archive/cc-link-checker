@@ -3,7 +3,7 @@ version: 2
 # A basic unit of work in a run
 jobs:
   # runs not using Workflows must have a `build` job as entry point
-  build:
+  lint:
     # directory where steps are run
     working_directory: ~/cc-link-checker
     # run the steps with Docker
@@ -39,13 +39,16 @@ jobs:
           name: Testing with flake8
           command: |
             mkdir test-reports
-            pipenv run flake8 ./ --output-file test-reports/flake8.txt
+            pipenv run flake8 ./ --output-file test-reports/flake8
       - run:
           name: Testing with black
           command: |
             black --check ./
-
-      # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
       - store_artifacts:
           path: test-reports
-          destination: cc-link-checker
+          destination: flake8-result
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - lint

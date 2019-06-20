@@ -38,7 +38,8 @@ jobs:
       - run:
           name: Testing with flake8
           command: |
-            pipenv run flake8 ./ --output-file test-reports
+            mkdir test-reports
+            pipenv run flake8 ./ --output-file test-reports/flake8.txt
       - run:
           name: Testing with black
           command: |

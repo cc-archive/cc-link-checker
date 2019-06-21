@@ -2,15 +2,24 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlsplit
 import sys
+import argparse
 
 # Set defaults
 err_code = 0
-
+verbose = False
 header = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 }
-
 scraped_links = {}
+
+
+parser = argparse.ArgumentParser(description="Script to check broken links")
+parser.add_argument(
+    "-v", "--verbose", help="Increase verbosity of output", action="store_true"
+)
+args = parser.parse_args()
+if args.verbose:
+    verbose = True
 
 
 def get_all_license():
@@ -75,35 +84,46 @@ def scrape(link):
         return "Invalid protocol detected"
 
 
+def verbose_print(*args, **kwargs):
+    """Prints only if -v or --verbose flag is set
+    """
+    if verbose:
+        print(*args, **kwargs)
+
+
 all_links = get_all_license()
 
 base = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
 
 for licens in all_links:
+    caught_errors = 0
     check_extension = licens.string.split(".")
     page_url = base + licens.string
     print("\n")
     print("Checking:", licens.string)
-    if check_extension[-1] == "txt":
-        print("Encountered txt file -\t skipping", licens.string)
+    if check_extension[-1] not in ["html", "htm"]:
+        verbose_print("Encountered non-html file -\t skipping", licens.string)
         continue
     source_html = requests.get(page_url, headers=header)
     license_soup = BeautifulSoup(source_html.content, "lxml")
     links_in_license = license_soup.find_all("a")
-    print("No. of links found:", len(links_in_license))
-    print("Errors:")
+    verbose_print("No. of links found:", len(links_in_license))
+    verbose_print("Errors and Warnings:")
     for link in links_in_license:
         try:
             href = link["href"]
         except KeyError:
             # if there exists an <a> tag without href
-            print("Found anchor tag without href -\t", link)
+            verbose_print("Found anchor tag without href -\t", link)
             continue
         if href[0] == "#":
-            print("Skipping internal link -\t", link)
+            verbose_print("Skipping internal link -\t", link)
             continue
         status = check_existing(link)
         if status not in [200, "ignore"]:
+            caught_errors += 1
+            if caught_errors == 1 and not verbose:
+                print("Errors:")
             err_code = 1
             print(status, "-\t", link)
 

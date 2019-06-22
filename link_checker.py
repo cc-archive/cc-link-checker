@@ -1,12 +1,14 @@
+import argparse
+import sys
+from urllib.parse import urlsplit
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlsplit
-import sys
-import argparse
 
 # Set defaults
 err_code = 0
 verbose = False
+output_err = False
 header = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 }
@@ -17,9 +19,21 @@ parser = argparse.ArgumentParser(description="Script to check broken links")
 parser.add_argument(
     "-v", "--verbose", help="Increase verbosity of output", action="store_true"
 )
+parser.add_argument(
+    "--output-error",
+    help="Output errors report to file (default: errorlog.txt)",
+    metavar="output file",
+    const="errorlog.txt",
+    nargs="?",
+    type=argparse.FileType("w", encoding="utf-8"),
+    dest="output",
+)
 args = parser.parse_args()
 if args.verbose:
     verbose = True
+if args.output:
+    output = args.output
+    output_err = True
 
 
 def get_all_license():
@@ -91,6 +105,14 @@ def verbose_print(*args, **kwargs):
         print(*args, **kwargs)
 
 
+def output_write(*args, **kwargs):
+    """Prints to output file is --output-error flag is set
+    """
+    if output_err:
+        kwargs["file"] = output
+        print(*args, **kwargs)
+
+
 all_links = get_all_license()
 
 base = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
@@ -122,9 +144,15 @@ for licens in all_links:
         status = check_existing(link)
         if status not in [200, "ignore"]:
             caught_errors += 1
-            if caught_errors == 1 and not verbose:
-                print("Errors:")
+            if caught_errors == 1:
+                if not verbose:
+                    print("Errors:")
+                output_write("\n{}".format(licens.string))
             err_code = 1
             print(status, "-\t", link)
+            output_write(status, "-\t", link)
+
+if output_err:
+    print("\nError file present at: ", output.name)
 
 sys.exit(err_code)

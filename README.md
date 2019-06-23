@@ -3,7 +3,7 @@
 <p align="center">This python script scrapes all the <a href="https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode">license files</a> and automates the task of detecting broken links, timeout error and other link issues</p>
 
 <p align="center">
-<img alt="CircleCI" src="https://img.shields.io/circleci/build/github/creativecommons/cc-link-checker.svg"> <a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://www.codacy.com/app/bhumijgupta/cc-link-checker_2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=creativecommons/cc-link-checker&amp;utm_campaign=Badge_Grade"><img src="https://api.codacy.com/project/badge/Grade/34a6db79b3d5412d9dadee0db8f3b773"/></a>
+<a href="https://circleci.com/gh/creativecommons/cc-link-checker"><img alt="CircleCI" src="https://img.shields.io/circleci/build/github/creativecommons/cc-link-checker.svg"></a> <a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
 ## Code of Conduct

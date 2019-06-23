@@ -21,8 +21,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--output-error",
-    help="Output errors report to file (default: errorlog.txt)",
-    metavar="output file",
+    help="Outputs all link errors to file (default: errorlog.txt)",
+    metavar="output_file",
     const="errorlog.txt",
     nargs="?",
     type=argparse.FileType("w", encoding="utf-8"),

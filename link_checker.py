@@ -89,11 +89,7 @@ def scrape(link, filename):
     """
     href = link["href"]
     analyse = urlsplit(href)
-    if (
-        analyse.scheme == ""
-        and analyse.netloc == ""
-        and analyse.path != ""
-    ):
+    if analyse.scheme == "" and analyse.netloc == "" and analyse.path != "":
         base_link = create_base_link(filename)
         href = urljoin(base_link, href)
         res = get_status(href)

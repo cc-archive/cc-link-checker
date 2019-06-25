@@ -1,6 +1,6 @@
 import argparse
 import sys
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -50,7 +50,7 @@ def get_all_license():
     return links
 
 
-def check_existing(link):
+def check_existing(link, filename):
     """This function checks if the link is already present in scraped_links.
 
     Args:
@@ -64,12 +64,21 @@ def check_existing(link):
     if status:
         return status
     else:
-        status = scrape(link)
+        status = scrape(link, filename)
         scraped_links[href] = status
         return status
 
 
-def scrape(link):
+def get_status(href):
+    try:
+        res = requests.get(href, headers=header, timeout=10)
+    except requests.exceptions.Timeout:
+        return "Timeout Error"
+    else:
+        return res.status_code
+
+
+def scrape(link, filename):
     """Checks the status of the link and returns the status code 200 or the error encountered.
 
     Args:
@@ -80,22 +89,57 @@ def scrape(link):
     """
     href = link["href"]
     analyse = urlsplit(href)
-    if analyse.scheme == "" or analyse.scheme in ["https", "http"]:
+    if (
+        analyse.scheme == ""
+        and analyse.netloc == ""
+        and analyse.path != ""
+    ):
+        base_link = create_base_link(filename)
+        href = urljoin(base_link, href)
+        res = get_status(href)
+        return res
+    elif analyse.scheme == "" or analyse.scheme in ["https", "http"]:
         if analyse.scheme == "":
             analyse = analyse._replace(scheme="https")
-        if analyse.netloc == "":
-            analyse = analyse._replace(netloc="creativecommons.org")
         href = analyse.geturl()
-        try:
-            res = requests.get(href, headers=header, timeout=10)
-        except requests.exceptions.Timeout:
-            return "Timeout Error"
-        else:
-            return res.status_code
+        res = get_status(href)
+        return res
     elif analyse.scheme == "mailto":
         return "ignore"
     else:
         return "Invalid protocol detected"
+
+
+def create_base_link(filename):
+    """Generates base URL on which the license file will be displayed
+
+    Args:
+        filename (str): Name of the license file
+
+    Returns:
+        str: Base URL of the license file
+    """
+    base = "https://creativecommons.org"
+    parts = filename.split("_")
+
+    if parts[0] == "samplingplus":
+        extra = "/licenses/sampling+"
+    elif parts[0].startswith("zero"):
+        extra = "/publicdomain/" + parts[0]
+    else:
+        extra = "/licenses/" + parts[0]
+
+    extra = extra + "/" + parts[1]
+    if parts[0] == "samplingplus" and len(parts) == 3:
+        extra = extra + "/" + parts[2] + "/legalcode"
+        return base + extra
+
+    if len(parts) == 4:
+        extra = extra + "/" + parts[2]
+    extra = extra + "/legalcode"
+    if len(parts) >= 3:
+        extra = extra + "." + parts[-1]
+    return base + extra
 
 
 def verbose_print(*args, **kwargs):
@@ -123,7 +167,7 @@ for licens in all_links:
     page_url = base + licens.string
     print("\n")
     print("Checking:", licens.string)
-    if check_extension[-1] not in ["html", "htm"]:
+    if check_extension[-1] != "html":
         verbose_print("Encountered non-html file -\t skipping", licens.string)
         continue
     source_html = requests.get(page_url, headers=header)
@@ -141,7 +185,8 @@ for licens in all_links:
         if href[0] == "#":
             verbose_print("Skipping internal link -\t", link)
             continue
-        status = check_existing(link)
+        filename = licens.string[:-5]
+        status = check_existing(link, filename)
         if status not in [200, "ignore"]:
             caught_errors += 1
             if caught_errors == 1:

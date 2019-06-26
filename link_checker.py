@@ -189,6 +189,9 @@ for licens in all_links:
     if check_extension[-1] != "html":
         verbose_print("Encountered non-html file -\t skipping", licens.string)
         continue
+    # Refer to issue https://github.com/creativecommons/cc-link-checker/issues/9 for more info
+    if licens.string == "samplingplus_1.0.br.html":
+        continue
     filename = licens.string[:-5]
     base_url = create_base_link(filename)
     print("URL:", base_url)

@@ -50,7 +50,16 @@ def get_all_license():
     return links
 
 
-def create_absolute_link(link_analysis, href):
+def create_absolute_link(link_analysis):
+    """Creates absolute links from relative links
+
+    Args:
+        link_analysis (class 'urllib.parse.SplitResult'): Link splitted by urlsplit, that is to be converted
+
+    Returns:
+        str: absolute link
+    """
+    href = link_analysis.geturl()
     if (
         link_analysis.scheme == ""
         and link_analysis.netloc == ""
@@ -60,18 +69,18 @@ def create_absolute_link(link_analysis, href):
     return href
 
 
-def check_existing(link, base_url):
+def check_existing(link):
     """This function checks if the link is already present in scraped_links.
 
     Args:
         link (bs4.element.Tag): The anchor tag extracted using BeautifulSoup which is to be checked
 
     Returns:
-        String or Number: The status of the link
+        String or Number: The status of the link(200) or error message
     """
     href = link["href"]
     analyse = urlsplit(href)
-    href = create_absolute_link(analyse, href)
+    href = create_absolute_link(analyse)
     status = scraped_links.get(href)
     if status:
         return status
@@ -82,6 +91,14 @@ def check_existing(link, base_url):
 
 
 def get_status(href):
+    """Sends request to link and returns status_code or Timeout Error
+
+    Args:
+        href (str): href extracted from anchor tag which is to be scraped
+
+    Returns:
+        int or str: Status code of response or "Timeout Error"
+    """
     try:
         res = requests.get(href, headers=header, timeout=10)
     except requests.exceptions.Timeout:
@@ -94,10 +111,10 @@ def scrape(href):
     """Checks the status of the link and returns the status code 200 or the error encountered.
 
     Args:
-        link (bs4.element.Tag): The anchor tag extracted using BeautifulSoup which is to be checked
+        href (str): href extracted from anchor tag which is to be scraped
 
     Returns:
-        String or Number: Error encountered or Status code 200
+        int or str: Error encountered or Status code 200
     """
     analyse = urlsplit(href)
     if analyse.scheme == "" or analyse.scheme in ["https", "http"]:
@@ -190,7 +207,7 @@ for licens in all_links:
         if href[0] == "#":
             verbose_print("Skipping internal link -\t", link)
             continue
-        status = check_existing(link, base_url)
+        status = check_existing(link)
         if status not in [200, "ignore"]:
             caught_errors += 1
             if caught_errors == 1:

@@ -213,7 +213,7 @@ for licens in all_links:
             if caught_errors == 1:
                 if not verbose:
                     print("Errors:")
-                output_write("\n{}\nURL: ".format(licens.string, base_url))
+                output_write("\n{}\nURL: {}".format(licens.string, base_url))
             err_code = 1
             print(status, "-\t", link)
             output_write(status, "-\t", link)

@@ -175,7 +175,6 @@ for licens in all_links:
     filename = licens.string[:-5]
     base_url = create_base_link(filename)
     print("URL:", base_url)
-    output_write("URL:", base_url)
     source_html = requests.get(page_url, headers=header)
     license_soup = BeautifulSoup(source_html.content, "lxml")
     links_in_license = license_soup.find_all("a")
@@ -197,7 +196,7 @@ for licens in all_links:
             if caught_errors == 1:
                 if not verbose:
                     print("Errors:")
-                output_write("\n{}".format(licens.string))
+                output_write("\n{}\nURL: ".format(licens.string, base_url))
             err_code = 1
             print(status, "-\t", link)
             output_write(status, "-\t", link)

@@ -50,7 +50,17 @@ def get_all_license():
     return links
 
 
-def check_existing(link, filename):
+def create_absolute_link(link_analysis, href):
+    if (
+        link_analysis.scheme == ""
+        and link_analysis.netloc == ""
+        and link_analysis.path != ""
+    ):
+        href = urljoin(base_url, href)
+    return href
+
+
+def check_existing(link, base_url):
     """This function checks if the link is already present in scraped_links.
 
     Args:
@@ -60,11 +70,13 @@ def check_existing(link, filename):
         String or Number: The status of the link
     """
     href = link["href"]
+    analyse = urlsplit(href)
+    href = create_absolute_link(analyse, href)
     status = scraped_links.get(href)
     if status:
         return status
     else:
-        status = scrape(link, filename)
+        status = scrape(href)
         scraped_links[href] = status
         return status
 
@@ -78,7 +90,7 @@ def get_status(href):
         return res.status_code
 
 
-def scrape(link, filename):
+def scrape(href):
     """Checks the status of the link and returns the status code 200 or the error encountered.
 
     Args:
@@ -87,14 +99,8 @@ def scrape(link, filename):
     Returns:
         String or Number: Error encountered or Status code 200
     """
-    href = link["href"]
     analyse = urlsplit(href)
-    if analyse.scheme == "" and analyse.netloc == "" and analyse.path != "":
-        base_link = create_base_link(filename)
-        href = urljoin(base_link, href)
-        res = get_status(href)
-        return res
-    elif analyse.scheme == "" or analyse.scheme in ["https", "http"]:
+    if analyse.scheme == "" or analyse.scheme in ["https", "http"]:
         if analyse.scheme == "":
             analyse = analyse._replace(scheme="https")
         href = analyse.geturl()
@@ -166,6 +172,10 @@ for licens in all_links:
     if check_extension[-1] != "html":
         verbose_print("Encountered non-html file -\t skipping", licens.string)
         continue
+    filename = licens.string[:-5]
+    base_url = create_base_link(filename)
+    print("URL:", base_url)
+    output_write("URL:", base_url)
     source_html = requests.get(page_url, headers=header)
     license_soup = BeautifulSoup(source_html.content, "lxml")
     links_in_license = license_soup.find_all("a")
@@ -181,8 +191,7 @@ for licens in all_links:
         if href[0] == "#":
             verbose_print("Skipping internal link -\t", link)
             continue
-        filename = licens.string[:-5]
-        status = check_existing(link, filename)
+        status = check_existing(link, base_url)
         if status not in [200, "ignore"]:
             caught_errors += 1
             if caught_errors == 1:

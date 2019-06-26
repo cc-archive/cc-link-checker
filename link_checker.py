@@ -1,6 +1,6 @@
 import argparse
 import sys
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -50,6 +50,25 @@ def get_all_license():
     return links
 
 
+def create_absolute_link(link_analysis):
+    """Creates absolute links from relative links
+
+    Args:
+        link_analysis (class 'urllib.parse.SplitResult'): Link splitted by urlsplit, that is to be converted
+
+    Returns:
+        str: absolute link
+    """
+    href = link_analysis.geturl()
+    if (
+        link_analysis.scheme == ""
+        and link_analysis.netloc == ""
+        and link_analysis.path != ""
+    ):
+        href = urljoin(base_url, href)
+    return href
+
+
 def check_existing(link):
     """This function checks if the link is already present in scraped_links.
 
@@ -57,45 +76,89 @@ def check_existing(link):
         link (bs4.element.Tag): The anchor tag extracted using BeautifulSoup which is to be checked
 
     Returns:
-        String or Number: The status of the link
+        String or Number: The status of the link(200) or error message
     """
     href = link["href"]
+    analyse = urlsplit(href)
+    href = create_absolute_link(analyse)
     status = scraped_links.get(href)
     if status:
         return status
     else:
-        status = scrape(link)
+        status = scrape(href)
         scraped_links[href] = status
         return status
 
 
-def scrape(link):
+def get_status(href):
+    """Sends request to link and returns status_code or Timeout Error
+
+    Args:
+        href (str): href extracted from anchor tag which is to be scraped
+
+    Returns:
+        int or str: Status code of response or "Timeout Error"
+    """
+    try:
+        res = requests.get(href, headers=header, timeout=10)
+    except requests.exceptions.Timeout:
+        return "Timeout Error"
+    else:
+        return res.status_code
+
+
+def scrape(href):
     """Checks the status of the link and returns the status code 200 or the error encountered.
 
     Args:
-        link (bs4.element.Tag): The anchor tag extracted using BeautifulSoup which is to be checked
+        href (str): href extracted from anchor tag which is to be scraped
 
     Returns:
-        String or Number: Error encountered or Status code 200
+        int or str: Error encountered or Status code 200
     """
-    href = link["href"]
     analyse = urlsplit(href)
     if analyse.scheme == "" or analyse.scheme in ["https", "http"]:
         if analyse.scheme == "":
             analyse = analyse._replace(scheme="https")
-        if analyse.netloc == "":
-            analyse = analyse._replace(netloc="creativecommons.org")
         href = analyse.geturl()
-        try:
-            res = requests.get(href, headers=header, timeout=10)
-        except requests.exceptions.Timeout:
-            return "Timeout Error"
-        else:
-            return res.status_code
+        res = get_status(href)
+        return res
     elif analyse.scheme == "mailto":
         return "ignore"
     else:
         return "Invalid protocol detected"
+
+
+def create_base_link(filename):
+    """Generates base URL on which the license file will be displayed
+
+    Args:
+        filename (str): Name of the license file
+
+    Returns:
+        str: Base URL of the license file
+    """
+    base = "https://creativecommons.org"
+    parts = filename.split("_")
+
+    if parts[0] == "samplingplus":
+        extra = "/licenses/sampling+"
+    elif parts[0].startswith("zero"):
+        extra = "/publicdomain/" + parts[0]
+    else:
+        extra = "/licenses/" + parts[0]
+
+    extra = extra + "/" + parts[1]
+    if parts[0] == "samplingplus" and len(parts) == 3:
+        extra = extra + "/" + parts[2] + "/legalcode"
+        return base + extra
+
+    if len(parts) == 4:
+        extra = extra + "/" + parts[2]
+    extra = extra + "/legalcode"
+    if len(parts) >= 3:
+        extra = extra + "." + parts[-1]
+    return base + extra
 
 
 def verbose_print(*args, **kwargs):
@@ -123,9 +186,12 @@ for licens in all_links:
     page_url = base + licens.string
     print("\n")
     print("Checking:", licens.string)
-    if check_extension[-1] not in ["html", "htm"]:
+    if check_extension[-1] != "html":
         verbose_print("Encountered non-html file -\t skipping", licens.string)
         continue
+    filename = licens.string[:-5]
+    base_url = create_base_link(filename)
+    print("URL:", base_url)
     source_html = requests.get(page_url, headers=header)
     license_soup = BeautifulSoup(source_html.content, "lxml")
     links_in_license = license_soup.find_all("a")
@@ -147,7 +213,7 @@ for licens in all_links:
             if caught_errors == 1:
                 if not verbose:
                     print("Errors:")
-                output_write("\n{}".format(licens.string))
+                output_write("\n{}\nURL: {}".format(licens.string, base_url))
             err_code = 1
             print(status, "-\t", link)
             output_write(status, "-\t", link)

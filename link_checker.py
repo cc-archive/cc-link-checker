@@ -13,6 +13,7 @@ header = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 }
 scraped_links = {}
+map_broken_links = {}
 
 
 parser = argparse.ArgumentParser(description="Script to check broken links")
@@ -83,10 +84,14 @@ def check_existing(link):
     href = create_absolute_link(analyse)
     status = scraped_links.get(href)
     if status:
+        if status not in [200, "ignore"]:
+            map_broken_links[href].append(base_url)
         return status
     else:
         status = scrape(href)
         scraped_links[href] = status
+        if status not in [200, "ignore"]:
+            map_broken_links[href] = [base_url]
         return status
 
 
@@ -176,10 +181,25 @@ def output_write(*args, **kwargs):
         print(*args, **kwargs)
 
 
+def output_summary(num_errors):
+    output_write(
+        "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
+    )
+    output_write("Total files checked: {}".format(len(all_links)))
+    output_write("Number of error links: {}".format(num_errors))
+    keys = map_broken_links.keys()
+    output_write("Number of unique broken links: {}\n".format(len(keys)))
+    for key, value in map_broken_links.items():
+        output_write("\nBroken link - {} found in:".format(key))
+        for url in value:
+            output_write(url)
+
+
 all_links = get_all_license()
 
 base = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
 
+errors_total = 0
 for licens in all_links:
     caught_errors = 0
     check_extension = licens.string.split(".")
@@ -220,8 +240,9 @@ for licens in all_links:
             err_code = 1
             print(status, "-\t", link)
             output_write(status, "-\t", link)
+    errors_total += caught_errors
 
 if output_err:
+    output_summary(errors_total)
     print("\nError file present at: ", output.name)
-
 sys.exit(err_code)

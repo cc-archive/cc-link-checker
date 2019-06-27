@@ -183,14 +183,12 @@ def output_write(*args, **kwargs):
 
 def output_summary(num_errors):
     output_write(
-        "\n\n{}\n{} SUMMARY {}\n{}".format(
-            "*" * 39, " " * 15, " " * 15, "*" * 39
-        )
+        "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
     )
     output_write("Total files checked: {}".format(len(all_links)))
-    output_write("Number of errors: {}".format(num_errors))
+    output_write("Number of error links: {}".format(num_errors))
     keys = map_broken_links.keys()
-    output_write("Number of unique links: {}\n".format(len(keys)))
+    output_write("Number of unique broken links: {}\n".format(len(keys)))
     for key, value in map_broken_links.items():
         output_write("\nBroken link - {} found in:".format(key))
         for url in value:

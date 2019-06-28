@@ -18,6 +18,7 @@ HEADER = {
 }
 scraped_links = {}
 map_broken_links = {}
+lock = Lock()
 
 
 parser = argparse.ArgumentParser(description="Script to check broken links")

@@ -4,8 +4,10 @@ from urllib.parse import urlsplit, urljoin
 
 import requests
 from bs4 import BeautifulSoup
+import time
 
 # Set defaults
+START_TIME = time.time()
 err_code = 0
 verbose = False
 output_err = False
@@ -185,6 +187,7 @@ def output_summary(num_errors):
     output_write(
         "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
     )
+    output_write("Timestamp: {}".format(time.ctime()))
     output_write("Total files checked: {}".format(len(all_links)))
     output_write("Number of error links: {}".format(num_errors))
     keys = map_broken_links.keys()
@@ -245,4 +248,5 @@ for licens in all_links:
 if output_err:
     output_summary(errors_total)
     print("\nError file present at: ", output.name)
+print("Completed in: {}".format(time.time() - START_TIME))
 sys.exit(err_code)

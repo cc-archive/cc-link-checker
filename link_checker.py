@@ -1,10 +1,11 @@
 import argparse
+import concurrent.futures as fp
 import sys
-from urllib.parse import urlsplit, urljoin
+import time
+from urllib.parse import urljoin, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
-import time
 
 # Set defaults
 START_TIME = time.time()
@@ -198,6 +199,29 @@ def output_summary(num_errors):
             output_write(url)
 
 
+def check_link(link, licens_name, base_url):
+    global caught_errors, err_code
+    try:
+        href = link["href"]
+    except KeyError:
+        # if there exists an <a> tag without href
+        verbose_print("Found anchor tag without href -\t", link)
+        return
+    if href[0] == "#":
+        verbose_print("Skipping internal link -\t", link)
+        return
+    status = check_existing(link)
+    if status not in [200, "ignore"]:
+        caught_errors += 1
+        if caught_errors == 1:
+            if not verbose:
+                print("Errors:")
+            output_write("\n{}\nURL: {}".format(licens_name, base_url))
+        err_code = 1
+        print(status, "-\t", link)
+        output_write(status, "-\t", link)
+
+
 all_links = get_all_license()
 
 GITHUB_BASE = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
@@ -223,26 +247,12 @@ for licens in all_links:
     links_in_license = license_soup.find_all("a")
     verbose_print("No. of links found:", len(links_in_license))
     verbose_print("Errors and Warnings:")
-    for link in links_in_license:
-        try:
-            href = link["href"]
-        except KeyError:
-            # if there exists an <a> tag without href
-            verbose_print("Found anchor tag without href -\t", link)
-            continue
-        if href[0] == "#":
-            verbose_print("Skipping internal link -\t", link)
-            continue
-        status = check_existing(link)
-        if status not in [200, "ignore"]:
-            caught_errors += 1
-            if caught_errors == 1:
-                if not verbose:
-                    print("Errors:")
-                output_write("\n{}\nURL: {}".format(licens.string, base_url))
-            err_code = 1
-            print(status, "-\t", link)
-            output_write(status, "-\t", link)
+    with fp.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {
+            executor.submit(check_link, link, licens.string, base_url): link
+            for link in links_in_license
+        }
+        fp.as_completed(future_to_url)
     errors_total += caught_errors
 
 if output_err:

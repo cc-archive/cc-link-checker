@@ -2,6 +2,7 @@ import argparse
 import concurrent.futures as fp
 import sys
 import time
+from threading import Lock
 from urllib.parse import urljoin, urlsplit
 
 import requests
@@ -200,6 +201,13 @@ def output_summary(num_errors):
 
 
 def check_link(link, licens_name, base_url):
+    """Function that checks the link for errors and warning, and prints it. This is the target for thread.
+
+    Args:
+        link (class 'bs4.element.tag'): The link that is to be checked for errors or warning
+        licens_name (str): Name of the license file
+        base_url (str): The url on which the license file is displayed
+    """
     global caught_errors, err_code
     try:
         href = link["href"]
@@ -211,15 +219,16 @@ def check_link(link, licens_name, base_url):
         verbose_print("Skipping internal link -\t", link)
         return
     status = check_existing(link)
-    if status not in [200, "ignore"]:
-        caught_errors += 1
-        if caught_errors == 1:
-            if not verbose:
-                print("Errors:")
-            output_write("\n{}\nURL: {}".format(licens_name, base_url))
-        err_code = 1
-        print(status, "-\t", link)
-        output_write(status, "-\t", link)
+    with lock:
+        if status not in [200, "ignore"]:
+            caught_errors += 1
+            if caught_errors == 1:
+                if not verbose:
+                    print("Errors:")
+                output_write("\n{}\nURL: {}".format(licens_name, base_url))
+            err_code = 1
+            print(status, "-\t", link)
+            output_write(status, "-\t", link)
 
 
 all_links = get_all_license()

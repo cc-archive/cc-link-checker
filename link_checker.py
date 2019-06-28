@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 err_code = 0
 verbose = False
 output_err = False
-header = {
+HEADER = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 }
 scraped_links = {}
@@ -43,8 +43,8 @@ def get_all_license():
     Returns:
         str[]: The list of license/deeds files found in the repository
     """
-    url = "https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode"
-    response = requests.get(url)
+    URL = "https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode"
+    response = requests.get(URL)
     soup = BeautifulSoup(response.text, "lxml")
     links = soup.table.tbody.find_all("a", class_="js-navigation-open")
     print("No. of files to be checked:", len(links))
@@ -105,7 +105,7 @@ def get_status(href):
         int or str: Status code of response or "Timeout Error"
     """
     try:
-        res = requests.get(href, headers=header, timeout=10)
+        res = requests.get(href, headers=HEADER, timeout=10)
     except requests.exceptions.Timeout:
         return "Timeout Error"
     else:
@@ -143,7 +143,7 @@ def create_base_link(filename):
     Returns:
         str: Base URL of the license file
     """
-    base = "https://creativecommons.org"
+    ROOT_URL = "https://creativecommons.org"
     parts = filename.split("_")
 
     if parts[0] == "samplingplus":
@@ -156,14 +156,14 @@ def create_base_link(filename):
     extra = extra + "/" + parts[1]
     if parts[0] == "samplingplus" and len(parts) == 3:
         extra = extra + "/" + parts[2] + "/legalcode"
-        return base + extra
+        return ROOT_URL + extra
 
     if len(parts) == 4:
         extra = extra + "/" + parts[2]
     extra = extra + "/legalcode"
     if len(parts) >= 3:
         extra = extra + "." + parts[-1]
-    return base + extra
+    return ROOT_URL + extra
 
 
 def verbose_print(*args, **kwargs):
@@ -197,13 +197,13 @@ def output_summary(num_errors):
 
 all_links = get_all_license()
 
-base = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
+GITHUB_BASE = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
 
 errors_total = 0
 for licens in all_links:
     caught_errors = 0
     check_extension = licens.string.split(".")
-    page_url = base + licens.string
+    page_url = GITHUB_BASE + licens.string
     print("\n")
     print("Checking:", licens.string)
     if check_extension[-1] != "html":
@@ -215,7 +215,7 @@ for licens in all_links:
     filename = licens.string[:-5]
     base_url = create_base_link(filename)
     print("URL:", base_url)
-    source_html = requests.get(page_url, headers=header)
+    source_html = requests.get(page_url, headers=HEADER)
     license_soup = BeautifulSoup(source_html.content, "lxml")
     links_in_license = license_soup.find_all("a")
     verbose_print("No. of links found:", len(links_in_license))

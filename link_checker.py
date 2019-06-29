@@ -16,6 +16,7 @@ output_err = False
 HEADER = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 }
+GOOD_RESPONSE = [200, 300, 301, 302, "ignore"]
 scraped_links = {}
 map_broken_links = {}
 lock = Lock()
@@ -89,13 +90,13 @@ def check_existing(link):
     href = create_absolute_link(analyse)
     status = scraped_links.get(href)
     if status:
-        if status not in [200, "ignore"]:
+        if status not in GOOD_RESPONSE:
             map_broken_links[href].append(base_url)
         return status
     else:
         status = scrape(href)
         scraped_links[href] = status
-        if status not in [200, "ignore"]:
+        if status not in GOOD_RESPONSE:
             map_broken_links[href] = [base_url]
         return status
 
@@ -201,12 +202,12 @@ def output_summary(num_errors):
             output_write(url)
 
 
-def check_link(link, licens_name, base_url):
+def check_link(link, license_name, base_url):
     """Function that checks the link for errors and warning, and prints it. This is the target for thread.
 
     Args:
         link (class 'bs4.element.tag'): The link that is to be checked for errors or warning
-        licens_name (str): Name of the license file
+        license_name (str): Name of the license file
         base_url (str): The url on which the license file is displayed
     """
     global caught_errors, err_code
@@ -221,12 +222,12 @@ def check_link(link, licens_name, base_url):
         return
     status = check_existing(link)
     with lock:
-        if status not in [200, "ignore"]:
+        if status not in GOOD_RESPONSE:
             caught_errors += 1
             if caught_errors == 1:
                 if not verbose:
                     print("Errors:")
-                output_write("\n{}\nURL: {}".format(licens_name, base_url))
+                output_write("\n{}\nURL: {}".format(license_name, base_url))
             err_code = 1
             print(status, "-\t", link)
             output_write(status, "-\t", link)

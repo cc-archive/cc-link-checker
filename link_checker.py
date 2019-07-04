@@ -4,7 +4,7 @@ import time
 import sys
 from urllib.parse import urljoin, urlsplit
 
-# Always import grequests before requests
+# WARNING: Always import grequests before requests
 import requests
 from bs4 import BeautifulSoup
 
@@ -20,6 +20,7 @@ memoized_links = {}
 map_broken_links = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
 
+# Setup argument parser
 parser = argparse.ArgumentParser(description="Script to check broken links")
 parser.add_argument(
     "-v", "--verbose", help="Increase verbosity of output", action="store_true"
@@ -103,6 +104,11 @@ def output_write(*args, **kwargs):
 
 
 def output_summary(num_errors):
+    """Prints short summary of broken links in the output error file
+
+    Args:
+        num_errors (int): Number of broken links found
+    """
     output_write(
         "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
     )
@@ -135,7 +141,7 @@ def create_absolute_link(link_analysis):
     ):
         href = urljoin(base_url, href)
         return href
-    # Append scheme
+    # Append scheme https where absent
     if link_analysis.scheme == "":
         link_analysis = link_analysis._replace(scheme="https")
         href = link_analysis.geturl()
@@ -144,6 +150,15 @@ def create_absolute_link(link_analysis):
 
 
 def get_scrapable_links(links_in_license):
+    """Filters out anchor tags without href attribute, internal links and mailto scheme links
+
+    Args:
+        links_in_license (list): List of all the links found in file
+
+    Returns:
+        set: valid_anchors - list of all scrapable anchor tags
+             valid_links - list of all absolute scrapable links
+    """
     valid_links = []
     valid_anchors = []
     for link in links_in_license:
@@ -165,6 +180,15 @@ def get_scrapable_links(links_in_license):
 
 
 def exception_handler(request, exception):
+    """Handles Invalid Scheme and Timeout Error from grequests.get
+
+    Args:
+        request (class 'grequests.AsyncRequest'): Request on which error occured
+        exception (class 'requests.exceptions'): Exception occured
+
+    Returns:
+        str: Exception occured in string format
+    """
     if type(exception) == requests.exceptions.InvalidSchema:
         return "Invalid Schema"
     if type(exception) == requests.exceptions.ConnectTimeout:
@@ -172,6 +196,12 @@ def exception_handler(request, exception):
 
 
 def map_links_file(link, file_url):
+    """Maps broken link to the files of occurence
+
+    Args:
+        link (str): Broken link encountered
+        file_url (str): File url in which the broken link was encountered
+    """
     if map_broken_links.get(link):
         if file_url not in map_broken_links[link]:
             map_broken_links[link].append(file_url)
@@ -180,6 +210,18 @@ def map_links_file(link, file_url):
 
 
 def write_response(all_links, response, base_url, license_name, valid_anchors):
+    """Writes broken links to CLI and file
+
+    Args:
+        all_links (list): List of all scrapable links found in website
+        response (list): Response status code/ exception of all the links in all_links
+        base_url (string): URL on which the license page will be displayed
+        license_name (string): Name of license
+        valid_anchors (list): List of all the scrapable anchors
+
+    Returns:
+        int: Number of broken links found in license
+    """
     caught_errors = 0
     for idx, link_status in enumerate(response):
         try:
@@ -199,6 +241,19 @@ def write_response(all_links, response, base_url, license_name, valid_anchors):
 
 
 def get_memoized_result(valid_links, valid_anchors):
+    """Get memoized result of previously checked links
+
+    Args:
+        valid_links (list): List of all scrapable links in license
+        valid_anchors (list): List of all scrapable anchor tags in license
+
+    Returns:
+        set: stored_links - List of links whose responses are memoized
+             stored_anchors - List of anchor tags corresponding to stored_links
+             stored_result - List of responses corresponding to stored_links
+             check_links - List of links which are to be checked
+             check_anchors - List of anchor tags corresponding to check_links
+    """
     stored_links = []
     stored_anchors = []
     stored_result = []
@@ -223,6 +278,12 @@ def get_memoized_result(valid_links, valid_anchors):
 
 
 def memoize_result(check_links, response):
+    """Memoize the result of links checked
+
+    Args:
+        check_links (list): List of fresh links that are processed
+        response (list): List of response corresponding to check_links
+    """
     for idx, link in enumerate(check_links):
         memoized_links[link] = response[idx]
 

@@ -11,6 +11,7 @@ pytest = "*"
 beautifulsoup4 = "*"
 lxml = "*"
 requests = "*"
+grequests = "*"
 
 [requires]
 python_version = "3.6"

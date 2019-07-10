@@ -5,6 +5,15 @@ from bs4 import BeautifulSoup
 import grequests
 
 
+@pytest.fixture
+def reset_global():
+    link_checker.verbose = False
+    link_checker.output_err = False
+    link_checker.memoized_links = {}
+    link_checker.map_broken_links = {}
+    return
+
+
 def test_get_all_license():
     all_links = link_checker.get_all_license()
     assert len(all_links) > 0
@@ -49,6 +58,29 @@ def test_create_base_link(filename, result):
     assert baseURL == result
 
 
+def test_verbose_print(capsys, reset_global):
+    # verbose = False (default)
+    link_checker.verbose_print("Without verbose")
+    # Set verbose True
+    link_checker.verbose = True
+    link_checker.verbose_print("With verbose")
+    captured = capsys.readouterr()
+    assert captured.out == "With verbose\n"
+
+
+def test_output_write(capsys, reset_global):
+    # output_err = False (default)
+    link_checker.output_write("Output disabled")
+    # Set output_err True
+    link_checker.output_err = True
+    with open("errorlog.txt", "w+") as output_file:
+        link_checker.output = output_file
+        link_checker.output_write("Output enabled")
+        # Seek to start of buffer
+        output_file.seek(0)
+        assert output_file.read() == "Output enabled\n"
+
+
 @pytest.mark.parametrize(
     "link, result",
     [
@@ -85,29 +117,6 @@ def test_get_scrapable_links():
     )
 
 
-def test_verbose_print(capsys):
-    # verbose = False (default)
-    link_checker.verbose_print("Without verbose")
-    # Set verbose True
-    link_checker.verbose = True
-    link_checker.verbose_print("With verbose")
-    captured = capsys.readouterr()
-    assert captured.out == "With verbose\n"
-
-
-def test_output_write(capsys):
-    # output_err = False (default)
-    link_checker.output_write("Output disabled")
-    # Set output_err True
-    link_checker.output_err = True
-    with open("errorlog.txt", "w+") as output_file:
-        link_checker.output = output_file
-        link_checker.output_write("Output enabled")
-        # Seek to start of buffer
-        output_file.seek(0)
-        assert output_file.read() == "Output enabled\n"
-
-
 def test_exception_handler():
     links_list = ["http://www.google.com:81", "file://C:/Devil"]
     rs = (grequests.get(link, timeout=3) for link in links_list)
@@ -115,3 +124,45 @@ def test_exception_handler():
         rs, exception_handler=link_checker.exception_handler
     )
     assert response == ["Timeout Error", "Invalid Schema"]
+
+
+def test_map_links_file(reset_global):
+    links = ["link1", "link2", "link1"]
+    file_urls = ["file1", "file1", "file3"]
+    for idx, link in enumerate(links):
+        file_url = file_urls[idx]
+        link_checker.map_links_file(link, file_url)
+    assert link_checker.map_broken_links == {
+        "link1": ["file1", "file3"],
+        "link2": ["file1"],
+    }
+
+
+def test_memoize_result(reset_global):
+    check_links = [
+        # Good response
+        "https://httpbin.org/status/200",
+        # Bad response
+        "https://httpbin.org/status/400",
+        # Invalid schema - Caught by exception handler
+        "file://hh",
+    ]
+    rs = (grequests.get(link, timeout=1) for link in check_links)
+    response = grequests.map(
+        rs, exception_handler=link_checker.exception_handler
+    )
+    link_checker.memoize_result(check_links, response)
+    assert len(link_checker.memoized_links.keys()) == 3
+    assert (
+        link_checker.memoized_links[
+            "https://httpbin.org/status/200"
+        ].status_code
+        == 200
+    )
+    assert (
+        link_checker.memoized_links[
+            "https://httpbin.org/status/400"
+        ].status_code
+        == 400
+    )
+    assert link_checker.memoized_links["file://hh"] == "Invalid Schema"

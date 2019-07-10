@@ -8,5 +8,6 @@ exclude =
     build,
     dist,
     venv,
-    .venv
+    .venv,
+    .pytest_cache
     

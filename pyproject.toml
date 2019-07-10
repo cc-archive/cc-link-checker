@@ -8,11 +8,13 @@ exclude = '''
   | \.mypy_cache
   | \.tox
   | \.venv
+  | \.pytest_cache
   | \.vscode
   | _build
   | buck-out
   | build
   | dist
   | venv
+  | __pycache__
 )/
 '''

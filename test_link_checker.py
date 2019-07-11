@@ -68,7 +68,7 @@ def test_verbose_print(capsys, reset_global):
     assert captured.out == "With verbose\n"
 
 
-def test_output_write(capsys, reset_global):
+def test_output_write(reset_global):
     # output_err = False (default)
     link_checker.output_write("Output disabled")
     # Set output_err True
@@ -136,6 +136,49 @@ def test_map_links_file(reset_global):
         "link1": ["file1", "file3"],
         "link2": ["file1"],
     }
+
+
+def test_write_response(reset_global):
+    # Set config
+    link_checker.output_err = True
+
+    # Text to extract valid_anchors
+    text = "<a href='http://httpbin.org/status/200'>Response 200</a>, <a href='file://link3'>Invalid Scheme</a>, <a href='http://httpbin.org/status/400'>Response 400</a>"
+    soup = BeautifulSoup(text, "lxml")
+    valid_anchors = soup.find_all("a")
+
+    # Setup function params
+    all_links = [
+        "http://httpbin.org/status/200",
+        "file://link3",
+        "http://httpbin.org/status/400",
+    ]
+    rs = (grequests.get(link) for link in all_links)
+    response = grequests.map(
+        rs, exception_handler=link_checker.exception_handler
+    )
+    base_url = "https://baseurl/goes/here"
+    license_name = "by-cc-nd_2.0"
+
+    # Set output to external file
+    with open("errorlog.txt", "w+") as output_file:
+        link_checker.output = output_file
+        caught_errors = link_checker.write_response(
+            all_links, response, base_url, license_name, valid_anchors
+        )
+        assert caught_errors == 2
+        output_file.seek(0)
+        assert output_file.readline() == "\n"
+        assert output_file.readline() == "by-cc-nd_2.0\n"
+        assert output_file.readline() == "URL: https://baseurl/goes/here\n"
+        assert (
+            output_file.readline()
+            == 'Invalid Schema -\t <a href="file://link3">Invalid Scheme</a>\n'
+        )
+        assert (
+            output_file.readline()
+            == '400 -\t <a href="http://httpbin.org/status/400">Response 400</a>\n'
+        )
 
 
 def test_memoize_result(reset_global):

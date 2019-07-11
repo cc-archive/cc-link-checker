@@ -81,6 +81,58 @@ def test_output_write(reset_global):
         assert output_file.read() == "Output enabled\n"
 
 
+def test_output_summary(reset_global):
+    # Set config
+    link_checker.output_err = True
+    link_checker.all_links = ["some link"] * 5
+    link_checker.map_broken_links = {
+        "https://link1.demo": [
+            "https://file1.url/here",
+            "https://file2.url/goes/here",
+        ],
+        "https://link2.demo": ["https://file4.url/here"],
+    }
+
+    # Open file for writing
+    with open("errorlog.txt", "w+") as output_file:
+        link_checker.output = output_file
+        link_checker.output_summary(3)
+        output_file.seek(0)
+        assert output_file.readline() == "\n"
+        assert output_file.readline() == "\n"
+        assert (
+            output_file.readline()
+            == "***************************************\n"
+        )
+        assert output_file.readline() == "                SUMMARY\n"
+        assert (
+            output_file.readline()
+            == "***************************************\n"
+        )
+        assert output_file.readline() == "\n"
+        assert str(output_file.readline()).startswith("Timestamp:")
+        assert output_file.readline() == "Total files checked: 5\n"
+        assert output_file.readline() == "Number of error links: 3\n"
+        assert output_file.readline() == "Number of unique broken links: 2\n"
+        assert output_file.readline() == "\n"
+        assert output_file.readline() == "\n"
+        assert (
+            output_file.readline()
+            == "Broken link - https://link1.demo found in:\n"
+        )
+        assert output_file.readline() == "https://file1.url/here\n"
+        assert output_file.readline() == "https://file2.url/goes/here\n"
+        assert output_file.readline() == "\n"
+        assert (
+            output_file.readline()
+            == "Broken link - https://link2.demo found in:\n"
+        )
+        assert output_file.readline() == "https://file4.url/here\n"
+
+    # Reset non global values
+    link_checker.all_links = []
+
+
 @pytest.mark.parametrize(
     "link, result",
     [
@@ -179,6 +231,28 @@ def test_write_response(reset_global):
             output_file.readline()
             == '400 -\t <a href="http://httpbin.org/status/400">Response 400</a>\n'
         )
+
+
+def test_get_memoized_result():
+    text = "<a href='link1'>Link 1</a>, <a href='link2'>Link 2</a>, <a href='link3_stored'>Link3 - stored</a>, <a href='link4_stored'>Link4 - stored</a>"
+    soup = BeautifulSoup(text, "lxml")
+    valid_anchors = soup.find_all("a")
+    valid_links = ["link1", "link2", "link3_stored", "link4_stored"]
+    link_checker.memoized_links = {"link3_stored": 200, "link4_stored": 404}
+    stored_links, stored_anchors, stored_result, check_links, check_anchors = link_checker.get_memoized_result(
+        valid_links, valid_anchors
+    )
+    assert stored_links == ["link3_stored", "link4_stored"]
+    assert (
+        str(stored_anchors)
+        == '[<a href="link3_stored">Link3 - stored</a>, <a href="link4_stored">Link4 - stored</a>]'
+    )
+    assert stored_result == [200, 404]
+    assert check_links == ["link1", "link2"]
+    assert (
+        str(check_anchors)
+        == '[<a href="link1">Link 1</a>, <a href="link2">Link 2</a>]'
+    )
 
 
 def test_memoize_result(reset_global):

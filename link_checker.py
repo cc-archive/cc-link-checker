@@ -19,6 +19,43 @@ HEADER = {
 memoized_links = {}
 map_broken_links = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
+output = None
+
+
+def parse_argument(args):
+    """parse arguments from cli
+
+    Args:
+        args (list): list of arguments parsed from command line
+    """
+    global verbose
+    global output_err
+    global output
+    # Setup argument parser
+    parser = argparse.ArgumentParser(
+        description="Script to check broken links"
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Increase verbosity of output",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--output-error",
+        help="Outputs all link errors to file (default: errorlog.txt)",
+        metavar="output_file",
+        const="errorlog.txt",
+        nargs="?",
+        type=argparse.FileType("w", encoding="utf-8"),
+        dest="output",
+    )
+    args = parser.parse_args(args)
+    if args.verbose:
+        verbose = True
+    if args.output:
+        output = args.output
+        output_err = True
 
 
 def get_all_license():
@@ -268,31 +305,8 @@ def memoize_result(check_links, response):
 
 
 if __name__ == "__main__":
-    # Setup argument parser
-    parser = argparse.ArgumentParser(
-        description="Script to check broken links"
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Increase verbosity of output",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--output-error",
-        help="Outputs all link errors to file (default: errorlog.txt)",
-        metavar="output_file",
-        const="errorlog.txt",
-        nargs="?",
-        type=argparse.FileType("w", encoding="utf-8"),
-        dest="output",
-    )
-    args = parser.parse_args()
-    if args.verbose:
-        verbose = True
-    if args.output:
-        output = args.output
-        output_err = True
+    # TODO create function for argument parser to add unit tests
+    parse_argument(sys.argv[1:])
 
     all_links = get_all_license()
 

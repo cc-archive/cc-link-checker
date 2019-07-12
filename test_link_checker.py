@@ -14,6 +14,21 @@ def reset_global():
     return
 
 
+def test_parse_argument(reset_global):
+    link_checker.parse_argument(["-v", "--output-error"])
+    assert link_checker.verbose is True
+    assert link_checker.output_err is True
+    assert link_checker.output.name == "errorlog.txt"
+    link_checker.verbose = False
+    link_checker.output_err = False
+    link_checker.parse_argument(
+        ["--verbose", "--output-error", "err_file.txt"]
+    )
+    assert link_checker.verbose is True
+    assert link_checker.output_err is True
+    assert link_checker.output.name == "err_file.txt"
+
+
 def test_get_all_license():
     all_links = link_checker.get_all_license()
     assert len(all_links) > 0

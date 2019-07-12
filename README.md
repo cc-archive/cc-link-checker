@@ -16,6 +16,7 @@
   - [Default mode](#default-mode)
   - [`-v` or `--verbose`](#-v-or---verbose)
   - [`--output-error`](#--output-error)
+- [Unit Testing](#Unit-Testing)
 - [Troubleshooting](#Troubleshooting)
 - [Code of Conduct](#Code-of-Conduct)
 - [Contributing](#Contributing)
@@ -123,12 +124,24 @@ The output file can also be explicitly defined by passing a value to the flag
 $ python link_checker.py --output-error output\results.txt
 ```
 
+## Unit Testing
+
+Unit tests have been written using [pytest](https://docs.pytest.org/en/latest/) framework. The tests can be run using:
+
+```python
+# Install dev dependencies
+pipenv install --dev
+
+# Run unit tests
+pipenv run pytest -v
+```
+
 ## Troubleshooting
 
 - `UnicodeEncodeError`  
   This error is thrown when the console is not UTF-8 supported.
 
-* Failing **Lint** build  
+- Failing **Lint** build  
   Currently we follow customised [black](https://github.com/python/black) code style alongwith [flake8](https://gitlab.com/pycqa/flake8). The [black configuration](pyproject.toml) and [flake8 configuration](.flake8) are present in the repo. Do follow them to pass the CI build
 
 ## Code of Conduct

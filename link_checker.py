@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# vim: set fileencoding=utf-8 :
 import grequests
 import argparse
 import time

@@ -410,7 +410,9 @@ def main():
             check_anchors = memoized_results[4]
             if check_links:
                 rs = (
-                    grequests.get(link, timeout=REQUESTS_TIMEOUT)
+                    # Since we're only checking for validity, we can retreive
+                    # only the headers/metadata
+                    grequests.head(link, timeout=REQUESTS_TIMEOUT)
                     for link in check_links
                 )
                 response = grequests.map(

@@ -10,7 +10,7 @@ import traceback
 
 # Third-party
 from bs4 import BeautifulSoup
-import grequests    # WARNING: Always import grequests before requests
+import grequests  # WARNING: Always import grequests before requests
 import requests
 
 
@@ -330,7 +330,8 @@ def main():
                 "Encountered non-html file -\t skipping", licens.string
             )
             continue
-        # Refer to issue https://github.com/creativecommons/cc-link-checker/issues/9 for more info
+        # Refer to issue for more info on samplingplus_1.0.br.htm:
+        #   https://github.com/creativecommons/cc-link-checker/issues/9
         if licens.string == "samplingplus_1.0.br.html":
             continue
         filename = licens.string[:-5]
@@ -341,8 +342,9 @@ def main():
         links_in_license = license_soup.find_all("a")
         verbose_print("No. of links found:", len(links_in_license))
         verbose_print("Errors and Warnings:")
-        valid_anchors, valid_links = get_scrapable_links(base_url,
-                                                         links_in_license)
+        valid_anchors, valid_links = get_scrapable_links(
+            base_url, links_in_license
+        )
         if valid_links:
             stored_links, stored_anchors, stored_result, check_links, check_anchors = get_memoized_result(
                 valid_links, valid_anchors
@@ -376,7 +378,7 @@ def main():
     sys.exit(err_code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     except SystemExit as e:

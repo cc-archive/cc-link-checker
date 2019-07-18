@@ -21,27 +21,43 @@ HEADER = {
 memoized_links = {}
 map_broken_links = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
+output = None
 
-# Setup argument parser
-parser = argparse.ArgumentParser(description="Script to check broken links")
-parser.add_argument(
-    "-v", "--verbose", help="Increase verbosity of output", action="store_true"
-)
-parser.add_argument(
-    "--output-error",
-    help="Outputs all link errors to file (default: errorlog.txt)",
-    metavar="output_file",
-    const="errorlog.txt",
-    nargs="?",
-    type=argparse.FileType("w", encoding="utf-8"),
-    dest="output",
-)
-args = parser.parse_args()
-if args.verbose:
-    verbose = True
-if args.output:
-    output = args.output
-    output_err = True
+
+def parse_argument(args):
+    """parse arguments from cli
+
+    Args:
+        args (list): list of arguments parsed from command line
+    """
+    global verbose
+    global output_err
+    global output
+    # Setup argument parser
+    parser = argparse.ArgumentParser(
+        description="Script to check broken links"
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Increase verbosity of output",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--output-error",
+        help="Outputs all link errors to file (default: errorlog.txt)",
+        metavar="output_file",
+        const="errorlog.txt",
+        nargs="?",
+        type=argparse.FileType("w", encoding="utf-8"),
+        dest="output",
+    )
+    args = parser.parse_args(args)
+    if args.verbose:
+        verbose = True
+    if args.output:
+        output = args.output
+        output_err = True
 
 
 def get_all_license():
@@ -290,60 +306,66 @@ def memoize_result(check_links, response):
         memoized_links[link] = response[idx]
 
 
-all_links = get_all_license()
+if __name__ == "__main__":
+    # TODO create function for argument parser to add unit tests
+    parse_argument(sys.argv[1:])
 
-GITHUB_BASE = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
+    all_links = get_all_license()
 
+    GITHUB_BASE = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
 
-errors_total = 0
-for licens in all_links:
-    caught_errors = 0
-    check_extension = licens.string.split(".")
-    page_url = GITHUB_BASE + licens.string
-    print("\n")
-    print("Checking:", licens.string)
-    if check_extension[-1] != "html":
-        verbose_print("Encountered non-html file -\t skipping", licens.string)
-        continue
-    # Refer to issue https://github.com/creativecommons/cc-link-checker/issues/9 for more info
-    if licens.string == "samplingplus_1.0.br.html":
-        continue
-    filename = licens.string[:-5]
-    base_url = create_base_link(filename)
-    print("URL:", base_url)
-    source_html = requests.get(page_url, headers=HEADER)
-    license_soup = BeautifulSoup(source_html.content, "lxml")
-    links_in_license = license_soup.find_all("a")
-    verbose_print("No. of links found:", len(links_in_license))
-    verbose_print("Errors and Warnings:")
-    valid_anchors, valid_links = get_scrapable_links(links_in_license)
-    if valid_links:
-        stored_links, stored_anchors, stored_result, check_links, check_anchors = get_memoized_result(
-            valid_links, valid_anchors
-        )
-        if check_links:
-            rs = (grequests.get(link, timeout=10) for link in check_links)
-            response = grequests.map(rs, exception_handler=exception_handler)
-            memoize_result(check_links, response)
-            stored_anchors += check_anchors
-            stored_result += response
-        stored_links += check_links
-        caught_errors = write_response(
-            stored_links,
-            stored_result,
-            base_url,
-            licens.string,
-            stored_anchors,
-        )
+    errors_total = 0
+    for licens in all_links:
+        caught_errors = 0
+        check_extension = licens.string.split(".")
+        page_url = GITHUB_BASE + licens.string
+        print("\n")
+        print("Checking:", licens.string)
+        if check_extension[-1] != "html":
+            verbose_print(
+                "Encountered non-html file -\t skipping", licens.string
+            )
+            continue
+        # Refer to issue https://github.com/creativecommons/cc-link-checker/issues/9 for more info
+        if licens.string == "samplingplus_1.0.br.html":
+            continue
+        filename = licens.string[:-5]
+        base_url = create_base_link(filename)
+        print("URL:", base_url)
+        source_html = requests.get(page_url, headers=HEADER)
+        license_soup = BeautifulSoup(source_html.content, "lxml")
+        links_in_license = license_soup.find_all("a")
+        verbose_print("No. of links found:", len(links_in_license))
+        verbose_print("Errors and Warnings:")
+        valid_anchors, valid_links = get_scrapable_links(links_in_license)
+        if valid_links:
+            stored_links, stored_anchors, stored_result, check_links, check_anchors = get_memoized_result(
+                valid_links, valid_anchors
+            )
+            if check_links:
+                rs = (grequests.get(link, timeout=10) for link in check_links)
+                response = grequests.map(
+                    rs, exception_handler=exception_handler
+                )
+                memoize_result(check_links, response)
+                stored_anchors += check_anchors
+                stored_result += response
+            stored_links += check_links
+            caught_errors = write_response(
+                stored_links,
+                stored_result,
+                base_url,
+                licens.string,
+                stored_anchors,
+            )
 
-    if caught_errors:
-        errors_total += caught_errors
-        err_code = 1
+        if caught_errors:
+            errors_total += caught_errors
+            err_code = 1
 
+    print("\nCompleted in: {}".format(time.time() - START_TIME))
 
-print("\nCompleted in: {}".format(time.time() - START_TIME))
-
-if output_err:
-    output_summary(errors_total)
-    print("\nError file present at: ", output.name)
-sys.exit(err_code)
+    if output_err:
+        output_summary(errors_total)
+        print("\nError file present at: ", output.name)
+    sys.exit(err_code)

@@ -9,6 +9,7 @@ link_checker = "python ./link_checker.py"
 
 [dev-packages]
 flake8 = "*"
+pytest = "*"
 
 [packages]
 beautifulsoup4 = "*"

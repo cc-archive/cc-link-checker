@@ -6,9 +6,11 @@ exclude = '''
     \.git
   | \.hg
   | \.mypy_cache
+  | \.pytest_cache
   | \.tox
   | \.venv
   | \.vscode
+  | __pycache__
   | _build
   | buck-out
   | build

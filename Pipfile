@@ -3,15 +3,19 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
+[scripts]
+link_checker = "python ./link_checker.py"
+"link_checker.py" = "python ./link_checker.py"
+
 [dev-packages]
 flake8 = "*"
 pytest = "*"
 
 [packages]
 beautifulsoup4 = "*"
+grequests = "*"
 lxml = "*"
 requests = "*"
-grequests = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3"

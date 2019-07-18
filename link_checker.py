@@ -83,7 +83,24 @@ def get_all_license():
         "https://github.com/creativecommons/creativecommons.org/tree/master"
         "/docroot/legalcode"
     )
-    response = requests.get(URL)
+    try:
+        response = requests.get(
+            URL, headers=HEADER, timeout=REQUESTS_TIMEOUT
+        )
+    except requests.exceptions.ConnectionError:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " ConnectionError".format(URL),
+            1,
+        )
+    except requests.exceptions.Timeout:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " Timeout".format(URL),
+            1,
+        )
+    except:
+        raise
     soup = BeautifulSoup(response.text, "lxml")
     links = soup.table.tbody.find_all("a", class_="js-navigation-open")
     print("No. of files to be checked:", len(links))
@@ -141,6 +158,7 @@ def output_summary(all_links, num_errors):
     """Prints short summary of broken links in the output error file
 
     Args:
+        all_links: Array of link to license files
         num_errors (int): Number of broken links found
     """
     output_write(
@@ -161,6 +179,7 @@ def create_absolute_link(base_url, link_analysis):
     """Creates absolute links from relative links
 
     Args:
+        base_url (string): URL on which the license page will be displayed
         link_analysis (class 'urllib.parse.SplitResult'): Link splitted by
             urlsplit, that is to be converted
 
@@ -189,6 +208,7 @@ def get_scrapable_links(base_url, links_in_license):
     mailto scheme links
 
     Args:
+        base_url (string): URL on which the license page will be displayed
         links_in_license (list): List of all the links found in file
 
     Returns:
@@ -329,7 +349,6 @@ def memoize_result(check_links, response):
 
 
 def main():
-    # TODO create function for argument parser to add unit tests
     parse_argument(sys.argv[1:])
 
     all_links = get_all_license()

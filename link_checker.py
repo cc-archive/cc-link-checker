@@ -26,6 +26,14 @@ memoized_links = {}
 map_broken_links = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
 output = None
+REQUESTS_TIMEOUT = 5
+
+
+class CheckerError(Exception):
+    def __init__(self, message, code=None):
+        self.code = code if code else 1
+        message = "({}) {}".format(self.code, message)
+        super(CheckerError, self).__init__(message)
 
 
 def parse_argument(args):
@@ -65,12 +73,16 @@ def parse_argument(args):
 
 
 def get_all_license():
-    """This function scrapes all the license file in the repo 'https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode'.
+    """This function scrapes all the license file in the repo:
+    https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
 
     Returns:
         str[]: The list of license/deeds files found in the repository
     """
-    URL = "https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode"
+    URL = (
+        "https://github.com/creativecommons/creativecommons.org/tree/master"
+        "/docroot/legalcode"
+    )
     response = requests.get(URL)
     soup = BeautifulSoup(response.text, "lxml")
     links = soup.table.tbody.find_all("a", class_="js-navigation-open")
@@ -149,7 +161,8 @@ def create_absolute_link(base_url, link_analysis):
     """Creates absolute links from relative links
 
     Args:
-        link_analysis (class 'urllib.parse.SplitResult'): Link splitted by urlsplit, that is to be converted
+        link_analysis (class 'urllib.parse.SplitResult'): Link splitted by
+            urlsplit, that is to be converted
 
     Returns:
         str: absolute link
@@ -172,7 +185,8 @@ def create_absolute_link(base_url, link_analysis):
 
 
 def get_scrapable_links(base_url, links_in_license):
-    """Filters out anchor tags without href attribute, internal links and mailto scheme links
+    """Filters out anchor tags without href attribute, internal links and
+    mailto scheme links
 
     Args:
         links_in_license (list): List of all the links found in file
@@ -205,16 +219,19 @@ def exception_handler(request, exception):
     """Handles Invalid Scheme and Timeout Error from grequests.get
 
     Args:
-        request (class 'grequests.AsyncRequest'): Request on which error occured
+        request (class 'grequests.AsyncRequest'): Request on which error
+            occured
         exception (class 'requests.exceptions'): Exception occured
 
     Returns:
         str: Exception occured in string format
     """
-    if type(exception) == requests.exceptions.InvalidSchema:
-        return "Invalid Schema"
+    if type(exception) == requests.exceptions.ConnectionError:
+        return "Connection Error"
     if type(exception) == requests.exceptions.ConnectTimeout:
         return "Timeout Error"
+    if type(exception) == requests.exceptions.InvalidSchema:
+        return "Invalid Schema"
 
 
 def map_links_file(link, file_url):
@@ -236,7 +253,8 @@ def write_response(all_links, response, base_url, license_name, valid_anchors):
 
     Args:
         all_links (list): List of all scrapable links found in website
-        response (list): Response status code/ exception of all the links in all_links
+        response (list): Response status code/ exception of all the links in
+            all_links
         base_url (string): URL on which the license page will be displayed
         license_name (string): Name of license
         valid_anchors (list): List of all the scrapable anchors
@@ -316,7 +334,10 @@ def main():
 
     all_links = get_all_license()
 
-    GITHUB_BASE = "https://raw.githubusercontent.com/creativecommons/creativecommons.org/master/docroot/legalcode/"
+    GITHUB_BASE = (
+        "https://raw.githubusercontent.com/creativecommons"
+        "/creativecommons.org/master/docroot/legalcode/"
+    )
 
     errors_total = 0
     for licens in all_links:
@@ -337,8 +358,26 @@ def main():
         filename = licens.string[:-5]
         base_url = create_base_link(filename)
         print("URL:", base_url)
-        source_html = requests.get(page_url, headers=HEADER)
-        license_soup = BeautifulSoup(source_html.content, "lxml")
+        try:
+            r = requests.get(
+                page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT
+            )
+            source_html = r.content
+        except requests.exceptions.ConnectionError:
+            raise CheckerError(
+                "FAILED to retreive source HTML ({}) due to"
+                " ConnectionError".format(page_url),
+                1,
+            )
+        except requests.exceptions.Timeout:
+            raise CheckerError(
+                "FAILED to retreive source HTML ({}) due to"
+                " Timeout".format(page_url),
+                1,
+            )
+        except:
+            raise
+        license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
         verbose_print("No. of links found:", len(links_in_license))
         verbose_print("Errors and Warnings:")
@@ -346,11 +385,17 @@ def main():
             base_url, links_in_license
         )
         if valid_links:
-            stored_links, stored_anchors, stored_result, check_links, check_anchors = get_memoized_result(
-                valid_links, valid_anchors
-            )
+            memoized_results = get_memoized_result(valid_links, valid_anchors)
+            stored_links = memoized_results[0]
+            stored_anchors = memoized_results[1]
+            stored_result = memoized_results[2]
+            check_links = memoized_results[3]
+            check_anchors = memoized_results[4]
             if check_links:
-                rs = (grequests.get(link, timeout=10) for link in check_links)
+                rs = (
+                    grequests.get(link, timeout=REQUESTS_TIMEOUT)
+                    for link in check_links
+                )
                 response = grequests.map(
                     rs, exception_handler=exception_handler
                 )
@@ -386,7 +431,11 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("INFO (130) Halted via KeyboardInterrupt.", file=sys.stderr)
         sys.exit(130)
-    except:  # noqa
+    except CheckerError:
+        error_type, error_value, error_traceback = sys.exc_info()
+        print("ERROR {}".format(error_value), file=sys.stderr)
+        sys.exit(error_value.code)
+    except:
         print("ERROR (1) Unhandled exception:", file=sys.stderr)
         print(traceback.print_exc(), file=sys.stderr)
         sys.exit(1)

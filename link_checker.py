@@ -369,22 +369,22 @@ def main():
     )
 
     errors_total = 0
-    for licens in all_links:
+    for license in all_links:
         caught_errors = 0
-        check_extension = licens.string.split(".")
-        page_url = GITHUB_BASE + licens.string
+        check_extension = license.string.split(".")
+        page_url = GITHUB_BASE + license.string
         print("\n")
-        print("Checking:", licens.string)
+        print("Checking:", license.string)
         if check_extension[-1] != "html":
             verbose_print(
-                "Encountered non-html file -\t skipping", licens.string
+                "Encountered non-html file -\t skipping", license.string
             )
             continue
         # Refer to issue for more info on samplingplus_1.0.br.htm:
         #   https://github.com/creativecommons/cc-link-checker/issues/9
-        if licens.string == "samplingplus_1.0.br.html":
+        if license.string == "samplingplus_1.0.br.html":
             continue
-        filename = licens.string[:-5]
+        filename = license.string[:-5]
         base_url = create_base_link(filename)
         print("URL:", base_url)
         try:
@@ -438,7 +438,7 @@ def main():
                 stored_links,
                 stored_result,
                 base_url,
-                licens.string,
+                license.string,
                 stored_anchors,
             )
 

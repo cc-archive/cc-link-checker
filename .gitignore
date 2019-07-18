@@ -1,6 +1,7 @@
 __pycache__
 venv
 errorlog.txt
+err_file.txt
 .vscode
 .pytest_cache
 test-reports

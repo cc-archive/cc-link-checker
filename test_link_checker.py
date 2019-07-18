@@ -99,7 +99,6 @@ def test_output_write(reset_global):
 def test_output_summary(reset_global):
     # Set config
     link_checker.output_err = True
-    link_checker.all_links = ["some link"] * 5
     link_checker.map_broken_links = {
         "https://link1.demo": [
             "https://file1.url/here",
@@ -111,7 +110,8 @@ def test_output_summary(reset_global):
     # Open file for writing
     with open("errorlog.txt", "w+") as output_file:
         link_checker.output = output_file
-        link_checker.output_summary(3)
+        all_links = ["some link"] * 5
+        link_checker.output_summary(all_links, 3)
         output_file.seek(0)
         assert output_file.readline() == "\n"
         assert output_file.readline() == "\n"
@@ -162,9 +162,9 @@ def test_output_summary(reset_global):
     ],
 )
 def test_create_absolute_link(link, result):
-    link_checker.base_url = "https://www.demourl.com/dir1/dir2"
+    base_url = "https://www.demourl.com/dir1/dir2"
     analyze = urlsplit(link)
-    res = link_checker.create_absolute_link(analyze)
+    res = link_checker.create_absolute_link(base_url, analyze)
     assert res == result
 
 
@@ -172,8 +172,10 @@ def test_get_scrapable_links():
     test_file = "<a name='hello'>without href</a>, <a href='#hello'>internal link</a>, <a href='mailto:abc@gmail.com'>mailto protocol</a>, <a href='https://creativecommons.ca'>Absolute link</a>, <a href='/index'>Relative Link</a>"
     soup = BeautifulSoup(test_file, "lxml")
     test_case = soup.find_all("a")
-    link_checker.base_url = "https://www.demourl.com/dir1/dir2"
-    valid_anchors, valid_links = link_checker.get_scrapable_links(test_case)
+    base_url = "https://www.demourl.com/dir1/dir2"
+    valid_anchors, valid_links = link_checker.get_scrapable_links(
+        base_url, test_case
+    )
     assert (
         str(valid_anchors)
         == '[<a href="https://creativecommons.ca">Absolute link</a>, <a href="/index">Relative Link</a>]'
@@ -185,12 +187,13 @@ def test_get_scrapable_links():
 
 
 def test_exception_handler():
+    # TODO: Check requests-mock module for mocking requests
     links_list = ["http://www.google.com:81", "file://C:/Devil"]
     rs = (grequests.get(link, timeout=3) for link in links_list)
     response = grequests.map(
         rs, exception_handler=link_checker.exception_handler
     )
-    assert response == ["Timeout Error", "Invalid Schema"]
+    assert response == ["Connection Error", "Invalid Schema"]
 
 
 def test_map_links_file(reset_global):

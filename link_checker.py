@@ -84,9 +84,7 @@ def get_all_license():
         "/docroot/legalcode"
     )
     try:
-        response = requests.get(
-            URL, headers=HEADER, timeout=REQUESTS_TIMEOUT
-        )
+        response = requests.get(URL, headers=HEADER, timeout=REQUESTS_TIMEOUT)
     except requests.exceptions.ConnectionError:
         raise CheckerError(
             "FAILED to retreive source HTML ({}) due to"

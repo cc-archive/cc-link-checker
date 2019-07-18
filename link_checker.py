@@ -101,7 +101,19 @@ def get_all_license():
         raise
     soup = BeautifulSoup(response.text, "lxml")
     links = soup.table.tbody.find_all("a", class_="js-navigation-open")
-    print("No. of files to be checked:", len(links))
+    # Test newer licenses first (they are the most volatile) and exclude
+    # non-.html files
+    test_order = ["zero", "4.0", "3.0"]
+    links_ordered = list()
+    for version in test_order:
+        for link in links:
+            if ".html" in link.string and version in link.string:
+                links_ordered.append(link)
+    for link in links:
+        if ".html" in link.string and link not in links_ordered:
+            links_ordered.append(link)
+    links = links_ordered
+    print("Number of files to be checked:", len(links))
     return links
 
 

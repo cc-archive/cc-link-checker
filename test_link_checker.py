@@ -242,11 +242,11 @@ def test_write_response(reset_global):
         assert output_file.readline() == "URL: https://baseurl/goes/here\n"
         assert (
             output_file.readline()
-            == 'Invalid Schema -\t <a href="file://link3">Invalid Scheme</a>\n'
+            == '  Invalid Schema          <a href="file://link3">Invalid Scheme</a>\n'
         )
         assert (
             output_file.readline()
-            == '400 -\t <a href="http://httpbin.org/status/400">Response 400</a>\n'
+            == '  400                     <a href="http://httpbin.org/status/400">Response 400</a>\n'
         )
 
 

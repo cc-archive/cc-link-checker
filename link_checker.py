@@ -125,7 +125,7 @@ def output_write(*args, **kwargs):
         print(*args, **kwargs)
 
 
-def output_summary(num_errors):
+def output_summary(all_links, num_errors):
     """Prints short summary of broken links in the output error file
 
     Args:
@@ -145,7 +145,7 @@ def output_summary(num_errors):
             output_write(url)
 
 
-def create_absolute_link(link_analysis):
+def create_absolute_link(base_url, link_analysis):
     """Creates absolute links from relative links
 
     Args:
@@ -171,7 +171,7 @@ def create_absolute_link(link_analysis):
     return href
 
 
-def get_scrapable_links(links_in_license):
+def get_scrapable_links(base_url, links_in_license):
     """Filters out anchor tags without href attribute, internal links and mailto scheme links
 
     Args:
@@ -196,7 +196,7 @@ def get_scrapable_links(links_in_license):
         if href.startswith("mailto:"):
             continue
         analyze = urlsplit(href)
-        valid_links.append(create_absolute_link(analyze))
+        valid_links.append(create_absolute_link(base_url, analyze))
         valid_anchors.append(link)
     return (valid_anchors, valid_links)
 
@@ -310,7 +310,7 @@ def memoize_result(check_links, response):
         memoized_links[link] = response[idx]
 
 
-if __name__ == "__main__":
+def main():
     # TODO create function for argument parser to add unit tests
     parse_argument(sys.argv[1:])
 
@@ -341,7 +341,8 @@ if __name__ == "__main__":
         links_in_license = license_soup.find_all("a")
         verbose_print("No. of links found:", len(links_in_license))
         verbose_print("Errors and Warnings:")
-        valid_anchors, valid_links = get_scrapable_links(links_in_license)
+        valid_anchors, valid_links = get_scrapable_links(base_url,
+                                                         links_in_license)
         if valid_links:
             stored_links, stored_anchors, stored_result, check_links, check_anchors = get_memoized_result(
                 valid_links, valid_anchors
@@ -370,6 +371,20 @@ if __name__ == "__main__":
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if output_err:
-        output_summary(errors_total)
+        output_summary(all_links, errors_total)
         print("\nError file present at: ", output.name)
     sys.exit(err_code)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit as e:
+        sys.exit(e.code)
+    except KeyboardInterrupt:
+        print("INFO (130) Halted via KeyboardInterrupt.", file=sys.stderr)
+        sys.exit(130)
+    except:  # noqa
+        print("ERROR (1) Unhandled exception:", file=sys.stderr)
+        print(traceback.print_exc(), file=sys.stderr)
+        sys.exit(1)

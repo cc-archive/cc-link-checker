@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 # vim: set fileencoding=utf-8 :
-import grequests
-import argparse
-import time
-import sys
-from urllib.parse import urljoin, urlsplit
 
-# WARNING: Always import grequests before requests
-import requests
+# Standard library
+from urllib.parse import urljoin, urlsplit
+import argparse
+import sys
+import time
+import traceback
+
+# Third-party
 from bs4 import BeautifulSoup
+import grequests    # WARNING: Always import grequests before requests
+import requests
+
 
 # Set defaults
 START_TIME = time.time()

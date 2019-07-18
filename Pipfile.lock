@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "354e74f8187c14ad49200867101b21e5cb2b2dc5e78464da21d348a86df8195d"
+            "sha256": "4f89d044469313c568a08ab174d08dc4030b12e20d2728a345d2e304624fa870"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -173,6 +173,10 @@
                 "sha256:f0b870f674851ecbfbbbd364d6b5cbdff9dcedbc7f3f5e18a6891057f21fe399"
             ],
             "version": "==19.1.0"
+        },
+        "black": {
+            "git": "https://github.com/python/black.git",
+            "ref": "026c81b83454f176a9f9253cbfb70be2c159d822"
         },
         "entrypoints": {
             "hashes": [

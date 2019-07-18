@@ -8,6 +8,8 @@ link_checker = "python ./link_checker.py"
 "link_checker.py" = "python ./link_checker.py"
 
 [dev-packages]
+# See https://github.com/pypa/pipenv/issues/1760
+black = {ref = "19.3b0", git = "https://github.com/python/black.git"}
 flake8 = "*"
 pytest = "*"
 

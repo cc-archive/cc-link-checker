@@ -245,13 +245,30 @@ def get_scrapable_links(base_url, links_in_license):
         try:
             href = link["href"]
         except KeyError:
-            # if there exists an <a> tag without href
-            verbose_print("Found anchor tag without href -\t", link)
+            try:
+                assert link["id"]
+            except KeyError:
+                try:
+                    assert link["name"]
+                    verbose_print(
+                        "  {:<24}{}".format("Anchor uses name", link)
+                    )
+                except:
+                    verbose_print(
+                        "  {:<24}{}".format("Anchor w/o href or id", link)
+                    )
             continue
         if href[0] == "#":
-            verbose_print("Skipping internal link -\t", link)
+            # No need to report non-issue (not actionable)
+            # verbose_print(
+            #     "  {:<25}{}".format("Skipping internal link ", link)
+            # )
             continue
         if href.startswith("mailto:"):
+            # No need to report non-issue (not actionable)
+            # verbose_print(
+            #     "  {:<24}{}".format("Skipping mailto link ", link)
+            # )
             continue
         analyze = urlsplit(href)
         valid_links.append(create_absolute_link(base_url, analyze))
@@ -319,8 +336,9 @@ def write_response(all_links, response, base_url, license_name, valid_anchors):
                 if not verbose:
                     print("Errors:")
                 output_write("\n{}\nURL: {}".format(license_name, base_url))
-            print(status, "-\t", valid_anchors[idx])
-            output_write(status, "-\t", valid_anchors[idx])
+            result = "  {:<24}{}".format(str(status), valid_anchors[idx])
+            print(result)
+            output_write(result)
     return caught_errors
 
 
@@ -392,7 +410,7 @@ def main():
         print("Checking:", license.string)
         if check_extension[-1] != "html":
             verbose_print(
-                "Encountered non-html file -\t skipping", license.string
+                "  {:<24}{}".format("Skipping non-HTML file", license.string)
             )
             continue
         # Refer to issue for more info on samplingplus_1.0.br.htm:
@@ -405,7 +423,7 @@ def main():
         source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
-        verbose_print("No. of links found:", len(links_in_license))
+        verbose_print("Number of links found:", len(links_in_license))
         verbose_print("Errors and Warnings:")
         valid_anchors, valid_links = get_scrapable_links(
             base_url, links_in_license

@@ -6,15 +6,15 @@ exclude = '''
     \.git
   | \.hg
   | \.mypy_cache
+  | \.pytest_cache
   | \.tox
   | \.venv
-  | \.pytest_cache
   | \.vscode
+  | __pycache__
   | _build
   | buck-out
   | build
   | dist
   | venv
-  | __pycache__
 )/
 '''

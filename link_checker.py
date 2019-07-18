@@ -361,15 +361,16 @@ def get_memoized_result(valid_links, valid_anchors):
     )
 
 
-def memoize_result(check_links, response):
+def memoize_result(check_links, responses):
     """Memoize the result of links checked
 
     Args:
         check_links (list): List of fresh links that are processed
-        response (list): List of response corresponding to check_links
+        responses (list): List of response status codes corresponding to
+            check_links
     """
     for idx, link in enumerate(check_links):
-        memoized_links[link] = response[idx]
+        memoized_links[link] = responses[idx]
 
 
 def main():
@@ -423,12 +424,21 @@ def main():
                     grequests.head(link, timeout=REQUESTS_TIMEOUT)
                     for link in check_links
                 )
-                response = grequests.map(
+                responses = list()
+                # Explicitly close connections to free up file handles and
+                # avoid Connection Errors per:
+                # https://stackoverflow.com/questions/21978115/using-grequests-to-make-several-thousand-get-requests-to-sourceforge-get-max-r/22839550#22839550
+                for response in grequests.map(
                     rs, exception_handler=exception_handler
-                )
-                memoize_result(check_links, response)
+                ):
+                    try:
+                        responses.append(response.status_code)
+                        response.close()
+                    except AttributeError:
+                        responses.append(response)
+                memoize_result(check_links, responses)
                 stored_anchors += check_anchors
-                stored_result += response
+                stored_result += responses
             stored_links += check_links
             caught_errors = write_response(
                 stored_links,

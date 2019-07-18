@@ -187,13 +187,12 @@ def test_get_scrapable_links():
 
 
 def test_exception_handler():
-    # TODO: Check requests-mock module for mocking requests
     links_list = ["http://www.google.com:81", "file://C:/Devil"]
     rs = (grequests.get(link, timeout=3) for link in links_list)
     response = grequests.map(
         rs, exception_handler=link_checker.exception_handler
     )
-    assert response == ["Connection Error", "Invalid Schema"]
+    assert response == ["Timeout Error", "Invalid Schema"]
 
 
 def test_map_links_file(reset_global):

@@ -83,23 +83,8 @@ def get_all_license():
         "https://github.com/creativecommons/creativecommons.org/tree/master"
         "/docroot/legalcode"
     )
-    try:
-        response = requests.get(URL, headers=HEADER, timeout=REQUESTS_TIMEOUT)
-    except requests.exceptions.ConnectionError:
-        raise CheckerError(
-            "FAILED to retreive source HTML ({}) due to"
-            " ConnectionError".format(URL),
-            1,
-        )
-    except requests.exceptions.Timeout:
-        raise CheckerError(
-            "FAILED to retreive source HTML ({}) due to"
-            " Timeout".format(URL),
-            1,
-        )
-    except:
-        raise
-    soup = BeautifulSoup(response.text, "lxml")
+    page_text = request_text(URL)
+    soup = BeautifulSoup(page_text, "lxml")
     links = soup.table.tbody.find_all("a", class_="js-navigation-open")
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files
@@ -115,6 +100,35 @@ def get_all_license():
     links = links_ordered
     print("Number of files to be checked:", len(links))
     return links
+
+
+def request_text(page_url):
+    """This function makes a requests get and returns the text result
+
+    Args:
+        page_url (str): URL to perform a GET request for
+
+    Returns:
+        str: request response text
+    """
+    try:
+        r = requests.get(page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT)
+        fetched_text = r.content
+    except requests.exceptions.ConnectionError:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " ConnectionError".format(page_url),
+            1,
+        )
+    except requests.exceptions.Timeout:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " Timeout".format(page_url),
+            1,
+        )
+    except:
+        raise
+    return fetched_text
 
 
 def create_base_link(filename):
@@ -387,25 +401,7 @@ def main():
         filename = license.string[:-5]
         base_url = create_base_link(filename)
         print("URL:", base_url)
-        try:
-            r = requests.get(
-                page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT
-            )
-            source_html = r.content
-        except requests.exceptions.ConnectionError:
-            raise CheckerError(
-                "FAILED to retreive source HTML ({}) due to"
-                " ConnectionError".format(page_url),
-                1,
-            )
-        except requests.exceptions.Timeout:
-            raise CheckerError(
-                "FAILED to retreive source HTML ({}) due to"
-                " Timeout".format(page_url),
-                1,
-            )
-        except:
-            raise
+        source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
         verbose_print("No. of links found:", len(links_in_license))

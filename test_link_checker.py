@@ -188,6 +188,7 @@ def test_get_scrapable_links():
 
 def test_exception_handler():
     links_list = ["http://www.google.com:81", "file://C:/Devil"]
+    # BUG: 1st link might give Connection error locally on testing
     rs = (grequests.get(link, timeout=3) for link in links_list)
     response = grequests.map(
         rs, exception_handler=link_checker.exception_handler

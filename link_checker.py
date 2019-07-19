@@ -289,10 +289,12 @@ def exception_handler(request, exception):
     """
     if type(exception) == requests.exceptions.ConnectionError:
         return "Connection Error"
-    if type(exception) == requests.exceptions.ConnectTimeout:
+    elif type(exception) == requests.exceptions.ConnectTimeout:
         return "Timeout Error"
-    if type(exception) == requests.exceptions.InvalidSchema:
+    elif type(exception) == requests.exceptions.InvalidSchema:
         return "Invalid Schema"
+    else:
+        return type(exception).__name__
 
 
 def map_links_file(link, file_url):

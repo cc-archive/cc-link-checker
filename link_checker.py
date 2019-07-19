@@ -103,6 +103,7 @@ def get_all_license():
 
 
 def request_text(page_url):
+    # TODO: Add Unit testing gor this function
     """This function makes a requests get and returns the text result
 
     Args:
@@ -170,63 +171,6 @@ def verbose_print(*args, **kwargs):
         print(*args, **kwargs)
 
 
-def output_write(*args, **kwargs):
-    """Prints to output file is --output-error flag is set
-    """
-    if OUTPUT_ERR:
-        kwargs["file"] = OUTPUT
-        print(*args, **kwargs)
-
-
-def output_summary(all_links, num_errors):
-    """Prints short summary of broken links in the output error file
-
-    Args:
-        all_links: Array of link to license files
-        num_errors (int): Number of broken links found
-    """
-    output_write(
-        "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
-    )
-    output_write("Timestamp: {}".format(time.ctime()))
-    output_write("Total files checked: {}".format(len(all_links)))
-    output_write("Number of error links: {}".format(num_errors))
-    keys = MAP_BROKEN_LINKS.keys()
-    output_write("Number of unique broken links: {}\n".format(len(keys)))
-    for key, value in MAP_BROKEN_LINKS.items():
-        output_write("\nBroken link - {} found in:".format(key))
-        for url in value:
-            output_write(url)
-
-
-def create_absolute_link(base_url, link_analysis):
-    """Creates absolute links from relative links
-
-    Args:
-        base_url (string): URL on which the license page will be displayed
-        link_analysis (class 'urllib.parse.SplitResult'): Link splitted by
-            urlsplit, that is to be converted
-
-    Returns:
-        str: absolute link
-    """
-    href = link_analysis.geturl()
-    # Check for relative link
-    if (
-        link_analysis.scheme == ""
-        and link_analysis.netloc == ""
-        and link_analysis.path != ""
-    ):
-        href = urljoin(base_url, href)
-        return href
-    # Append scheme https where absent
-    if link_analysis.scheme == "":
-        link_analysis = link_analysis._replace(scheme="https")
-        href = link_analysis.geturl()
-        return href
-    return href
-
-
 def get_scrapable_links(base_url, links_in_license):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links
@@ -276,72 +220,32 @@ def get_scrapable_links(base_url, links_in_license):
     return (valid_anchors, valid_links)
 
 
-def exception_handler(request, exception):
-    """Handles Invalid Scheme and Timeout Error from grequests.get
+def create_absolute_link(base_url, link_analysis):
+    """Creates absolute links from relative links
 
     Args:
-        request (class 'grequests.AsyncRequest'): Request on which error
-            occured
-        exception (class 'requests.exceptions'): Exception occured
-
-    Returns:
-        str: Exception occured in string format
-    """
-    if type(exception) == requests.exceptions.ConnectionError:
-        return "Connection Error"
-    elif type(exception) == requests.exceptions.ConnectTimeout:
-        return "Timeout Error"
-    elif type(exception) == requests.exceptions.InvalidSchema:
-        return "Invalid Schema"
-    else:
-        return type(exception).__name__
-
-
-def map_links_file(link, file_url):
-    """Maps broken link to the files of occurence
-
-    Args:
-        link (str): Broken link encountered
-        file_url (str): File url in which the broken link was encountered
-    """
-    if MAP_BROKEN_LINKS.get(link):
-        if file_url not in MAP_BROKEN_LINKS[link]:
-            MAP_BROKEN_LINKS[link].append(file_url)
-    else:
-        MAP_BROKEN_LINKS[link] = [file_url]
-
-
-def write_response(all_links, response, base_url, license_name, valid_anchors):
-    """Writes broken links to CLI and file
-
-    Args:
-        all_links (list): List of all scrapable links found in website
-        response (list): Response status code/ exception of all the links in
-            all_links
         base_url (string): URL on which the license page will be displayed
-        license_name (string): Name of license
-        valid_anchors (list): List of all the scrapable anchors
+        link_analysis (class 'urllib.parse.SplitResult'): Link splitted by
+            urlsplit, that is to be converted
 
     Returns:
-        int: Number of broken links found in license
+        str: absolute link
     """
-    caught_errors = 0
-    for idx, link_status in enumerate(response):
-        try:
-            status = link_status.status_code
-        except AttributeError:
-            status = link_status
-        if status not in GOOD_RESPONSE:
-            map_links_file(all_links[idx], base_url)
-            caught_errors += 1
-            if caught_errors == 1:
-                if not VERBOSE:
-                    print("Errors:")
-                output_write("\n{}\nURL: {}".format(license_name, base_url))
-            result = "  {:<24}{}".format(str(status), valid_anchors[idx])
-            print(result)
-            output_write(result)
-    return caught_errors
+    href = link_analysis.geturl()
+    # Check for relative link
+    if (
+        link_analysis.scheme == ""
+        and link_analysis.netloc == ""
+        and link_analysis.path != ""
+    ):
+        href = urljoin(base_url, href)
+        return href
+    # Append scheme https where absent
+    if link_analysis.scheme == "":
+        link_analysis = link_analysis._replace(scheme="https")
+        href = link_analysis.geturl()
+        return href
+    return href
 
 
 def get_memoized_result(valid_links, valid_anchors):
@@ -381,6 +285,27 @@ def get_memoized_result(valid_links, valid_anchors):
     )
 
 
+def exception_handler(request, exception):
+    """Handles Invalid Scheme and Timeout Error from grequests.get
+
+    Args:
+        request (class 'grequests.AsyncRequest'): Request on which error
+            occured
+        exception (class 'requests.exceptions'): Exception occured
+
+    Returns:
+        str: Exception occured in string format
+    """
+    if type(exception) == requests.exceptions.ConnectionError:
+        return "Connection Error"
+    elif type(exception) == requests.exceptions.ConnectTimeout:
+        return "Timeout Error"
+    elif type(exception) == requests.exceptions.InvalidSchema:
+        return "Invalid Schema"
+    else:
+        return type(exception).__name__
+
+
 def memoize_result(check_links, responses):
     """Memoize the result of links checked
 
@@ -391,6 +316,82 @@ def memoize_result(check_links, responses):
     """
     for idx, link in enumerate(check_links):
         MEMOIZED_LINKS[link] = responses[idx]
+
+
+def write_response(all_links, response, base_url, license_name, valid_anchors):
+    """Writes broken links to CLI and file
+
+    Args:
+        all_links (list): List of all scrapable links found in website
+        response (list): Response status code/ exception of all the links in
+            all_links
+        base_url (string): URL on which the license page will be displayed
+        license_name (string): Name of license
+        valid_anchors (list): List of all the scrapable anchors
+
+    Returns:
+        int: Number of broken links found in license
+    """
+    caught_errors = 0
+    for idx, link_status in enumerate(response):
+        try:
+            status = link_status.status_code
+        except AttributeError:
+            status = link_status
+        if status not in GOOD_RESPONSE:
+            map_links_file(all_links[idx], base_url)
+            caught_errors += 1
+            if caught_errors == 1:
+                if not VERBOSE:
+                    print("Errors:")
+                output_write("\n{}\nURL: {}".format(license_name, base_url))
+            result = "  {:<24}{}".format(str(status), valid_anchors[idx])
+            print(result)
+            output_write(result)
+    return caught_errors
+
+
+def map_links_file(link, file_url):
+    """Maps broken link to the files of occurence
+
+    Args:
+        link (str): Broken link encountered
+        file_url (str): File url in which the broken link was encountered
+    """
+    if MAP_BROKEN_LINKS.get(link):
+        if file_url not in MAP_BROKEN_LINKS[link]:
+            MAP_BROKEN_LINKS[link].append(file_url)
+    else:
+        MAP_BROKEN_LINKS[link] = [file_url]
+
+
+def output_write(*args, **kwargs):
+    """Prints to output file is --output-error flag is set
+    """
+    if OUTPUT_ERR:
+        kwargs["file"] = OUTPUT
+        print(*args, **kwargs)
+
+
+def output_summary(all_links, num_errors):
+    """Prints short summary of broken links in the output error file
+
+    Args:
+        all_links: Array of link to license files
+        num_errors (int): Number of broken links found
+    """
+    output_write(
+        "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
+    )
+    output_write("Timestamp: {}".format(time.ctime()))
+    output_write("Total files checked: {}".format(len(all_links)))
+    output_write("Number of error links: {}".format(num_errors))
+    keys = MAP_BROKEN_LINKS.keys()
+    output_write("Number of unique broken links: {}\n".format(len(keys)))
+    for key, value in MAP_BROKEN_LINKS.items():
+        output_write("\nBroken link - {} found in:".format(key))
+        for url in value:
+            output_write(url)
 
 
 def main():

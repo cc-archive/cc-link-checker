@@ -7,26 +7,26 @@ import grequests
 
 @pytest.fixture
 def reset_global():
-    link_checker.verbose = False
-    link_checker.output_err = False
-    link_checker.memoized_links = {}
-    link_checker.map_broken_links = {}
+    link_checker.VERBOSE = False
+    link_checker.OUTPUT_ERR = False
+    link_checker.MEMOIZED_LINKS = {}
+    link_checker.MAP_BROKEN_LINKS = {}
     return
 
 
 def test_parse_argument(reset_global):
     link_checker.parse_argument(["-v", "--output-error"])
-    assert link_checker.verbose is True
-    assert link_checker.output_err is True
-    assert link_checker.output.name == "errorlog.txt"
-    link_checker.verbose = False
-    link_checker.output_err = False
+    assert link_checker.VERBOSE is True
+    assert link_checker.OUTPUT_ERR is True
+    assert link_checker.OUTPUT.name == "errorlog.txt"
+    link_checker.VERBOSE = False
+    link_checker.OUTPUT_ERR = False
     link_checker.parse_argument(
         ["--verbose", "--output-error", "err_file.txt"]
     )
-    assert link_checker.verbose is True
-    assert link_checker.output_err is True
-    assert link_checker.output.name == "err_file.txt"
+    assert link_checker.VERBOSE is True
+    assert link_checker.OUTPUT_ERR is True
+    assert link_checker.OUTPUT.name == "err_file.txt"
 
 
 def test_get_all_license():
@@ -77,19 +77,19 @@ def test_verbose_print(capsys, reset_global):
     # verbose = False (default)
     link_checker.verbose_print("Without verbose")
     # Set verbose True
-    link_checker.verbose = True
+    link_checker.VERBOSE = True
     link_checker.verbose_print("With verbose")
     captured = capsys.readouterr()
     assert captured.out == "With verbose\n"
 
 
 def test_output_write(reset_global):
-    # output_err = False (default)
+    # OUTPUT_ERR = False (default)
     link_checker.output_write("Output disabled")
-    # Set output_err True
-    link_checker.output_err = True
+    # Set OUTPUT_ERR True
+    link_checker.OUTPUT_ERR = True
     with open("errorlog.txt", "w+") as output_file:
-        link_checker.output = output_file
+        link_checker.OUTPUT = output_file
         link_checker.output_write("Output enabled")
         # Seek to start of buffer
         output_file.seek(0)
@@ -98,8 +98,8 @@ def test_output_write(reset_global):
 
 def test_output_summary(reset_global):
     # Set config
-    link_checker.output_err = True
-    link_checker.map_broken_links = {
+    link_checker.OUTPUT_ERR = True
+    link_checker.MAP_BROKEN_LINKS = {
         "https://link1.demo": [
             "https://file1.url/here",
             "https://file2.url/goes/here",
@@ -109,7 +109,7 @@ def test_output_summary(reset_global):
 
     # Open file for writing
     with open("errorlog.txt", "w+") as output_file:
-        link_checker.output = output_file
+        link_checker.OUTPUT = output_file
         all_links = ["some link"] * 5
         link_checker.output_summary(all_links, 3)
         output_file.seek(0)
@@ -201,7 +201,7 @@ def test_map_links_file(reset_global):
     for idx, link in enumerate(links):
         file_url = file_urls[idx]
         link_checker.map_links_file(link, file_url)
-    assert link_checker.map_broken_links == {
+    assert link_checker.MAP_BROKEN_LINKS == {
         "link1": ["file1", "file3"],
         "link2": ["file1"],
     }
@@ -209,7 +209,7 @@ def test_map_links_file(reset_global):
 
 def test_write_response(reset_global):
     # Set config
-    link_checker.output_err = True
+    link_checker.OUTPUT_ERR = True
 
     # Text to extract valid_anchors
     text = "<a href='http://httpbin.org/status/200'>Response 200</a>, <a href='file://link3'>Invalid Scheme</a>, <a href='http://httpbin.org/status/400'>Response 400</a>"
@@ -231,7 +231,7 @@ def test_write_response(reset_global):
 
     # Set output to external file
     with open("errorlog.txt", "w+") as output_file:
-        link_checker.output = output_file
+        link_checker.OUTPUT = output_file
         caught_errors = link_checker.write_response(
             all_links, response, base_url, license_name, valid_anchors
         )
@@ -255,7 +255,7 @@ def test_get_memoized_result():
     soup = BeautifulSoup(text, "lxml")
     valid_anchors = soup.find_all("a")
     valid_links = ["link1", "link2", "link3_stored", "link4_stored"]
-    link_checker.memoized_links = {"link3_stored": 200, "link4_stored": 404}
+    link_checker.MEMOIZED_LINKS = {"link3_stored": 200, "link4_stored": 404}
     stored_links, stored_anchors, stored_result, check_links, check_anchors = link_checker.get_memoized_result(
         valid_links, valid_anchors
     )
@@ -286,17 +286,17 @@ def test_memoize_result(reset_global):
         rs, exception_handler=link_checker.exception_handler
     )
     link_checker.memoize_result(check_links, response)
-    assert len(link_checker.memoized_links.keys()) == 3
+    assert len(link_checker.MEMOIZED_LINKS.keys()) == 3
     assert (
-        link_checker.memoized_links[
+        link_checker.MEMOIZED_LINKS[
             "https://httpbin.org/status/200"
         ].status_code
         == 200
     )
     assert (
-        link_checker.memoized_links[
+        link_checker.MEMOIZED_LINKS[
             "https://httpbin.org/status/400"
         ].status_code
         == 400
     )
-    assert link_checker.memoized_links["file://hh"] == "Invalid Schema"
+    assert link_checker.MEMOIZED_LINKS["file://hh"] == "Invalid Schema"

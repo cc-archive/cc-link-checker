@@ -16,16 +16,16 @@ import requests
 
 # Set defaults
 START_TIME = time.time()
-err_code = 0
-verbose = False
-output_err = False
+ERR_CODE = 0
+VERBOSE = False
+OUTPUT_ERR = False
 HEADER = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 }
-memoized_links = {}
-map_broken_links = {}
+MEMOIZED_LINKS = {}
+MAP_BROKEN_LINKS = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
-output = None
+OUTPUT = None
 REQUESTS_TIMEOUT = 5
 
 
@@ -42,9 +42,9 @@ def parse_argument(args):
     Args:
         args (list): list of arguments parsed from command line
     """
-    global verbose
-    global output_err
-    global output
+    global VERBOSE
+    global OUTPUT_ERR
+    global OUTPUT
     # Setup argument parser
     parser = argparse.ArgumentParser(
         description="Script to check broken links"
@@ -62,14 +62,14 @@ def parse_argument(args):
         const="errorlog.txt",
         nargs="?",
         type=argparse.FileType("w", encoding="utf-8"),
-        dest="output",
+        dest="OUTPUT",
     )
     args = parser.parse_args(args)
     if args.verbose:
-        verbose = True
-    if args.output:
-        output = args.output
-        output_err = True
+        VERBOSE = True
+    if args.OUTPUT:
+        OUTPUT = args.OUTPUT
+        OUTPUT_ERR = True
 
 
 def get_all_license():
@@ -166,15 +166,15 @@ def create_base_link(filename):
 def verbose_print(*args, **kwargs):
     """Prints only if -v or --verbose flag is set
     """
-    if verbose:
+    if VERBOSE:
         print(*args, **kwargs)
 
 
 def output_write(*args, **kwargs):
     """Prints to output file is --output-error flag is set
     """
-    if output_err:
-        kwargs["file"] = output
+    if OUTPUT_ERR:
+        kwargs["file"] = OUTPUT
         print(*args, **kwargs)
 
 
@@ -191,9 +191,9 @@ def output_summary(all_links, num_errors):
     output_write("Timestamp: {}".format(time.ctime()))
     output_write("Total files checked: {}".format(len(all_links)))
     output_write("Number of error links: {}".format(num_errors))
-    keys = map_broken_links.keys()
+    keys = MAP_BROKEN_LINKS.keys()
     output_write("Number of unique broken links: {}\n".format(len(keys)))
-    for key, value in map_broken_links.items():
+    for key, value in MAP_BROKEN_LINKS.items():
         output_write("\nBroken link - {} found in:".format(key))
         for url in value:
             output_write(url)
@@ -261,7 +261,7 @@ def get_scrapable_links(base_url, links_in_license):
         if href[0] == "#":
             # No need to report non-issue (not actionable)
             # verbose_print(
-            #     "  {:<25}{}".format("Skipping internal link ", link)
+            #     "  {:<24}{}".format("Skipping internal link ", link)
             # )
             continue
         if href.startswith("mailto:"):
@@ -302,11 +302,11 @@ def map_links_file(link, file_url):
         link (str): Broken link encountered
         file_url (str): File url in which the broken link was encountered
     """
-    if map_broken_links.get(link):
-        if file_url not in map_broken_links[link]:
-            map_broken_links[link].append(file_url)
+    if MAP_BROKEN_LINKS.get(link):
+        if file_url not in MAP_BROKEN_LINKS[link]:
+            MAP_BROKEN_LINKS[link].append(file_url)
     else:
-        map_broken_links[link] = [file_url]
+        MAP_BROKEN_LINKS[link] = [file_url]
 
 
 def write_response(all_links, response, base_url, license_name, valid_anchors):
@@ -333,7 +333,7 @@ def write_response(all_links, response, base_url, license_name, valid_anchors):
             map_links_file(all_links[idx], base_url)
             caught_errors += 1
             if caught_errors == 1:
-                if not verbose:
+                if not VERBOSE:
                     print("Errors:")
                 output_write("\n{}\nURL: {}".format(license_name, base_url))
             result = "  {:<24}{}".format(str(status), valid_anchors[idx])
@@ -362,7 +362,7 @@ def get_memoized_result(valid_links, valid_anchors):
     check_links = []
     check_anchors = []
     for idx, link in enumerate(valid_links):
-        status = memoized_links.get(link)
+        status = MEMOIZED_LINKS.get(link)
         if status:
             stored_anchors.append(valid_anchors[idx])
             stored_result.append(status)
@@ -388,7 +388,7 @@ def memoize_result(check_links, responses):
             check_links
     """
     for idx, link in enumerate(check_links):
-        memoized_links[link] = responses[idx]
+        MEMOIZED_LINKS[link] = responses[idx]
 
 
 def main():
@@ -468,14 +468,14 @@ def main():
 
         if caught_errors:
             errors_total += caught_errors
-            err_code = 1
+            ERR_CODE = 1
 
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
-    if output_err:
+    if OUTPUT_ERR:
         output_summary(all_links, errors_total)
-        print("\nError file present at: ", output.name)
-    sys.exit(err_code)
+        print("\nError file present at: ", OUTPUT.name)
+    sys.exit(ERR_CODE)
 
 
 if __name__ == "__main__":

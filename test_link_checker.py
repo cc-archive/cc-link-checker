@@ -301,3 +301,20 @@ def test_memoize_result(reset_global):
         == 400
     )
     assert link_checker.MEMOIZED_LINKS["file://hh"] == "Invalid Schema"
+
+
+@pytest.mark.parametrize(
+    "URL, error",
+    [
+        ("https://www.google.com:82", "Timeout"),
+        ("http://doesnotexist.google.com", "ConnectionError"),
+    ],
+)
+def test_request_text(URL, error):
+    with pytest.raises(link_checker.CheckerError) as e:
+        assert link_checker.request_text(URL)
+        assert str(
+            e.value
+        ) == "FAILED to retreive source HTML (https://www.google.com:82) due to {}".format(
+            error
+        )

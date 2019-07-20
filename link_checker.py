@@ -32,8 +32,11 @@ REQUESTS_TIMEOUT = 5
 class CheckerError(Exception):
     def __init__(self, message, code=None):
         self.code = code if code else 1
-        message = "({}) {}".format(self.code, message)
-        super(CheckerError, self).__init__(message)
+        self.message = "({}) {}".format(self.code, message)
+        super(CheckerError, self).__init__(self.message)
+
+    def __str__(self):
+        return self.message
 
 
 def parse_argument(args):
@@ -103,7 +106,6 @@ def get_all_license():
 
 
 def request_text(page_url):
-    # TODO: Add Unit testing gor this function
     """This function makes a requests get and returns the text result
 
     Args:
@@ -407,15 +409,9 @@ def main():
     errors_total = 0
     for license in all_links:
         caught_errors = 0
-        check_extension = license.string.split(".")
         page_url = GITHUB_BASE + license.string
         print("\n")
         print("Checking:", license.string)
-        if check_extension[-1] != "html":
-            verbose_print(
-                "  {:<24}{}".format("Skipping non-HTML file", license.string)
-            )
-            continue
         # Refer to issue for more info on samplingplus_1.0.br.htm:
         #   https://github.com/creativecommons/cc-link-checker/issues/9
         if license.string == "samplingplus_1.0.br.html":

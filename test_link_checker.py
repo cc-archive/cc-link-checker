@@ -29,8 +29,8 @@ def test_parse_argument(reset_global):
     assert link_checker.OUTPUT.name == "err_file.txt"
 
 
-def test_get_all_license():
-    all_links = link_checker.get_all_license()
+def test_get_global_license():
+    all_links = link_checker.get_global_license()
     assert len(all_links) > 0
 
 

@@ -87,6 +87,11 @@ def parse_argument(args):
 
 
 def get_local_license():
+    """This function get all the licenses stored locally
+
+    Returns:
+        list: list of file names of license file
+    """
     all_files = os.listdir(LICENSE_LOCAL_PATH)
     test_order = ["zero", "4.0", "3.0"]
     links_ordered = list()
@@ -162,6 +167,14 @@ def request_text(page_url):
 
 
 def request_local_text(license_name):
+    """This function reads license content from license file stored in local file system
+
+    Args:
+        license_name (str): Name of the license
+
+    Returns:
+        str: Content of license file
+    """
     filename = license_name
     with open(LICENSE_LOCAL_PATH + "/" + filename, "r") as lic:
         return lic.read()

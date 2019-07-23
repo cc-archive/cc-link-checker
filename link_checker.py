@@ -29,6 +29,7 @@ MAP_BROKEN_LINKS = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
 OUTPUT = None
 REQUESTS_TIMEOUT = 5
+LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
 
 
 class CheckerError(Exception):
@@ -86,7 +87,7 @@ def parse_argument(args):
 
 
 def get_local_license():
-    all_files = os.listdir("../creativecommons.org/docroot/legalcode")
+    all_files = os.listdir(LICENSE_LOCAL_PATH)
     test_order = ["zero", "4.0", "3.0"]
     links_ordered = list()
     for version in test_order:
@@ -158,6 +159,12 @@ def request_text(page_url):
     except:
         raise
     return fetched_text
+
+
+def request_local_text(license_name):
+    filename = license_name
+    with open(LICENSE_LOCAL_PATH + "/" + filename, "r") as lic:
+        return lic.read()
 
 
 def create_base_link(filename):
@@ -452,7 +459,10 @@ def main():
         filename = license_name[:-5]
         base_url = create_base_link(filename)
         print("URL:", base_url)
-        source_html = request_text(page_url)
+        if LOCAL:
+            source_html = request_local_text(license_name)
+        else:
+            source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
         verbose_print("Number of links found:", len(links_in_license))

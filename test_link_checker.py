@@ -11,6 +11,7 @@ def reset_global():
     link_checker.OUTPUT_ERR = False
     link_checker.MEMOIZED_LINKS = {}
     link_checker.MAP_BROKEN_LINKS = {}
+    link_checker.LOCAL = False
     return
 
 

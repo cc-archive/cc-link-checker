@@ -319,3 +319,12 @@ def test_request_text(URL, error):
         ) == "FAILED to retreive source HTML (https://www.google.com:82) due to {}".format(
             error
         )
+
+
+def test_request_local_text():
+    random_string = "creativecommons cc-link-checker"
+    with open("test_file.txt", "w") as test_file:
+        test_file.write(random_string)
+        test_file.close
+    link_checker.LICENSE_LOCAL_PATH = "./"
+    assert link_checker.request_local_text("test_file.txt") == random_string

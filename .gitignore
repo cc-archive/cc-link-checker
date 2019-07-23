@@ -6,3 +6,4 @@ err_file.txt
 .pytest_cache
 test-reports
 .coverage
+test_file.txt

@@ -93,7 +93,15 @@ def get_local_license():
     Returns:
         list: list of file names of license file
     """
-    all_files = os.listdir(LICENSE_LOCAL_PATH)
+    try:
+        all_files = os.listdir(LICENSE_LOCAL_PATH)
+    except FileNotFoundError:
+        raise CheckerError(
+            "Local license path({}) does not exist".format(LICENSE_LOCAL_PATH)
+        )
+    # Catching permission denied(OS ERROR) or other errors
+    except:
+        raise
     links_ordered = list()
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files

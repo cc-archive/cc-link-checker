@@ -30,6 +30,7 @@ GOOD_RESPONSE = [200, 300, 301, 302]
 OUTPUT = None
 REQUESTS_TIMEOUT = 5
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
+TEST_ORDER = ["zero", "4.0", "3.0"]
 
 
 class CheckerError(Exception):
@@ -93,9 +94,10 @@ def get_local_license():
         list: list of file names of license file
     """
     all_files = os.listdir(LICENSE_LOCAL_PATH)
-    test_order = ["zero", "4.0", "3.0"]
     links_ordered = list()
-    for version in test_order:
+    # Test newer licenses first (they are the most volatile) and exclude
+    # non-.html files
+    for version in TEST_ORDER:
         for link in all_files:
             if ".html" in link and version in link:
                 links_ordered.append(link)
@@ -121,11 +123,10 @@ def get_global_license():
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
     links = soup.table.tbody.find_all("a", class_="js-navigation-open")
+    links_ordered = list()
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files
-    test_order = ["zero", "4.0", "3.0"]
-    links_ordered = list()
-    for version in test_order:
+    for version in TEST_ORDER:
         for link in links:
             if ".html" in link.string and version in link.string:
                 links_ordered.append(link)
@@ -176,8 +177,17 @@ def request_local_text(license_name):
         str: Content of license file
     """
     filename = license_name
-    with open(LICENSE_LOCAL_PATH + "/" + filename, "r") as lic:
-        return lic.read()
+    path = os.path.join(LICENSE_LOCAL_PATH, filename)
+    try:
+        with open(path) as lic:
+            return lic.read()
+    except FileNotFoundError:
+        raise CheckerError(
+            "Local license path({}) does not exist".format(path)
+        )
+    # Catching permission denied(OS ERROR) or other errors
+    except:
+        raise
 
 
 def create_base_link(filename):
@@ -462,7 +472,7 @@ def main():
         except AttributeError:
             license_name = license
         caught_errors = 0
-        page_url = GITHUB_BASE + license_name
+        page_url = "{}{}".format(GITHUB_BASE, license_name)
         print("\n")
         print("Checking:", license_name)
         # Refer to issue for more info on samplingplus_1.0.br.htm:

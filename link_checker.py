@@ -487,7 +487,7 @@ def main():
         #   https://github.com/creativecommons/cc-link-checker/issues/9
         if license_name == "samplingplus_1.0.br.html":
             continue
-        filename = license_name[:-len(".html")]
+        filename = license_name[: -len(".html")]
         base_url = create_base_link(filename)
         print("URL:", base_url)
         if LOCAL:

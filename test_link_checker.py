@@ -11,6 +11,7 @@ def reset_global():
     link_checker.OUTPUT_ERR = False
     link_checker.MEMOIZED_LINKS = {}
     link_checker.MAP_BROKEN_LINKS = {}
+    link_checker.LOCAL = False
     return
 
 
@@ -29,8 +30,8 @@ def test_parse_argument(reset_global):
     assert link_checker.OUTPUT.name == "err_file.txt"
 
 
-def test_get_all_license():
-    all_links = link_checker.get_all_license()
+def test_get_global_license():
+    all_links = link_checker.get_global_license()
     assert len(all_links) > 0
 
 
@@ -318,3 +319,13 @@ def test_request_text(URL, error):
         ) == "FAILED to retreive source HTML (https://www.google.com:82) due to {}".format(
             error
         )
+
+
+def test_request_local_text():
+    random_string = "creativecommons cc-link-checker"
+    with open("test_file.txt", "w") as test_file:
+        test_file.write(random_string)
+        test_file.close
+    # Change local path to current directory
+    link_checker.LICENSE_LOCAL_PATH = "./"
+    assert link_checker.request_local_text("test_file.txt") == random_string

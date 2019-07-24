@@ -7,6 +7,7 @@ import argparse
 import sys
 import time
 import traceback
+import os
 
 # Third-party
 from bs4 import BeautifulSoup
@@ -19,6 +20,7 @@ START_TIME = time.time()
 ERR_CODE = 0
 VERBOSE = False
 OUTPUT_ERR = False
+LOCAL = False
 HEADER = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 }
@@ -27,6 +29,8 @@ MAP_BROKEN_LINKS = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
 OUTPUT = None
 REQUESTS_TIMEOUT = 5
+LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
+TEST_ORDER = ["zero", "4.0", "3.0"]
 
 
 class CheckerError(Exception):
@@ -48,6 +52,7 @@ def parse_argument(args):
     global VERBOSE
     global OUTPUT_ERR
     global OUTPUT
+    global LOCAL
     # Setup argument parser
     parser = argparse.ArgumentParser(
         description="Script to check broken links"
@@ -67,15 +72,52 @@ def parse_argument(args):
         type=argparse.FileType("w", encoding="utf-8"),
         dest="OUTPUT",
     )
+    parser.add_argument(
+        "--local",
+        help="Scrapes license files from local file system",
+        action="store_true",
+    )
     args = parser.parse_args(args)
     if args.verbose:
         VERBOSE = True
     if args.OUTPUT:
         OUTPUT = args.OUTPUT
         OUTPUT_ERR = True
+    if args.local:
+        LOCAL = True
 
 
-def get_all_license():
+def get_local_license():
+    """This function get all the licenses stored locally
+
+    Returns:
+        list: list of file names of license file
+    """
+    try:
+        all_files = os.listdir(LICENSE_LOCAL_PATH)
+    except FileNotFoundError:
+        raise CheckerError(
+            "Local license path({}) does not exist".format(LICENSE_LOCAL_PATH)
+        )
+    # Catching permission denied(OS ERROR) or other errors
+    except:
+        raise
+    links_ordered = list()
+    # Test newer licenses first (they are the most volatile) and exclude
+    # non-.html files
+    for version in TEST_ORDER:
+        for link in all_files:
+            if ".html" in link and version in link:
+                links_ordered.append(link)
+    for link in all_files:
+        if ".html" in link and link not in links_ordered:
+            links_ordered.append(link)
+    links = links_ordered
+    print("Number of files to be checked:", len(links))
+    return links
+
+
+def get_global_license():
     """This function scrapes all the license file in the repo:
     https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
 
@@ -89,11 +131,10 @@ def get_all_license():
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
     links = soup.table.tbody.find_all("a", class_="js-navigation-open")
+    links_ordered = list()
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files
-    test_order = ["zero", "4.0", "3.0"]
-    links_ordered = list()
-    for version in test_order:
+    for version in TEST_ORDER:
         for link in links:
             if ".html" in link.string and version in link.string:
                 links_ordered.append(link)
@@ -132,6 +173,29 @@ def request_text(page_url):
     except:
         raise
     return fetched_text
+
+
+def request_local_text(license_name):
+    """This function reads license content from license file stored in local file system
+
+    Args:
+        license_name (str): Name of the license
+
+    Returns:
+        str: Content of license file
+    """
+    filename = license_name
+    path = os.path.join(LICENSE_LOCAL_PATH, filename)
+    try:
+        with open(path) as lic:
+            return lic.read()
+    except FileNotFoundError:
+        raise CheckerError(
+            "Local license path({}) does not exist".format(path)
+        )
+    # Catching permission denied(OS ERROR) or other errors
+    except:
+        raise
 
 
 def create_base_link(filename):
@@ -399,7 +463,10 @@ def output_summary(all_links, num_errors):
 def main():
     parse_argument(sys.argv[1:])
 
-    all_links = get_all_license()
+    if LOCAL:
+        all_links = get_local_license()
+    else:
+        all_links = get_global_license()
 
     GITHUB_BASE = (
         "https://raw.githubusercontent.com/creativecommons"
@@ -408,18 +475,25 @@ def main():
 
     errors_total = 0
     for license in all_links:
+        try:
+            license_name = license.string
+        except AttributeError:
+            license_name = license
         caught_errors = 0
-        page_url = GITHUB_BASE + license.string
+        page_url = "{}{}".format(GITHUB_BASE, license_name)
         print("\n")
-        print("Checking:", license.string)
+        print("Checking:", license_name)
         # Refer to issue for more info on samplingplus_1.0.br.htm:
         #   https://github.com/creativecommons/cc-link-checker/issues/9
-        if license.string == "samplingplus_1.0.br.html":
+        if license_name == "samplingplus_1.0.br.html":
             continue
-        filename = license.string[:-5]
+        filename = license_name[: -len(".html")]
         base_url = create_base_link(filename)
         print("URL:", base_url)
-        source_html = request_text(page_url)
+        if LOCAL:
+            source_html = request_local_text(license_name)
+        else:
+            source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
         verbose_print("Number of links found:", len(links_in_license))
@@ -461,7 +535,7 @@ def main():
                 stored_links,
                 stored_result,
                 base_url,
-                license.string,
+                license_name,
                 stored_anchors,
             )
 

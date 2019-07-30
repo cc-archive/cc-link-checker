@@ -469,16 +469,16 @@ def output_test_summary(errors_total):
     if not os.path.isdir("test-summary"):
         os.mkdir("test-summary")
     with open("test-summary/junit-xml-report.xml", "w") as test_summary:
-        test_summary.write('<?xml version="1.0" encoding="utf-8"?>')
+        test_summary.write('<?xml version="1.0" encoding="utf-8"?>\n')
         test_summary.write(
-            f'<testsuite errors="0" name="cc-link-checker" skipped="0" tests="1" time="{time.time()-START_TIME}">'
+            f'<testsuite errors="0" name="cc-link-checker" skipped="0" tests="1" time="{time.time()-START_TIME}">\n'
         )
         test_summary.write(
-            '<testcase classname="test_broken_links" name="check broken links" file="link_checker.py">'
+            '<testcase classname="test_broken_links" name="check broken links" file="link_checker.py">\n'
         )
         if errors_total != 0:
             test_summary.write(
-                f'<failure message="{errors_total} broken links found">Number of error links: {errors_total}\nNumber of unique broken links: {len(MAP_BROKEN_LINKS.keys())}</failure>'
+                f'<failure message="{errors_total} broken links found">Number of error links: {errors_total}\nNumber of unique broken links: {len(MAP_BROKEN_LINKS.keys())}</failure>\n'
             )
         test_summary.write("</testcase></testsuite>")
 

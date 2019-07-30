@@ -329,3 +329,33 @@ def test_request_local_text():
     # Change local path to current directory
     link_checker.LICENSE_LOCAL_PATH = "./"
     assert link_checker.request_local_text("test_file.txt") == random_string
+
+
+@pytest.mark.parametrize(
+    "errors_total, map_links",
+    [(3, {"link1": ["file1", "file3"], "link2": ["file1"]}), (0, {})],
+)
+def test_output_test_summary(errors_total, map_links):
+    link_checker.OUTPUT_ERR = True
+    link_checker.MAP_BROKEN_LINKS = map_links
+    link_checker.output_test_summary(errors_total)
+    with open("test-summary/junit-xml-report.xml", "r") as test_summary:
+        assert (
+            test_summary.readline()
+            == '<?xml version="1.0" encoding="utf-8"?>\n'
+        )
+        test_summary.readline()
+        assert (
+            test_summary.readline()
+            == '<testcase classname="test_broken_links" name="check broken links" file="link_checker.py">\n'
+        )
+        if errors_total != 0:
+            assert (
+                test_summary.readline()
+                == '<failure message="3 broken links found">Number of error links: 3\n'
+            )
+            assert (
+                test_summary.readline()
+                == "Number of unique broken links: 2</failure>\n"
+            )
+        assert test_summary.readline() == "</testcase></testsuite>"

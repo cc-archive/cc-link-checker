@@ -460,6 +460,29 @@ def output_summary(all_links, num_errors):
             output_write(url)
 
 
+def output_test_summary(errors_total):
+    """Prints summary of script output in form of junit-xml
+
+    Args:
+        errors_total (int): Total number of broken links
+    """
+    if not os.path.isdir("test-summary"):
+        os.mkdir("test-summary")
+    with open("test-summary/junit-xml-report.xml", "w") as test_summary:
+        test_summary.write('<?xml version="1.0" encoding="utf-8"?>')
+        test_summary.write(
+            f'<testsuite errors="0" name="cc-link-checker" skipped="0" tests="1" time="{time.time()-START_TIME}">'
+        )
+        test_summary.write(
+            '<testcase classname="test_broken_links" name="check broken links" file="link_checker.py">'
+        )
+        if errors_total != 0:
+            test_summary.write(
+                f'<failure message="{errors_total} broken links found">Number of error links: {errors_total}\nNumber of unique broken links: {len(MAP_BROKEN_LINKS.keys())}</failure>'
+            )
+        test_summary.write("</testcase></testsuite>")
+
+
 def main():
     parse_argument(sys.argv[1:])
 
@@ -548,6 +571,8 @@ def main():
     if OUTPUT_ERR:
         output_summary(all_links, errors_total)
         print("\nError file present at: ", OUTPUT.name)
+        output_test_summary(errors_total)
+
     sys.exit(ERR_CODE)
 
 

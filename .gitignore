@@ -1,9 +1,10 @@
 __pycache__
 venv
 errorlog.txt
-err_file.txt
 .vscode
 .pytest_cache
 test-reports
 .coverage
 test_file.txt
+err_file.txt
+test-summary

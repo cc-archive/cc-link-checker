@@ -12,6 +12,7 @@ import os
 # Third-party
 from bs4 import BeautifulSoup
 import grequests  # WARNING: Always import grequests before requests
+from junit_xml import TestCase, TestSuite
 import requests
 
 
@@ -460,6 +461,28 @@ def output_summary(all_links, num_errors):
             output_write(url)
 
 
+def output_test_summary(errors_total):
+    """Prints summary of script output in form of junit-xml
+
+    Args:
+        errors_total (int): Total number of broken links
+    """
+    if not os.path.isdir("test-summary"):
+        os.mkdir("test-summary")
+    with open("test-summary/junit-xml-report.xml", "w") as test_summary:
+        time_taken = time.time() - START_TIME
+        test_case = TestCase(
+            "Broken links checker", "License files", time_taken
+        )
+        if errors_total != 0:
+            test_case.add_failure_info(
+                f"{errors_total} broken links found",
+                f"Number of error links: {errors_total}\nNumber of unique broken links: {len(MAP_BROKEN_LINKS.keys())}",
+            )
+        ts = TestSuite("cc-link-checker", [test_case])
+        TestSuite.to_file(test_summary, [ts])
+
+
 def main():
     parse_argument(sys.argv[1:])
 
@@ -548,6 +571,8 @@ def main():
     if OUTPUT_ERR:
         output_summary(all_links, errors_total)
         print("\nError file present at: ", OUTPUT.name)
+        output_test_summary(errors_total)
+
     sys.exit(ERR_CODE)
 
 

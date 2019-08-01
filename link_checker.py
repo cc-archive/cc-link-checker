@@ -12,6 +12,7 @@ import os
 # Third-party
 from bs4 import BeautifulSoup
 import grequests  # WARNING: Always import grequests before requests
+from junit_xml import TestCase, TestSuite
 import requests
 
 
@@ -65,7 +66,7 @@ def parse_argument(args):
     )
     parser.add_argument(
         "--output-error",
-        help="Outputs all link errors to file (default: errorlog.txt) and creates junit-xml type script run summary(test-summary/junit-xml-report.xml) for CI",
+        help="Outputs all link errors to file (default: errorlog.txt)",
         metavar="output_file",
         const="errorlog.txt",
         nargs="?",
@@ -469,18 +470,17 @@ def output_test_summary(errors_total):
     if not os.path.isdir("test-summary"):
         os.mkdir("test-summary")
     with open("test-summary/junit-xml-report.xml", "w") as test_summary:
-        test_summary.write('<?xml version="1.0" encoding="utf-8"?>\n')
-        test_summary.write(
-            f'<testsuite errors="0" name="cc-link-checker" skipped="0" tests="1" time="{time.time()-START_TIME}">\n'
-        )
-        test_summary.write(
-            '<testcase classname="test_broken_links" name="check broken links" file="link_checker.py">\n'
+        time_taken = time.time() - START_TIME
+        test_case = TestCase(
+            "Broken links checker", "License files", time_taken
         )
         if errors_total != 0:
-            test_summary.write(
-                f'<failure message="{errors_total} broken links found">Number of error links: {errors_total}\nNumber of unique broken links: {len(MAP_BROKEN_LINKS.keys())}</failure>\n'
+            test_case.add_failure_info(
+                f"{errors_total} broken links found",
+                f"Number of error links: {errors_total}\nNumber of unique broken links: {len(MAP_BROKEN_LINKS.keys())}",
             )
-        test_summary.write("</testcase></testsuite>")
+        ts = TestSuite("cc-link-checker", [test_case])
+        TestSuite.to_file(test_summary, [ts])
 
 
 def main():

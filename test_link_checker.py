@@ -23,11 +23,12 @@ def test_parse_argument(reset_global):
     link_checker.VERBOSE = False
     link_checker.OUTPUT_ERR = False
     link_checker.parse_argument(
-        ["--verbose", "--output-error", "err_file.txt"]
+        ["--verbose", "--output-error", "err_file.txt", "--local"]
     )
     assert link_checker.VERBOSE is True
     assert link_checker.OUTPUT_ERR is True
     assert link_checker.OUTPUT.name == "err_file.txt"
+    assert link_checker.LOCAL is True
 
 
 def test_get_global_license():
@@ -331,6 +332,7 @@ def test_request_local_text():
     assert link_checker.request_local_text("test_file.txt") == random_string
 
 
+# TODO: Optimize the test using mock
 @pytest.mark.parametrize(
     "errors_total, map_links",
     [(3, {"link1": ["file1", "file3"], "link2": ["file1"]}), (0, {})],

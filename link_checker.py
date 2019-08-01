@@ -56,7 +56,7 @@ def parse_argument(args):
     global LOCAL
     # Setup argument parser
     parser = argparse.ArgumentParser(
-        description="Script to check broken links"
+        description="Script to check broken links in CC licenses"
     )
     parser.add_argument(
         "-v",
@@ -66,7 +66,7 @@ def parse_argument(args):
     )
     parser.add_argument(
         "--output-error",
-        help="Outputs all link errors to file (default: errorlog.txt)",
+        help="Outputs all link errors to file (default: errorlog.txt) and creates junit-xml type summary(test-summary/junit-xml-report.xml)",
         metavar="output_file",
         const="errorlog.txt",
         nargs="?",

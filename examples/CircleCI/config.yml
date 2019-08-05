@@ -1,0 +1,59 @@
+# This file will be located in `.circle` in root of your project
+
+version: 2
+jobs:
+    build-job:
+        # configure your build job here
+        machine: true
+        steps:
+            - checkout
+            - run: sudo apt-get update && sudo apt-get install -y tidy
+            - run: TRANSLATIONS=$(git --no-pager diff --name-only FETCH_HEAD $(git merge-base FETCH_HEAD master))
+            - run: for htmlfile in $TRANSLATIONS; do echo $htmlfile; tidy -errors -quiet $htmlfile; done
+
+    broken-links:
+        # directory where steps are run
+        working_directory: ~/creativecommons.org
+        docker:
+            # CircleCI Python images available at: https://hub.docker.com/r/circleci/python/
+            - image: circleci/python:3.6.4
+              environment:
+                  PIPENV_VENV_IN_PROJECT: true
+        steps:
+            # check out source code to working directory
+            - checkout
+            - run: sudo chown -R circleci:circleci /usr/local/bin
+            - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+            - run:
+                  # Clone cc-link-checker in root of the container
+                  name: clone link-checker
+                  command: |
+                      git clone https://github.com/creativecommons/cc-link-checker.git ~/cc-link-checker
+            - run:
+                  name: Install dependencies
+                  command: |
+                      cd ~/cc-link-checker
+                      sudo pip install pipenv
+                      pipenv install
+            - run:
+                  name: Run link-checker
+                  command: |
+                      cd ~/cc-link-checker
+                      # Creating folder to store test-reports
+                      mkdir test-reports
+                      # Running link-checker in local and output-error config
+                      pipenv run python ./link_checker.py --output-error test-reports/errorlog.txt --local
+            - store_artifacts:
+                  # Uploading output errorlog.txt file as test artifact
+                  path: ~/cc-link-checker/test-reports
+                  destination: links-result
+            - store_test_results:
+                  # Archiving the output junit-xml type test results
+                  path: ~/cc-link-checker/test-summary
+
+workflows:
+    version: 2
+    workflow:
+        jobs:
+            - build-job
+            - broken-links

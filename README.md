@@ -2,7 +2,7 @@
 <p align="center">This python script scrapes all the <a href="https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode">license files</a> and automates the task of detecting broken links, timeout error and other link issues</p>
 
 <p align="center">
-<a href="https://circleci.com/gh/creativecommons/cc-link-checker"><img alt="CircleCI" src="https://img.shields.io/circleci/build/github/creativecommons/cc-link-checker.svg"></a> <a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<a href="https://circleci.com/gh/creativecommons/cc-link-checker"><img alt="CircleCI" src="https://img.shields.io/circleci/build/github/creativecommons/cc-link-checker.svg"></a> <a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://opensource.creativecommons.org/community/#slack"><img alt="chat: on Slack" src="https://img.shields.io/badge/chat-on%20Slack-blue"></a>
 </p>
 
 ## Table of Contents
@@ -17,6 +17,7 @@
     -   [`-v` or `--verbose`](#-v-or---verbose)
     -   [`--output-error`](#--output-error)
     -   [`--local`](#--local)
+-   [Integrating with CI](#Integrating-with-CI)
 -   [Unit Testing](#Unit-Testing)
 -   [Troubleshooting](#Troubleshooting)
 -   [Code of Conduct](#Code-of-Conduct)
@@ -162,6 +163,23 @@ The relative directory structure should be:
 This mode can be helpful for using script as a CI.
 
 **Note:** You can manually change the relative local path by changing `LICENSE_LOCAL_PATH` global variable in the script.
+
+## Integrating with CI
+
+Due to the script capability to scrape licenses from local storage, it can be used as CI in 2 easy steps:-
+
+1. Clone this repo in the CI container
+
+    ```shell
+    git clone https://github.com/creativecommons/cc-link-checker.git ~/cc-link-checker
+    ```
+
+2. Run the `link_checker.py` in local(`--local`) and output error(`--output-error`) mode
+    ```shell
+    python link_checker.py --local --output-errors
+    ```
+
+The example configuration for **CircleCI** is present [here](examples/CircleCI/config.yml).
 
 ## Unit Testing
 

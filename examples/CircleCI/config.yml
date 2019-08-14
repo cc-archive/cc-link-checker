@@ -28,7 +28,7 @@ jobs:
                   # Clone cc-link-checker in root of the container
                   name: clone link-checker
                   command: |
-                      git clone https://github.com/creativecommons/cc-link-checker.git ~/cc-link-checker
+                      git clone --depth 1 https://github.com/creativecommons/cc-link-checker.git ~/cc-link-checker
             - run:
                   name: Install dependencies
                   command: |

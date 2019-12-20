@@ -42,7 +42,7 @@ jobs:
             - run:
                   name: Testing with black
                   command: |
-                      black --check ./
+                      pipenv run black --check ./
             - store_artifacts:
                   path: test-reports
                   destination: flake8-result

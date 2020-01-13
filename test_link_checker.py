@@ -255,7 +255,8 @@ def test_write_response(reset_global):
         assert output_file.readline() == "by-cc-nd_2.0\n"
         assert output_file.readline() == "URL: https://baseurl/goes/here\n"
         assert output_file.readline() == (
-            "  Invalid Schema" '<a href="file://link3">Invalid Scheme</a>\n'
+            "  Invalid Schema          "
+            '<a href="file://link3">Invalid Scheme</a>\n'
         )
         assert output_file.readline() == (
             "  400                     "
@@ -282,8 +283,8 @@ def test_get_memoized_result():
         check_anchors,
     ) = link_checker.get_memoized_result(valid_links, valid_anchors)
     assert stored_links == ["link3_stored", "link4_stored"]
-    assert (
-        str(stored_anchors) == '[<a href="link3_stored">Link3 - stored</a>,'
+    assert str(stored_anchors) == (
+        '[<a href="link3_stored">Link3 - stored</a>,'
         ' <a href="link4_stored">Link4 - stored</a>]'
     )
     assert stored_result == [200, 404]
@@ -336,7 +337,7 @@ def test_request_text(URL, error):
         assert link_checker.request_text(URL)
         assert str(e.value) == (
             "FAILED to retreive source HTML (https://www.google.com:82) due"
-            "to {}".format(error)
+            " to {}".format(error)
         )
 
 
@@ -365,8 +366,8 @@ def test_output_test_summary(errors_total, map_links):
             test_summary.readline()
             test_summary.readline()
             test_summary.readline()
-            assert (
-                test_summary.readline() == "\t\t\t"
+            assert test_summary.readline() == (
+                "\t\t\t"
                 '<failure message="3 broken links found" type="failure">'
                 "Number of error links: 3\n"
             )

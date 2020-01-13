@@ -66,7 +66,7 @@ def parse_argument(args):
         action="store_true",
     )
     parser.add_argument(
-        "--output-error",
+        "--output-errors",
         help="Outputs all link errors to file (default: errorlog.txt) and"
         " creates junit-xml type summary(test-summary/junit-xml-report.xml)",
         metavar="output_file",

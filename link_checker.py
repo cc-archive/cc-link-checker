@@ -31,7 +31,7 @@ GOOD_RESPONSE = [200, 300, 301, 302]
 OUTPUT = None
 REQUESTS_TIMEOUT = 5
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
-TEST_ORDER = ["zero", "4.0", "3.0"]
+TEST_ORDER = ["zero", "4.0", "3.0", "2.5", "2.1", "2.0"]
 
 
 class CheckerError(Exception):

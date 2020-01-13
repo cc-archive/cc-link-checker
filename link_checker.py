@@ -18,7 +18,6 @@ import requests
 
 # Set defaults
 START_TIME = time.time()
-ERR_CODE = 0
 VERBOSE = False
 OUTPUT_ERR = False
 LOCAL = False
@@ -500,6 +499,7 @@ def main():
         all_links = get_global_license()
 
     errors_total = 0
+    exit_status = 0
     for license in all_links:
         try:
             license_name = license.string
@@ -567,7 +567,7 @@ def main():
 
         if caught_errors:
             errors_total += caught_errors
-            ERR_CODE = 1
+            exit_status = 1
 
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
@@ -576,7 +576,7 @@ def main():
         print("\nError file present at: ", OUTPUT.name)
         output_test_summary(errors_total)
 
-    sys.exit(ERR_CODE)
+    sys.exit(exit_status)
 
 
 if __name__ == "__main__":

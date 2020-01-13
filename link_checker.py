@@ -23,7 +23,8 @@ VERBOSE = False
 OUTPUT_ERR = False
 LOCAL = False
 HEADER = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
+    "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0)"
+    " Gecko/20100101 Firefox/10.0"
 }
 MEMOIZED_LINKS = {}
 MAP_BROKEN_LINKS = {}
@@ -66,7 +67,8 @@ def parse_argument(args):
     )
     parser.add_argument(
         "--output-error",
-        help="Outputs all link errors to file (default: errorlog.txt) and creates junit-xml type summary(test-summary/junit-xml-report.xml)",
+        help="Outputs all link errors to file (default: errorlog.txt) and"
+        " creates junit-xml type summary(test-summary/junit-xml-report.xml)",
         metavar="output_file",
         const="errorlog.txt",
         nargs="?",
@@ -177,7 +179,8 @@ def request_text(page_url):
 
 
 def request_local_text(license_name):
-    """This function reads license content from license file stored in local file system
+    """This function reads license content from license file stored in local
+    file system
 
     Args:
         license_name (str): Name of the license
@@ -477,7 +480,8 @@ def output_test_summary(errors_total):
         if errors_total != 0:
             test_case.add_failure_info(
                 f"{errors_total} broken links found",
-                f"Number of error links: {errors_total}\nNumber of unique broken links: {len(MAP_BROKEN_LINKS.keys())}",
+                f"Number of error links: {errors_total}\nNumber of unique"
+                f" broken links: {len(MAP_BROKEN_LINKS.keys())}",
             )
         ts = TestSuite("cc-link-checker", [test_case])
         TestSuite.to_file(test_summary, [ts])
@@ -541,7 +545,7 @@ def main():
                 responses = list()
                 # Explicitly close connections to free up file handles and
                 # avoid Connection Errors per:
-                # https://stackoverflow.com/questions/21978115/using-grequests-to-make-several-thousand-get-requests-to-sourceforge-get-max-r/22839550#22839550
+                # https://stackoverflow.com/a/22839550
                 for response in grequests.map(
                     rs, exception_handler=exception_handler
                 ):

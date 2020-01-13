@@ -31,6 +31,10 @@ MAP_BROKEN_LINKS = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
 OUTPUT = None
 REQUESTS_TIMEOUT = 5
+GITHUB_BASE = (
+    "https://raw.githubusercontent.com/creativecommons/creativecommons.org"
+    "/master/docroot/legalcode/"
+)
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
 TEST_ORDER = ["zero", "4.0", "3.0"]
 
@@ -495,11 +499,6 @@ def main():
     else:
         all_links = get_global_license()
 
-    GITHUB_BASE = (
-        "https://raw.githubusercontent.com/creativecommons"
-        "/creativecommons.org/master/docroot/legalcode/"
-    )
-
     errors_total = 0
     for license in all_links:
         try:
@@ -507,7 +506,6 @@ def main():
         except AttributeError:
             license_name = license
         caught_errors = 0
-        page_url = "{}{}".format(GITHUB_BASE, license_name)
         print("\n")
         print("Checking:", license_name)
         # Refer to issue for more info on samplingplus_1.0.br.htm:
@@ -520,6 +518,7 @@ def main():
         if LOCAL:
             source_html = request_local_text(license_name)
         else:
+            page_url = "{}{}".format(GITHUB_BASE, license_name)
             source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")

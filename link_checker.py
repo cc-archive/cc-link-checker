@@ -35,7 +35,7 @@ GITHUB_BASE = (
     "/master/docroot/legalcode/"
 )
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
-TEST_ORDER = ["zero", "4.0", "3.0"]
+TEST_ORDER = ["zero", "4.0", "3.0", "2.5", "2.1", "2.0"]
 
 
 class CheckerError(Exception):

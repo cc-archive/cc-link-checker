@@ -52,7 +52,8 @@ def test_get_global_license():
         # 4 part URL
         (
             "by-nc-nd_3.0_rs_sr-Latn",
-            "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/legalcode.sr-Latn",
+            "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/"
+            "legalcode.sr-Latn",
         ),
         # Special case - samplingplus
         (
@@ -171,16 +172,22 @@ def test_create_absolute_link(link, result):
 
 
 def test_get_scrapable_links():
-    test_file = "<a name='hello'>without href</a>, <a href='#hello'>internal link</a>, <a href='mailto:abc@gmail.com'>mailto protocol</a>, <a href='https://creativecommons.ca'>Absolute link</a>, <a href='/index'>Relative Link</a>"
+    test_file = (
+        "<a name='hello'>without href</a>,"
+        " <a href='#hello'>internal link</a>,"
+        " <a href='mailto:abc@gmail.com'>mailto protocol</a>,"
+        " <a href='https://creativecommons.ca'>Absolute link</a>,"
+        " <a href='/index'>Relative Link</a>"
+    )
     soup = BeautifulSoup(test_file, "lxml")
     test_case = soup.find_all("a")
     base_url = "https://www.demourl.com/dir1/dir2"
     valid_anchors, valid_links = link_checker.get_scrapable_links(
         base_url, test_case
     )
-    assert (
-        str(valid_anchors)
-        == '[<a href="https://creativecommons.ca">Absolute link</a>, <a href="/index">Relative Link</a>]'
+    assert str(valid_anchors) == (
+        '[<a href="https://creativecommons.ca">Absolute link</a>,'
+        ' <a href="/index">Relative Link</a>]'
     )
     assert (
         str(valid_links)
@@ -215,7 +222,11 @@ def test_write_response(reset_global):
     link_checker.OUTPUT_ERR = True
 
     # Text to extract valid_anchors
-    text = "<a href='http://httpbin.org/status/200'>Response 200</a>, <a href='file://link3'>Invalid Scheme</a>, <a href='http://httpbin.org/status/400'>Response 400</a>"
+    text = (
+        "<a href='http://httpbin.org/status/200'>Response 200</a>,"
+        " <a href='file://link3'>Invalid Scheme</a>,"
+        " <a href='http://httpbin.org/status/400'>Response 400</a>"
+    )
     soup = BeautifulSoup(text, "lxml")
     valid_anchors = soup.find_all("a")
 
@@ -243,29 +254,38 @@ def test_write_response(reset_global):
         assert output_file.readline() == "\n"
         assert output_file.readline() == "by-cc-nd_2.0\n"
         assert output_file.readline() == "URL: https://baseurl/goes/here\n"
-        assert (
-            output_file.readline()
-            == '  Invalid Schema          <a href="file://link3">Invalid Scheme</a>\n'
+        assert output_file.readline() == (
+            "  Invalid Schema          "
+            '<a href="file://link3">Invalid Scheme</a>\n'
         )
-        assert (
-            output_file.readline()
-            == '  400                     <a href="http://httpbin.org/status/400">Response 400</a>\n'
+        assert output_file.readline() == (
+            "  400                     "
+            '<a href="http://httpbin.org/status/400">Response 400</a>\n'
         )
 
 
 def test_get_memoized_result():
-    text = "<a href='link1'>Link 1</a>, <a href='link2'>Link 2</a>, <a href='link3_stored'>Link3 - stored</a>, <a href='link4_stored'>Link4 - stored</a>"
+    text = (
+        "<a href='link1'>Link 1</a>,"
+        " <a href='link2'>Link 2</a>,"
+        " <a href='link3_stored'>Link3 - stored</a>,"
+        " <a href='link4_stored'>Link4 - stored</a>"
+    )
     soup = BeautifulSoup(text, "lxml")
     valid_anchors = soup.find_all("a")
     valid_links = ["link1", "link2", "link3_stored", "link4_stored"]
     link_checker.MEMOIZED_LINKS = {"link3_stored": 200, "link4_stored": 404}
-    stored_links, stored_anchors, stored_result, check_links, check_anchors = link_checker.get_memoized_result(
-        valid_links, valid_anchors
-    )
+    (
+        stored_links,
+        stored_anchors,
+        stored_result,
+        check_links,
+        check_anchors,
+    ) = link_checker.get_memoized_result(valid_links, valid_anchors)
     assert stored_links == ["link3_stored", "link4_stored"]
-    assert (
-        str(stored_anchors)
-        == '[<a href="link3_stored">Link3 - stored</a>, <a href="link4_stored">Link4 - stored</a>]'
+    assert str(stored_anchors) == (
+        '[<a href="link3_stored">Link3 - stored</a>,'
+        ' <a href="link4_stored">Link4 - stored</a>]'
     )
     assert stored_result == [200, 404]
     assert check_links == ["link1", "link2"]
@@ -315,10 +335,9 @@ def test_memoize_result(reset_global):
 def test_request_text(URL, error):
     with pytest.raises(link_checker.CheckerError) as e:
         assert link_checker.request_text(URL)
-        assert str(
-            e.value
-        ) == "FAILED to retreive source HTML (https://www.google.com:82) due to {}".format(
-            error
+        assert str(e.value) == (
+            "FAILED to retreive source HTML (https://www.google.com:82) due"
+            " to {}".format(error)
         )
 
 
@@ -347,9 +366,10 @@ def test_output_test_summary(errors_total, map_links):
             test_summary.readline()
             test_summary.readline()
             test_summary.readline()
-            assert (
-                test_summary.readline()
-                == '\t\t\t<failure message="3 broken links found" type="failure">Number of error links: 3\n'
+            assert test_summary.readline() == (
+                "\t\t\t"
+                '<failure message="3 broken links found" type="failure">'
+                "Number of error links: 3\n"
             )
             assert (
                 test_summary.readline()

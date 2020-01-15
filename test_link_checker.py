@@ -31,8 +31,8 @@ def test_parse_argument(reset_global):
     assert link_checker.LOCAL is True
 
 
-def test_get_global_license():
-    all_links = link_checker.get_global_license()
+def test_get_github_licenses():
+    all_links = link_checker.get_github_licenses()
     assert len(all_links) > 0
 
 

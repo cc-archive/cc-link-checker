@@ -100,7 +100,7 @@ def get_local_licenses():
         list: list of file names of license file
     """
     try:
-        all_files = os.listdir(LICENSE_LOCAL_PATH)
+        license_names_unordered = os.listdir(LICENSE_LOCAL_PATH)
     except FileNotFoundError:
         raise CheckerError(
             "Local license path({}) does not exist".format(LICENSE_LOCAL_PATH)
@@ -108,20 +108,19 @@ def get_local_licenses():
     # Catching permission denied(OS ERROR) or other errors
     except:
         raise
-    links.sort()
-    links_ordered = list()
+    license_names_unordered.sort()
+    license_names = []
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files
     for version in TEST_ORDER:
-        for link in all_files:
-            if ".html" in link and version in link:
-                links_ordered.append(link)
-    for link in all_files:
-        if ".html" in link and link not in links_ordered:
-            links_ordered.append(link)
-    links = links_ordered
-    print("Number of files to be checked:", len(links))
-    return links
+        for name in license_names_unordered:
+            if ".html" in name and version in name:
+                license_names.append(name)
+    for name in license_names_unordered:
+        if ".html" in name and name not in license_names:
+            license_names.append(name)
+    print("Number of files to be checked:", len(license_names))
+    return license_names
 
 
 def get_github_licenses():
@@ -137,23 +136,22 @@ def get_github_licenses():
     )
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
-    links = []
+    license_names_unordered = []
     for link in soup.table.tbody.find_all("a", class_="js-navigation-open"):
-        links.append(link.string)
-    links.sort()
-    links_ordered = list()
+        license_names_unordered.append(link.string)
+    license_names_unordered.sort()
+    license_names = []
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files
     for version in TEST_ORDER:
-        for link in links:
-            if ".html" in link.string and version in link.string:
-                links_ordered.append(link)
-    for link in links:
-        if ".html" in link.string and link not in links_ordered:
-            links_ordered.append(link)
-    links = links_ordered
-    print("Number of files to be checked:", len(links))
-    return links
+        for name in license_names_unordered:
+            if ".html" in name.string and version in name.string:
+                license_names.append(name)
+    for name in license_names_unordered:
+        if ".html" in name.string and name not in license_names:
+            license_names.append(name)
+    print("Number of files to be checked:", len(license_names))
+    return license_names
 
 
 def request_text(page_url):
@@ -455,18 +453,18 @@ def output_write(*args, **kwargs):
         print(*args, **kwargs)
 
 
-def output_summary(all_links, num_errors):
+def output_summary(license_names, num_errors):
     """Prints short summary of broken links in the output error file
 
     Args:
-        all_links: Array of link to license files
+        license_names: Array of link to license files
         num_errors (int): Number of broken links found
     """
     output_write(
         "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
     )
     output_write("Timestamp: {}".format(time.ctime()))
-    output_write("Total files checked: {}".format(len(all_links)))
+    output_write("Total files checked: {}".format(len(license_names)))
     output_write("Number of error links: {}".format(num_errors))
     keys = MAP_BROKEN_LINKS.keys()
     output_write("Number of unique broken links: {}\n".format(len(keys)))
@@ -503,13 +501,13 @@ def main():
     parse_argument(sys.argv[1:])
 
     if LOCAL:
-        all_links = get_local_licenses()
+        license_names = get_local_licenses()
     else:
-        all_links = get_github_licenses()
+        license_names = get_github_licenses()
 
     errors_total = 0
     exit_status = 0
-    for license_name in all_links:
+    for license_name in license_names:
         caught_errors = 0
         print("\n\nChecking:", license_name)
         # Refer to issue for more info on samplingplus_1.0.br.htm:
@@ -575,7 +573,7 @@ def main():
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if OUTPUT_ERR:
-        output_summary(all_links, errors_total)
+        output_summary(license_names, errors_total)
         print("\nError file present at: ", OUTPUT.name)
         output_test_summary(errors_total)
 

@@ -108,6 +108,8 @@ def get_local_licenses():
     # Catching permission denied(OS ERROR) or other errors
     except:
         raise
+    # Although license_names_unordered is sorted below, is not ordered
+    # according to TEST_ORDER.
     license_names_unordered.sort()
     license_names = []
     # Test newer licenses first (they are the most volatile) and exclude
@@ -139,6 +141,8 @@ def get_github_licenses():
     license_names_unordered = []
     for link in soup.table.tbody.find_all("a", class_="js-navigation-open"):
         license_names_unordered.append(link.string)
+    # Although license_names_unordered is sorted below, is not ordered
+    # according to TEST_ORDER.
     license_names_unordered.sort()
     license_names = []
     # Test newer licenses first (they are the most volatile) and exclude

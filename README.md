@@ -5,6 +5,7 @@
 <a href="https://circleci.com/gh/creativecommons/cc-link-checker"><img alt="CircleCI" src="https://img.shields.io/circleci/build/github/creativecommons/cc-link-checker.svg"></a> <a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://opensource.creativecommons.org/community/#slack"><img alt="chat: on Slack" src="https://img.shields.io/badge/chat-on%20Slack-blue"></a>
 </p>
 
+
 ## Table of Contents
 
 -   [Pre-requisite](#Pre-requisite)
@@ -14,6 +15,7 @@
 -   [Usage](#Usage)
     -   [`-h` or `--help`](#-h-or---help)
     -   [Default mode](#default-mode)
+    -   [`-q` or `--quiet`](#-q-or---quiet)
     -   [`-v` or `--verbose`](#-v-or---verbose)
     -   [`--output-error`](#--output-error)
     -   [`--local`](#--local)
@@ -24,10 +26,12 @@
 -   [Contributing](#Contributing)
 -   [License](#License)
 
+
 ## Pre-requisite
 
 -   Python3
 -   UTF-8 supported console
+
 
 ## Installation
 
@@ -35,15 +39,17 @@ There are two suggested ways of installation. Use [User](#User), if you are
 interested in just running the script. Use [Development](#Development), if you
 are interested in developing the script
 
+
 ### User
 
 1. Clone the repo
     ```shell
     git clone https://github.com/creativecommons/cc-link-checker.git
     ```
-2. Install dependencies  
-   Using **requirements.txt**: `pip install -r requirements.txt`  
+2. Install dependencies
+   Using **requirements.txt**: `pip install -r requirements.txt`
    Using **Pipfile** (requires [pipenv](https://github.com/pypa/pipenv)): `pipenv install`
+
 
 ### Development
 
@@ -72,50 +78,64 @@ We recommend using [pipenv](https://github.com/pypa/pipenv) to create a virtual 
         pipenv run link_checker.py
         ```
 
+
 ## Usage
+
 
 ### `-h` or `--help`
 
 It provides the help text related to the script
 
+```shell
+pipenv run link_checker.py -h
 ```
-$ python link_checker.py -h
-Script to check broken links in CC licenses
+```
+usage: link_checker.py [-h] [--local] [--output-errors [output_file]] [-q]
+                       [--root-url ROOT_URL] [-v]
+
+Check for broken links in Creative Commons licenses
 
 optional arguments:
   -h, --help            show this help message and exit
-  -v, --verbose         Increase verbosity of output
-  --output-error [output_file]
-                        Outputs all link errors to file (default:
-                        errorlog.txt) and creates junit-xml type summary(test-
-                        summary/junit-xml-report.xml)
   --local               Scrapes license files from local file system
+  --output-errors [output_file]
+                        Outputs all link errors to file (default: errorlog.txt)
+                        and creates junit-xml type summary(test-summary/junit-xml-
+                        report.xml)
+  -q, --quiet           Decrease verbosity. Can be specified multiple times.
+  --root-url ROOT_URL   Set root URL (default: https://creativecommons.org)
+  -v, --verbose         Increase verbosity. Can be specified multiple times.
 ```
 
 ### Default mode
 
-This mode shows which file is currently being checked along with errors
-encountered in the links
+This mode shows which file is currently being checked along with warnings and
+errors encountered in the links
 
 ```shell
 pipenv run link_checker.py
 ```
 
+
+### `-q` or `--quiet`
+
+This flag decreases the verbosity of the output. This mode is useful for
+reducing the noise. By default, WARNING and higher output is displayed.
+
+```shell
+pipenv run link_checker.py -q
+```
+
+
 ### `-v` or `--verbose`
 
 This flag increases the verbosity of the output. This mode is useful for
-in-depth debugging
+in-depth debugging. By default, WARNING and higher output is displayed.
 
 ```shell
 pipenv run link_checker.py -v
 ```
 
-The output contains:
-
--   File currently being checked
--   Errors in the links
--   Warnings in the link
--   Skipped files and links
 
 ### `--output-error`
 
@@ -135,6 +155,7 @@ pipenv run link_checker.py --output-error output\results.txt
 This flag also creates a `junit-xml` format summary of script run containing number of error links and number of unique error links.
 
 The location of this file will be `test-summary/junit-xml-report.xml`. This xml file can be passed to CI to show failure result.
+
 
 ### `--local`
 
@@ -164,6 +185,7 @@ This mode can be helpful for using script as a CI.
 
 **Note:** You can manually change the relative local path by changing `LICENSE_LOCAL_PATH` global variable in the script.
 
+
 ## Integrating with CI
 
 Due to the script capability to scrape licenses from local storage, it can be used as CI in 2 easy steps:-
@@ -181,6 +203,7 @@ Due to the script capability to scrape licenses from local storage, it can be us
 
 The example configuration for **CircleCI** is present [here](examples/CircleCI/config.yml).
 
+
 ## Unit Testing
 
 Unit tests have been written using [pytest](https://docs.pytest.org/en/latest/)
@@ -195,16 +218,24 @@ framework. The tests can be run using:
     pipenv run pytest -v
     ```
 
+
 ## Troubleshooting
 
--   `UnicodeEncodeError`  
+-   `UnicodeEncodeError`
     This error is thrown when the console is not UTF-8 supported.
 
--   Failing **Lint** build  
+-   Failing **Lint** build
     Currently we follow customised [black](https://github.com/python/black) code
     style alongwith [flake8](https://gitlab.com/pycqa/flake8). The [black
     configuration](pyproject.toml) and [flake8 configuration](.flake8) are
-    present in the repo. Do follow them to pass the CI build
+    present in the repo. Do follow them to pass the CI build:
+    ```shell
+    black ./
+    ```
+    ```
+    flake8 ./
+    ```
+
 
 ## Code of Conduct
 
@@ -219,10 +250,12 @@ framework. The tests can be run using:
 [code_of_conduct]: https://creativecommons.github.io/community/code-of-conduct/
 [reporting_guide]: https://creativecommons.github.io/community/code-of-conduct/enforcement/
 
+
 ## Contributing
 
 We welcome contributions for bug fixes, enhancement and documentation. Please
 follow [`CONTRIBUTING.md`](CONTRIBUTING.md) while contributing.
+
 
 ## License
 

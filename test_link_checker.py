@@ -13,21 +13,51 @@ def reset_global():
 
 
 def test_parse_argument(tmpdir):
+    # Test default options
     args = link_checker.parse_argument([])
-    assert args.verbose is False
+    assert args.log_level == 30
     assert bool(args.output_errors) is False
-    args = link_checker.parse_argument(["-v", "--output-errors"])
-    assert args.verbose is True
+    assert args.local is False
+    assert args.root_url == "https://creativecommons.org"
+    # Test --local
+    args = link_checker.parse_argument(["--local"])
+    assert args.local is True
+    # Test Logging Levels -q/--quiet
+    args = link_checker.parse_argument(["-q"])
+    assert args.log_level == 40
+    args = link_checker.parse_argument(["-qq"])
+    assert args.log_level == 50
+    args = link_checker.parse_argument(["-qqq"])
+    assert args.log_level == 50
+    args = link_checker.parse_argument(["-q", "--quiet"])
+    assert args.log_level == 50
+    # Test Logging Levels -v/--verbose
+    args = link_checker.parse_argument(["-v"])
+    assert args.log_level == 20
+    args = link_checker.parse_argument(["-vv"])
+    assert args.log_level == 10
+    args = link_checker.parse_argument(["-vvv"])
+    assert args.log_level == 10
+    args = link_checker.parse_argument(["-v", "--verbose"])
+    assert args.log_level == 10
+    # Test Logging Levels with both -v and -q
+    args = link_checker.parse_argument(["-vq"])
+    assert args.log_level == 30
+    args = link_checker.parse_argument(["-vvq"])
+    assert args.log_level == 20
+    args = link_checker.parse_argument(["-vqq"])
+    assert args.log_level == 40
+    # Test default value of --output-errors
+    args = link_checker.parse_argument(["--output-errors"])
     assert bool(args.output_errors) is True
     assert args.output_errors.name == "errorlog.txt"
+    # Test custom value of --output-errors
     output_file = tmpdir.join("errorlog.txt")
     args = link_checker.parse_argument(
-        ["--verbose", "--output-errors", output_file.strpath, "--local"]
+        ["--output-errors", output_file.strpath]
     )
-    assert args.verbose is True
     assert bool(args.output_errors) is True
     assert args.output_errors.name == output_file.strpath
-    assert args.local is True
 
 
 def test_get_github_licenses():
@@ -74,17 +104,6 @@ def test_create_base_link(filename, result):
     args = link_checker.parse_argument([])
     baseURL = link_checker.create_base_link(args, filename)
     assert baseURL == result
-
-
-def test_verbose_print(capsys):
-    # verbose = False (default)
-    args = link_checker.parse_argument([])
-    link_checker.verbose_print(args, "Without verbose")
-    # Set verbose True
-    args = link_checker.parse_argument(["-v"])
-    link_checker.verbose_print(args, "With verbose")
-    captured = capsys.readouterr()
-    assert captured.out == "With verbose\n"
 
 
 def test_output_write(tmpdir):
@@ -185,8 +204,8 @@ def test_get_scrapable_links():
     soup = BeautifulSoup(test_file, "lxml")
     test_case = soup.find_all("a")
     base_url = "https://www.demourl.com/dir1/dir2"
-    valid_anchors, valid_links = link_checker.get_scrapable_links(
-        args, base_url, test_case
+    valid_anchors, valid_links, _ = link_checker.get_scrapable_links(
+        args, base_url, test_case, None, False
     )
     assert str(valid_anchors) == (
         '[<a href="https://creativecommons.ca">Absolute link</a>,'
@@ -251,7 +270,14 @@ def test_write_response(tmpdir):
 
     # Set output to external file
     caught_errors = link_checker.write_response(
-        args, all_links, response, base_url, license_name, valid_anchors
+        args,
+        all_links,
+        response,
+        base_url,
+        license_name,
+        valid_anchors,
+        license_name,
+        False,
     )
     assert caught_errors == 2
     args.output_errors.flush()

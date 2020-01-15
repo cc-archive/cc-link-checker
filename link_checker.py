@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # vim: set fileencoding=utf-8 :
 
+"""Check for broken links in Creative Commons licenses
+"""
+
 # Standard library
 from urllib.parse import urljoin, urlsplit
 import argparse
@@ -33,6 +36,11 @@ GITHUB_BASE = (
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
 TEST_ORDER = ["zero", "4.0", "3.0", "2.5", "2.1", "2.0"]
 DEFAULT_ROOT_URL = "https://creativecommons.org"
+CRITICAL = 50
+ERROR = 40
+WARNING = 30
+INFO = 20
+DEBUG = 10
 
 
 class CheckerError(Exception):
@@ -52,9 +60,7 @@ def parse_argument(arguments):
         args (list): list of arguments parsed from command line
     """
     # Setup argument parser
-    parser = argparse.ArgumentParser(
-        description="Script to check broken links in CC licenses"
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--local",
         help="Scrapes license files from local file system",
@@ -70,18 +76,36 @@ def parse_argument(arguments):
         type=argparse.FileType("w", encoding="utf-8"),
     )
     parser.add_argument(
+        "-q",
+        "--quiet",
+        action="append_const",
+        const=10,
+        dest="verbosity",
+        help="Decrease verbosity. Can be specified multiple times.",
+    )
+    parser.add_argument(
         "--root-url", help=f"Set root URL (default: {DEFAULT_ROOT_URL})",
     )
     parser.add_argument(
         "-v",
         "--verbose",
-        help="Increase verbosity of output",
-        action="store_true",
+        action="append_const",
+        const=-10,
+        dest="verbosity",
+        help="Increase verbosity. Can be specified multiple times.",
     )
 
     args = parser.parse_args(arguments)
     if args.root_url is None:
         args.root_url = DEFAULT_ROOT_URL
+    args.log_level = WARNING
+    if args.verbosity:
+        for v in args.verbosity:
+            args.log_level += v
+        if args.log_level < DEBUG:
+            args.log_level = DEBUG
+        if args.log_level > CRITICAL:
+            args.log_level = CRITICAL
     if not args.output_errors:
         args.output_errors = None
     return args
@@ -115,7 +139,6 @@ def get_local_licenses():
     for name in license_names_unordered:
         if ".html" in name and name not in license_names:
             license_names.append(name)
-    print("Number of files to be checked:", len(license_names))
     return license_names
 
 
@@ -148,7 +171,6 @@ def get_github_licenses():
     for name in license_names_unordered:
         if ".html" in name.string and name not in license_names:
             license_names.append(name)
-    print("Number of files to be checked:", len(license_names))
     return license_names
 
 
@@ -236,14 +258,9 @@ def create_base_link(args, filename):
     return args.root_url + extra
 
 
-def verbose_print(args, *args_, **kwargs):
-    """Prints only if -v/--verbose flag is set
-    """
-    if args.verbose:
-        print(*args_, **kwargs)
-
-
-def get_scrapable_links(args, base_url, links_in_license):
+def get_scrapable_links(
+    args, base_url, links_in_license, context, context_printed
+):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links
 
@@ -278,26 +295,27 @@ def get_scrapable_links(args, base_url, links_in_license):
         if href[0] == "#":
             # anchor links are valid, but out of scope
             # No need to report non-issue (not actionable)
-            # verbose_print(
-            #     args,
+            # warnings.append(
             #     "  {:<24}{}".format("Skipping internal link ", link)
             # )
             continue
         if href.startswith("mailto:"):
             # mailto links are valid, but out of scope
             # No need to report non-issue (not actionable)
-            # verbose_print(
-            #     args,
+            # warnings.append
             #     "  {:<24}{}".format("Skipping mailto link ", link)
             # )
             continue
         analyze = urlsplit(href)
         valid_links.append(create_absolute_link(base_url, analyze))
         valid_anchors.append(link)
-    if warnings:
-        verbose_print(args, "Warnings:")
-        verbose_print(args, "\n".join(warnings))
-    return (valid_anchors, valid_links)
+    # Logging level WARNING or lower
+    if warnings and args.log_level <= WARNING:
+        print(context)
+        print("Warnings:")
+        print("\n".join(warnings))
+        context_printed = True
+    return (valid_anchors, valid_links, context_printed)
 
 
 def create_absolute_link(base_url, link_analysis):
@@ -399,7 +417,14 @@ def memoize_result(check_links, responses):
 
 
 def write_response(
-    args, all_links, response, base_url, license_name, valid_anchors
+    args,
+    all_links,
+    response,
+    base_url,
+    license_name,
+    valid_anchors,
+    context,
+    context_printed,
 ):
     """Writes broken links to CLI and file
 
@@ -424,12 +449,16 @@ def write_response(
             map_links_file(all_links[idx], base_url)
             caught_errors += 1
             if caught_errors == 1:
-                print("Errors:")
+                if args.log_level <= ERROR:
+                    if not context_printed:
+                        print(context)
+                    print("Errors:")
                 output_write(
                     args, "\n{}\nURL: {}".format(license_name, base_url)
                 )
             result = "  {:<24}{}".format(str(status), valid_anchors[idx])
-            print(result)
+            if args.log_level <= ERROR:
+                print(result)
             output_write(args, result)
     return caught_errors
 
@@ -507,19 +536,20 @@ def main():
         license_names = get_local_licenses()
     else:
         license_names = get_github_licenses()
-
+    if args.log_level <= INFO:
+        print("Number of files to be checked:", len(license_names))
     errors_total = 0
     exit_status = 0
     for license_name in license_names:
         caught_errors = 0
-        print("\n\nChecking:", license_name)
+        context_printed = False
         # Refer to issue for more info on samplingplus_1.0.br.htm:
         #   https://github.com/creativecommons/cc-link-checker/issues/9
         if license_name == "samplingplus_1.0.br.html":
             continue
         filename = license_name[: -len(".html")]
         base_url = create_base_link(args, filename)
-        print("URL:", base_url)
+        context = f"\n\nChecking: {license_name}\nURL: {base_url}"
         if args.local:
             source_html = request_local_text(license_name)
         else:
@@ -527,9 +557,12 @@ def main():
             source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
-        verbose_print(args, "Number of links found:", len(links_in_license))
-        valid_anchors, valid_links = get_scrapable_links(
-            args, base_url, links_in_license
+        link_count = len(links_in_license)
+        if args.log_level <= INFO:
+            print(f"{context}\nNumber of links found: {link_count}")
+            context_printed = True
+        valid_anchors, valid_links, context_printed = get_scrapable_links(
+            args, base_url, links_in_license, context, context_printed
         )
         if valid_links:
             memoized_results = get_memoized_result(valid_links, valid_anchors)
@@ -568,6 +601,8 @@ def main():
                 base_url,
                 license_name,
                 stored_anchors,
+                context,
+                context_printed,
             )
 
         if caught_errors:

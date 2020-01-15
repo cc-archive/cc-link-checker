@@ -421,8 +421,7 @@ def write_response(all_links, response, base_url, license_name, valid_anchors):
             map_links_file(all_links[idx], base_url)
             caught_errors += 1
             if caught_errors == 1:
-                if not VERBOSE:
-                    print("Errors:")
+                print("Errors:")
                 output_write("\n{}\nURL: {}".format(license_name, base_url))
             result = "  {:<24}{}".format(str(status), valid_anchors[idx])
             print(result)

@@ -258,6 +258,7 @@ def get_scrapable_links(base_url, links_in_license):
     """
     valid_links = []
     valid_anchors = []
+    warnings = []
     for link in links_in_license:
         try:
             href = link["href"]
@@ -267,21 +268,23 @@ def get_scrapable_links(base_url, links_in_license):
             except KeyError:
                 try:
                     assert link["name"]
-                    verbose_print(
+                    warnings.append(
                         "  {:<24}{}".format("Anchor uses name", link)
                     )
                 except:
-                    verbose_print(
+                    warnings.append(
                         "  {:<24}{}".format("Anchor w/o href or id", link)
                     )
             continue
         if href[0] == "#":
+            # anchor links are valid, but out of scope
             # No need to report non-issue (not actionable)
             # verbose_print(
             #     "  {:<24}{}".format("Skipping internal link ", link)
             # )
             continue
         if href.startswith("mailto:"):
+            # mailto links are valid, but out of scope
             # No need to report non-issue (not actionable)
             # verbose_print(
             #     "  {:<24}{}".format("Skipping mailto link ", link)
@@ -290,6 +293,9 @@ def get_scrapable_links(base_url, links_in_license):
         analyze = urlsplit(href)
         valid_links.append(create_absolute_link(base_url, analyze))
         valid_anchors.append(link)
+    if warnings:
+        verbose_print("Warnings:")
+        print("\n".join(warnings))
     return (valid_anchors, valid_links)
 
 
@@ -523,7 +529,6 @@ def main():
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
         verbose_print("Number of links found:", len(links_in_license))
-        verbose_print("Errors and Warnings:")
         valid_anchors, valid_links = get_scrapable_links(
             base_url, links_in_license
         )

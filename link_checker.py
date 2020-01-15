@@ -4,23 +4,20 @@
 # Standard library
 from urllib.parse import urljoin, urlsplit
 import argparse
+import os
 import sys
 import time
 import traceback
-import os
 
 # Third-party
 from bs4 import BeautifulSoup
-import grequests  # WARNING: Always import grequests before requests
 from junit_xml import TestCase, TestSuite
+import grequests  # WARNING: Always import grequests before requests
 import requests
 
 
 # Set defaults
 START_TIME = time.time()
-VERBOSE = False
-OUTPUT_ERR = False
-LOCAL = False
 HEADER = {
     "User-Agent": "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0)"
     " Gecko/20100101 Firefox/10.0"
@@ -28,7 +25,6 @@ HEADER = {
 MEMOIZED_LINKS = {}
 MAP_BROKEN_LINKS = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
-OUTPUT = None
 REQUESTS_TIMEOUT = 5
 GITHUB_BASE = (
     "https://raw.githubusercontent.com/creativecommons/creativecommons.org"
@@ -36,6 +32,7 @@ GITHUB_BASE = (
 )
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
 TEST_ORDER = ["zero", "4.0", "3.0", "2.5", "2.1", "2.0"]
+DEFAULT_ROOT_URL = "https://creativecommons.org"
 
 
 class CheckerError(Exception):
@@ -48,24 +45,19 @@ class CheckerError(Exception):
         return self.message
 
 
-def parse_argument(args):
+def parse_argument(arguments):
     """parse arguments from cli
 
     Args:
         args (list): list of arguments parsed from command line
     """
-    global VERBOSE
-    global OUTPUT_ERR
-    global OUTPUT
-    global LOCAL
     # Setup argument parser
     parser = argparse.ArgumentParser(
         description="Script to check broken links in CC licenses"
     )
     parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Increase verbosity of output",
+        "--local",
+        help="Scrapes license files from local file system",
         action="store_true",
     )
     parser.add_argument(
@@ -76,21 +68,23 @@ def parse_argument(args):
         const="errorlog.txt",
         nargs="?",
         type=argparse.FileType("w", encoding="utf-8"),
-        dest="OUTPUT",
     )
     parser.add_argument(
-        "--local",
-        help="Scrapes license files from local file system",
+        "--root-url", help=f"Set root URL (default: {DEFAULT_ROOT_URL})",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Increase verbosity of output",
         action="store_true",
     )
-    args = parser.parse_args(args)
-    if args.verbose:
-        VERBOSE = True
-    if args.OUTPUT:
-        OUTPUT = args.OUTPUT
-        OUTPUT_ERR = True
-    if args.local:
-        LOCAL = True
+
+    args = parser.parse_args(arguments)
+    if args.root_url is None:
+        args.root_url = DEFAULT_ROOT_URL
+    if not args.output_errors:
+        args.output_errors = None
+    return args
 
 
 def get_local_licenses():
@@ -211,7 +205,7 @@ def request_local_text(license_name):
         raise
 
 
-def create_base_link(filename):
+def create_base_link(args, filename):
     """Generates base URL on which the license file will be displayed
 
     Args:
@@ -220,7 +214,6 @@ def create_base_link(filename):
     Returns:
         str: Base URL of the license file
     """
-    ROOT_URL = "https://creativecommons.org"
     parts = filename.split("_")
 
     if parts[0] == "samplingplus":
@@ -233,24 +226,24 @@ def create_base_link(filename):
     extra = extra + "/" + parts[1]
     if parts[0] == "samplingplus" and len(parts) == 3:
         extra = extra + "/" + parts[2] + "/legalcode"
-        return ROOT_URL + extra
+        return args.root_url + extra
 
     if len(parts) == 4:
         extra = extra + "/" + parts[2]
     extra = extra + "/legalcode"
     if len(parts) >= 3:
         extra = extra + "." + parts[-1]
-    return ROOT_URL + extra
+    return args.root_url + extra
 
 
-def verbose_print(*args, **kwargs):
-    """Prints only if -v or --verbose flag is set
+def verbose_print(args, *args_, **kwargs):
+    """Prints only if -v/--verbose flag is set
     """
-    if VERBOSE:
-        print(*args, **kwargs)
+    if args.verbose:
+        print(*args_, **kwargs)
 
 
-def get_scrapable_links(base_url, links_in_license):
+def get_scrapable_links(args, base_url, links_in_license):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links
 
@@ -286,6 +279,7 @@ def get_scrapable_links(base_url, links_in_license):
             # anchor links are valid, but out of scope
             # No need to report non-issue (not actionable)
             # verbose_print(
+            #     args,
             #     "  {:<24}{}".format("Skipping internal link ", link)
             # )
             continue
@@ -293,6 +287,7 @@ def get_scrapable_links(base_url, links_in_license):
             # mailto links are valid, but out of scope
             # No need to report non-issue (not actionable)
             # verbose_print(
+            #     args,
             #     "  {:<24}{}".format("Skipping mailto link ", link)
             # )
             continue
@@ -300,8 +295,8 @@ def get_scrapable_links(base_url, links_in_license):
         valid_links.append(create_absolute_link(base_url, analyze))
         valid_anchors.append(link)
     if warnings:
-        verbose_print("Warnings:")
-        print("\n".join(warnings))
+        verbose_print(args, "Warnings:")
+        verbose_print(args, "\n".join(warnings))
     return (valid_anchors, valid_links)
 
 
@@ -403,7 +398,9 @@ def memoize_result(check_links, responses):
         MEMOIZED_LINKS[link] = responses[idx]
 
 
-def write_response(all_links, response, base_url, license_name, valid_anchors):
+def write_response(
+    args, all_links, response, base_url, license_name, valid_anchors
+):
     """Writes broken links to CLI and file
 
     Args:
@@ -428,10 +425,12 @@ def write_response(all_links, response, base_url, license_name, valid_anchors):
             caught_errors += 1
             if caught_errors == 1:
                 print("Errors:")
-                output_write("\n{}\nURL: {}".format(license_name, base_url))
+                output_write(
+                    args, "\n{}\nURL: {}".format(license_name, base_url)
+                )
             result = "  {:<24}{}".format(str(status), valid_anchors[idx])
             print(result)
-            output_write(result)
+            output_write(args, result)
     return caught_errors
 
 
@@ -449,15 +448,15 @@ def map_links_file(link, file_url):
         MAP_BROKEN_LINKS[link] = [file_url]
 
 
-def output_write(*args, **kwargs):
+def output_write(args, *args_, **kwargs):
     """Prints to output file is --output-error flag is set
     """
-    if OUTPUT_ERR:
-        kwargs["file"] = OUTPUT
-        print(*args, **kwargs)
+    if args.output_errors:
+        kwargs["file"] = args.output_errors
+        print(*args_, **kwargs)
 
 
-def output_summary(license_names, num_errors):
+def output_summary(args, license_names, num_errors):
     """Prints short summary of broken links in the output error file
 
     Args:
@@ -465,17 +464,17 @@ def output_summary(license_names, num_errors):
         num_errors (int): Number of broken links found
     """
     output_write(
-        "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
+        args, "\n\n{}\n{} SUMMARY\n{}\n".format("*" * 39, " " * 15, "*" * 39)
     )
-    output_write("Timestamp: {}".format(time.ctime()))
-    output_write("Total files checked: {}".format(len(license_names)))
-    output_write("Number of error links: {}".format(num_errors))
+    output_write(args, "Timestamp: {}".format(time.ctime()))
+    output_write(args, "Total files checked: {}".format(len(license_names)))
+    output_write(args, "Number of error links: {}".format(num_errors))
     keys = MAP_BROKEN_LINKS.keys()
-    output_write("Number of unique broken links: {}\n".format(len(keys)))
+    output_write(args, "Number of unique broken links: {}\n".format(len(keys)))
     for key, value in MAP_BROKEN_LINKS.items():
-        output_write("\nBroken link - {} found in:".format(key))
+        output_write(args, "\nBroken link - {} found in:".format(key))
         for url in value:
-            output_write(url)
+            output_write(args, url)
 
 
 def output_test_summary(errors_total):
@@ -502,9 +501,9 @@ def output_test_summary(errors_total):
 
 
 def main():
-    parse_argument(sys.argv[1:])
+    args = parse_argument(sys.argv[1:])
 
-    if LOCAL:
+    if args.local:
         license_names = get_local_licenses()
     else:
         license_names = get_github_licenses()
@@ -519,18 +518,18 @@ def main():
         if license_name == "samplingplus_1.0.br.html":
             continue
         filename = license_name[: -len(".html")]
-        base_url = create_base_link(filename)
+        base_url = create_base_link(args, filename)
         print("URL:", base_url)
-        if LOCAL:
+        if args.local:
             source_html = request_local_text(license_name)
         else:
             page_url = "{}{}".format(GITHUB_BASE, license_name)
             source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
-        verbose_print("Number of links found:", len(links_in_license))
+        verbose_print(args, "Number of links found:", len(links_in_license))
         valid_anchors, valid_links = get_scrapable_links(
-            base_url, links_in_license
+            args, base_url, links_in_license
         )
         if valid_links:
             memoized_results = get_memoized_result(valid_links, valid_anchors)
@@ -563,6 +562,7 @@ def main():
                 stored_result += responses
             stored_links += check_links
             caught_errors = write_response(
+                args,
                 stored_links,
                 stored_result,
                 base_url,
@@ -576,9 +576,9 @@ def main():
 
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
-    if OUTPUT_ERR:
-        output_summary(license_names, errors_total)
-        print("\nError file present at: ", OUTPUT.name)
+    if args.output_errors:
+        output_summary(args, license_names, errors_total)
+        print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
     sys.exit(exit_status)

@@ -93,7 +93,7 @@ def parse_argument(args):
         LOCAL = True
 
 
-def get_local_license():
+def get_local_licenses():
     """This function get all the licenses stored locally
 
     Returns:
@@ -108,6 +108,7 @@ def get_local_license():
     # Catching permission denied(OS ERROR) or other errors
     except:
         raise
+    links.sort()
     links_ordered = list()
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files
@@ -123,7 +124,7 @@ def get_local_license():
     return links
 
 
-def get_global_license():
+def get_github_licenses():
     """This function scrapes all the license file in the repo:
     https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
 
@@ -136,7 +137,10 @@ def get_global_license():
     )
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
-    links = soup.table.tbody.find_all("a", class_="js-navigation-open")
+    links = []
+    for link in soup.table.tbody.find_all("a", class_="js-navigation-open"):
+        links.append(link.string)
+    links.sort()
     links_ordered = list()
     # Test newer licenses first (they are the most volatile) and exclude
     # non-.html files
@@ -499,20 +503,15 @@ def main():
     parse_argument(sys.argv[1:])
 
     if LOCAL:
-        all_links = get_local_license()
+        all_links = get_local_licenses()
     else:
-        all_links = get_global_license()
+        all_links = get_github_licenses()
 
     errors_total = 0
     exit_status = 0
-    for license in all_links:
-        try:
-            license_name = license.string
-        except AttributeError:
-            license_name = license
+    for license_name in all_links:
         caught_errors = 0
-        print("\n")
-        print("Checking:", license_name)
+        print("\n\nChecking:", license_name)
         # Refer to issue for more info on samplingplus_1.0.br.htm:
         #   https://github.com/creativecommons/cc-link-checker/issues/9
         if license_name == "samplingplus_1.0.br.html":

@@ -7,28 +7,57 @@ import grequests
 
 @pytest.fixture
 def reset_global():
-    link_checker.VERBOSE = False
-    link_checker.OUTPUT_ERR = False
     link_checker.MEMOIZED_LINKS = {}
     link_checker.MAP_BROKEN_LINKS = {}
-    link_checker.LOCAL = False
     return
 
 
-def test_parse_argument(reset_global):
-    link_checker.parse_argument(["-v", "--output-error"])
-    assert link_checker.VERBOSE is True
-    assert link_checker.OUTPUT_ERR is True
-    assert link_checker.OUTPUT.name == "errorlog.txt"
-    link_checker.VERBOSE = False
-    link_checker.OUTPUT_ERR = False
-    link_checker.parse_argument(
-        ["--verbose", "--output-error", "err_file.txt", "--local"]
+def test_parse_argument(tmpdir):
+    # Test default options
+    args = link_checker.parse_argument([])
+    assert args.log_level == 30
+    assert bool(args.output_errors) is False
+    assert args.local is False
+    assert args.root_url == "https://creativecommons.org"
+    # Test --local
+    args = link_checker.parse_argument(["--local"])
+    assert args.local is True
+    # Test Logging Levels -q/--quiet
+    args = link_checker.parse_argument(["-q"])
+    assert args.log_level == 40
+    args = link_checker.parse_argument(["-qq"])
+    assert args.log_level == 50
+    args = link_checker.parse_argument(["-qqq"])
+    assert args.log_level == 50
+    args = link_checker.parse_argument(["-q", "--quiet"])
+    assert args.log_level == 50
+    # Test Logging Levels -v/--verbose
+    args = link_checker.parse_argument(["-v"])
+    assert args.log_level == 20
+    args = link_checker.parse_argument(["-vv"])
+    assert args.log_level == 10
+    args = link_checker.parse_argument(["-vvv"])
+    assert args.log_level == 10
+    args = link_checker.parse_argument(["-v", "--verbose"])
+    assert args.log_level == 10
+    # Test Logging Levels with both -v and -q
+    args = link_checker.parse_argument(["-vq"])
+    assert args.log_level == 30
+    args = link_checker.parse_argument(["-vvq"])
+    assert args.log_level == 20
+    args = link_checker.parse_argument(["-vqq"])
+    assert args.log_level == 40
+    # Test default value of --output-errors
+    args = link_checker.parse_argument(["--output-errors"])
+    assert bool(args.output_errors) is True
+    assert args.output_errors.name == "errorlog.txt"
+    # Test custom value of --output-errors
+    output_file = tmpdir.join("errorlog.txt")
+    args = link_checker.parse_argument(
+        ["--output-errors", output_file.strpath]
     )
-    assert link_checker.VERBOSE is True
-    assert link_checker.OUTPUT_ERR is True
-    assert link_checker.OUTPUT.name == "err_file.txt"
-    assert link_checker.LOCAL is True
+    assert bool(args.output_errors) is True
+    assert args.output_errors.name == output_file.strpath
 
 
 def test_get_github_licenses():
@@ -72,36 +101,28 @@ def test_get_github_licenses():
     ],
 )
 def test_create_base_link(filename, result):
-    baseURL = link_checker.create_base_link(filename)
+    args = link_checker.parse_argument([])
+    baseURL = link_checker.create_base_link(args, filename)
     assert baseURL == result
 
 
-def test_verbose_print(capsys, reset_global):
-    # verbose = False (default)
-    link_checker.verbose_print("Without verbose")
-    # Set verbose True
-    link_checker.VERBOSE = True
-    link_checker.verbose_print("With verbose")
-    captured = capsys.readouterr()
-    assert captured.out == "With verbose\n"
+def test_output_write(tmpdir):
+    # output_errors is set and written to
+    output_file = tmpdir.join("errorlog.txt")
+    args = link_checker.parse_argument(
+        ["--output-errors", output_file.strpath]
+    )
+    link_checker.output_write(args, "Output enabled")
+    args.output_errors.flush()
+    assert output_file.read() == "Output enabled\n"
 
 
-def test_output_write(reset_global):
-    # OUTPUT_ERR = False (default)
-    link_checker.output_write("Output disabled")
-    # Set OUTPUT_ERR True
-    link_checker.OUTPUT_ERR = True
-    with open("errorlog.txt", "w+") as output_file:
-        link_checker.OUTPUT = output_file
-        link_checker.output_write("Output enabled")
-        # Seek to start of buffer
-        output_file.seek(0)
-        assert output_file.read() == "Output enabled\n"
-
-
-def test_output_summary(reset_global):
-    # Set config
-    link_checker.OUTPUT_ERR = True
+def test_output_summary(reset_global, tmpdir):
+    # output_errors is set and written to
+    output_file = tmpdir.join("errorlog.txt")
+    args = link_checker.parse_argument(
+        ["--output-errors", output_file.strpath]
+    )
     link_checker.MAP_BROKEN_LINKS = {
         "https://link1.demo": [
             "https://file1.url/here",
@@ -109,46 +130,46 @@ def test_output_summary(reset_global):
         ],
         "https://link2.demo": ["https://file4.url/here"],
     }
-
-    # Open file for writing
-    with open("errorlog.txt", "w+") as output_file:
-        link_checker.OUTPUT = output_file
-        all_links = ["some link"] * 5
-        link_checker.output_summary(all_links, 3)
-        output_file.seek(0)
-        assert output_file.readline() == "\n"
-        assert output_file.readline() == "\n"
-        assert (
-            output_file.readline()
-            == "***************************************\n"
-        )
-        assert output_file.readline() == "                SUMMARY\n"
-        assert (
-            output_file.readline()
-            == "***************************************\n"
-        )
-        assert output_file.readline() == "\n"
-        assert str(output_file.readline()).startswith("Timestamp:")
-        assert output_file.readline() == "Total files checked: 5\n"
-        assert output_file.readline() == "Number of error links: 3\n"
-        assert output_file.readline() == "Number of unique broken links: 2\n"
-        assert output_file.readline() == "\n"
-        assert output_file.readline() == "\n"
-        assert (
-            output_file.readline()
-            == "Broken link - https://link1.demo found in:\n"
-        )
-        assert output_file.readline() == "https://file1.url/here\n"
-        assert output_file.readline() == "https://file2.url/goes/here\n"
-        assert output_file.readline() == "\n"
-        assert (
-            output_file.readline()
-            == "Broken link - https://link2.demo found in:\n"
-        )
-        assert output_file.readline() == "https://file4.url/here\n"
-
-    # Reset non global values
-    link_checker.all_links = []
+    all_links = ["some link"] * 5
+    link_checker.output_summary(args, all_links, 3)
+    args.output_errors.flush()
+    lines = output_file.readlines()
+    i = 0
+    assert lines[i] == "\n"
+    i += 1
+    assert lines[i] == "\n"
+    i += 1
+    assert lines[i] == "***************************************\n"
+    i += 1
+    assert lines[i] == "                SUMMARY\n"
+    i += 1
+    assert lines[i] == "***************************************\n"
+    i += 1
+    assert lines[i] == "\n"
+    i += 1
+    assert str(lines[i]).startswith("Timestamp:")
+    i += 1
+    assert lines[i] == "Total files checked: 5\n"
+    i += 1
+    assert lines[i] == "Number of error links: 3\n"
+    i += 1
+    assert lines[i] == "Number of unique broken links: 2\n"
+    i += 1
+    assert lines[i] == "\n"
+    i += 1
+    assert lines[i] == "\n"
+    i += 1
+    assert lines[i] == "Broken link - https://link1.demo found in:\n"
+    i += 1
+    assert lines[i] == "https://file1.url/here\n"
+    i += 1
+    assert lines[i] == "https://file2.url/goes/here\n"
+    i += 1
+    assert lines[i] == "\n"
+    i += 1
+    assert lines[i] == "Broken link - https://link2.demo found in:\n"
+    i += 1
+    assert lines[i] == "https://file4.url/here\n"
 
 
 @pytest.mark.parametrize(
@@ -172,6 +193,7 @@ def test_create_absolute_link(link, result):
 
 
 def test_get_scrapable_links():
+    args = link_checker.parse_argument([])
     test_file = (
         "<a name='hello'>without href</a>,"
         " <a href='#hello'>internal link</a>,"
@@ -182,8 +204,8 @@ def test_get_scrapable_links():
     soup = BeautifulSoup(test_file, "lxml")
     test_case = soup.find_all("a")
     base_url = "https://www.demourl.com/dir1/dir2"
-    valid_anchors, valid_links = link_checker.get_scrapable_links(
-        base_url, test_case
+    valid_anchors, valid_links, _ = link_checker.get_scrapable_links(
+        args, base_url, test_case, None, False
     )
     assert str(valid_anchors) == (
         '[<a href="https://creativecommons.ca">Absolute link</a>,'
@@ -217,9 +239,12 @@ def test_map_links_file(reset_global):
     }
 
 
-def test_write_response(reset_global):
+def test_write_response(tmpdir):
     # Set config
-    link_checker.OUTPUT_ERR = True
+    output_file = tmpdir.join("errorlog.txt")
+    args = link_checker.parse_argument(
+        ["--output-errors", output_file.strpath]
+    )
 
     # Text to extract valid_anchors
     text = (
@@ -244,27 +269,38 @@ def test_write_response(reset_global):
     license_name = "by-cc-nd_2.0"
 
     # Set output to external file
-    with open("errorlog.txt", "w+") as output_file:
-        link_checker.OUTPUT = output_file
-        caught_errors = link_checker.write_response(
-            all_links, response, base_url, license_name, valid_anchors
-        )
-        assert caught_errors == 2
-        output_file.seek(0)
-        assert output_file.readline() == "\n"
-        assert output_file.readline() == "by-cc-nd_2.0\n"
-        assert output_file.readline() == "URL: https://baseurl/goes/here\n"
-        assert output_file.readline() == (
-            "  Invalid Schema          "
-            '<a href="file://link3">Invalid Scheme</a>\n'
-        )
-        assert output_file.readline() == (
-            "  400                     "
-            '<a href="http://httpbin.org/status/400">Response 400</a>\n'
-        )
+    caught_errors = link_checker.write_response(
+        args,
+        all_links,
+        response,
+        base_url,
+        license_name,
+        valid_anchors,
+        license_name,
+        False,
+    )
+    assert caught_errors == 2
+    args.output_errors.flush()
+    lines = output_file.readlines()
+    i = 0
+    assert lines[i] == "\n"
+    i += 1
+    assert lines[i] == "by-cc-nd_2.0\n"
+    i += 1
+    assert lines[i] == "URL: https://baseurl/goes/here\n"
+    i += 1
+    assert lines[i] == (
+        "  Invalid Schema          "
+        '<a href="file://link3">Invalid Scheme</a>\n'
+    )
+    i += 1
+    assert lines[i] == (
+        "  400                     "
+        '<a href="http://httpbin.org/status/400">Response 400</a>\n'
+    )
 
 
-def test_get_memoized_result():
+def test_get_memoized_result(reset_global):
     text = (
         "<a href='link1'>Link 1</a>,"
         " <a href='link2'>Link 2</a>,"
@@ -356,8 +392,7 @@ def test_request_local_text():
     "errors_total, map_links",
     [(3, {"link1": ["file1", "file3"], "link2": ["file1"]}), (0, {})],
 )
-def test_output_test_summary(errors_total, map_links):
-    link_checker.OUTPUT_ERR = True
+def test_output_test_summary(errors_total, map_links, reset_global, tmpdir):
     link_checker.MAP_BROKEN_LINKS = map_links
     link_checker.output_test_summary(errors_total)
     with open("test-summary/junit-xml-report.xml", "r") as test_summary:

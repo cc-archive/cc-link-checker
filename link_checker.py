@@ -104,7 +104,7 @@ def parse_argument(arguments):
             args.log_level += v
         if args.log_level < DEBUG:
             args.log_level = DEBUG
-        if args.log_level > CRITICAL:
+        elif args.log_level > CRITICAL:
             args.log_level = CRITICAL
     if not args.output_errors:
         args.output_errors = None

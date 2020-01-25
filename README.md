@@ -2,7 +2,8 @@
 <p align="center">This python script scrapes all the <a href="https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode">license files</a> and automates the task of detecting broken links, timeout error and other link issues</p>
 
 <p align="center">
-<a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://opensource.creativecommons.org/community/#slack"><img alt="chat: on Slack" src="https://img.shields.io/badge/chat-on%20Slack-blue"></a>
+
+<a href="https://github.com/creativecommons/cc-link-checker/actions"><img src="https://github.com/creativecommons/cc-link-checker/workflows/unitAndLint/badge.svg" alt="unitAndLint"></a> <a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://opensource.creativecommons.org/community/#slack"><img alt="chat: on Slack" src="https://img.shields.io/badge/chat-on%20Slack-blue"></a>
 </p>
 
 
@@ -47,7 +48,7 @@ are interested in developing the script
     git clone https://github.com/creativecommons/cc-link-checker.git
     ```
 2. Install dependencies
-   Using **requirements.txt**: `pip install -r requirements.txt`
+   Using **requirements.txt** (Deprecated): `pip install -r requirements.txt`<br>
    Using **Pipfile** (requires [pipenv](https://github.com/pypa/pipenv)): `pipenv install`
 
 

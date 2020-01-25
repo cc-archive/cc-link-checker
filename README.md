@@ -53,7 +53,8 @@ are interested in developing the script
 
 ### Development
 
-We recommend using [pipenv](https://github.com/pypa/pipenv) to create a virtual environment and install dependencies
+We recommend using [pipenv](https://github.com/pypa/pipenv) to create a virtual
+environment and install dependencies
 
 1. Clone the repo
     ```shell
@@ -152,14 +153,17 @@ The output file can also be explicitly defined by passing a value to the flag
 pipenv run link_checker.py --output-error output\results.txt
 ```
 
-This flag also creates a `junit-xml` format summary of script run containing number of error links and number of unique error links.
+This flag also creates a `junit-xml` format summary of script run containing
+number of error links and number of unique error links.
 
-The location of this file will be `test-summary/junit-xml-report.xml`. This xml file can be passed to CI to show failure result.
+The location of this file will be `test-summary/junit-xml-report.xml`. This xml
+file can be passed to CI to show failure result.
 
 
 ### `--local`
 
-This flag allows script to test license files stored locally rather than fetching each license file from Github.
+This flag allows script to test license files stored locally rather than
+fetching each license file from Github.
 
 The relative directory structure should be:
 
@@ -183,12 +187,14 @@ The relative directory structure should be:
 
 This mode can be helpful for using script as a CI.
 
-**Note:** You can manually change the relative local path by changing `LICENSE_LOCAL_PATH` global variable in the script.
+**Note:** You can manually change the relative local path by changing
+`LICENSE_LOCAL_PATH` global variable in the script.
 
 
 ## Integrating with CI
 
-Due to the script capability to scrape licenses from local storage, it can be used as CI in 2 easy steps:-
+Due to the script capability to scrape licenses from local storage, it can be
+used as CI in 2 easy steps:
 
 1. Clone this repo in the CI container
 
@@ -196,12 +202,14 @@ Due to the script capability to scrape licenses from local storage, it can be us
     git clone https://github.com/creativecommons/cc-link-checker.git ~/cc-link-checker
     ```
 
-2. Run the `link_checker.py` in local(`--local`) and output error(`--output-error`) mode
+2. Run the `link_checker.py` in local(`--local`) and
+   output error(`--output-error`) mode
     ```shell
     python link_checker.py --local --output-errors
     ```
 
-The example configuration for **CircleCI** is present [here](examples/CircleCI/config.yml).
+The configuration for **GitHub Actions**, for example, is present
+[here](.github/workflows/unitAndLint.yaml).
 
 
 ## Unit Testing
@@ -221,10 +229,12 @@ framework. The tests can be run using:
 
 ## Troubleshooting
 
--   `UnicodeEncodeError`
+-   `UnicodeEncodeError`:
+
     This error is thrown when the console is not UTF-8 supported.
 
--   Failing **Lint** build  
+-   Failing **Lint** build:
+
     Currently we follow customised [black](https://github.com/python/black) code
     style alongwith [flake8](https://gitlab.com/pycqa/flake8). The [black
     configuration](pyproject.toml) and [flake8 configuration](.flake8) are

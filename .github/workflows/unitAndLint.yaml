@@ -1,0 +1,69 @@
+name: unitAndLint
+
+on:
+  push:
+    paths:
+      # Only run if there is a change in python or yaml(Github workflow) file
+      - "**.py"
+      - "**.yaml"
+  pull_request:
+    paths:
+      # Only run if there is a change in python or yaml(Github workflow) file
+      - "**.py"
+      - "**.yaml"
+
+jobs:
+  unitTest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install pipenv
+        uses: dschep/install-pipenv-action@v1
+      - name: Install dependencies
+        run: |
+          pipenv install --dev
+      - name: Test with pytest
+        run: |
+          mkdir test-reports
+          pipenv run pytest -v --junitxml=test-reports/junit.xml
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@master
+        with:
+          name: unitTest-report
+          path: test-reports/junit.xml
+        # Use always() to always run this step to publish test results when there are test failures
+        if: always()
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install pipenv
+        uses: dschep/install-pipenv-action@v1
+      - name: Install dependencies
+        run: |
+          pipenv install --dev
+      - name: Testing with flake8
+        run: |
+          mkdir test-reports
+          pipenv run flake8 ./ --output-file test-reports/flake8
+      - name: Testing with black
+        run: |
+          pipenv run black --check ./
+      - name: Upload flake test results
+        uses: actions/upload-artifact@master
+        with:
+          name: flake-report
+          path: test-reports/flake8
+        # Use failure() to upload only if failure occurs
+        if: failure()

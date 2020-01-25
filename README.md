@@ -2,7 +2,7 @@
 <p align="center">This python script scrapes all the <a href="https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode">license files</a> and automates the task of detecting broken links, timeout error and other link issues</p>
 
 <p align="center">
-<a href="https://circleci.com/gh/creativecommons/cc-link-checker"><img alt="CircleCI" src="https://img.shields.io/circleci/build/github/creativecommons/cc-link-checker.svg"></a> <a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://opensource.creativecommons.org/community/#slack"><img alt="chat: on Slack" src="https://img.shields.io/badge/chat-on%20Slack-blue"></a>
+<a href="./LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/github/license/creativecommons/cc-link-checker.svg"></a> <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a> <a href="https://opensource.creativecommons.org/community/#slack"><img alt="chat: on Slack" src="https://img.shields.io/badge/chat-on%20Slack-blue"></a>
 </p>
 
 
@@ -224,7 +224,7 @@ framework. The tests can be run using:
 -   `UnicodeEncodeError`
     This error is thrown when the console is not UTF-8 supported.
 
--   Failing **Lint** build
+-   Failing **Lint** build  
     Currently we follow customised [black](https://github.com/python/black) code
     style alongwith [flake8](https://gitlab.com/pycqa/flake8). The [black
     configuration](pyproject.toml) and [flake8 configuration](.flake8) are

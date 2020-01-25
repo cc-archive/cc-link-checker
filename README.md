@@ -229,10 +229,12 @@ framework. The tests can be run using:
 
 ## Troubleshooting
 
--   `UnicodeEncodeError`
+-   `UnicodeEncodeError`:
+
     This error is thrown when the console is not UTF-8 supported.
 
--   Failing **Lint** build
+-   Failing **Lint** build:
+
     Currently we follow customised [black](https://github.com/python/black) code
     style alongwith [flake8](https://gitlab.com/pycqa/flake8). The [black
     configuration](pyproject.toml) and [flake8 configuration](.flake8) are

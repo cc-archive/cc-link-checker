@@ -2,15 +2,25 @@ name: unitAndLint
 
 on:
   push:
+    # Only run if,
     paths:
-      # Only run if there is a change in python or yaml(Github workflow) file
+      # Changes in python, yaml(github actions), toml(black config), .flake8(flake8 config) or Pipfile
       - "**.py"
       - "**.yaml"
+      - "**.toml"
+      - ".flake8"
+      - "Pipfile"
+      - "Pipfile.lock"
   pull_request:
+    # Only run if,
     paths:
-      # Only run if there is a change in python or yaml(Github workflow) file
+      # Changes in python, yaml(github actions), toml(black config), .flake8(flake8 config) or Pipfile
       - "**.py"
       - "**.yaml"
+      - "**.toml"
+      - ".flake8"
+      - "Pipfile"
+      - "Pipfile.lock"
 
 jobs:
   unitTest:

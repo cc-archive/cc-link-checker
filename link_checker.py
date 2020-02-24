@@ -14,7 +14,7 @@ import traceback
 
 # Third-party
 from bs4 import BeautifulSoup
-from junit_xml import TestCase, TestSuite
+from junit_xml import TestCase, TestSuite, to_xml_report_file
 import grequests  # WARNING: Always import grequests before requests
 import requests
 
@@ -526,7 +526,7 @@ def output_test_summary(errors_total):
                 f" broken links: {len(MAP_BROKEN_LINKS.keys())}",
             )
         ts = TestSuite("cc-link-checker", [test_case])
-        TestSuite.to_file(test_summary, [ts])
+        to_xml_report_file(test_summary, [ts])
 
 
 def main():

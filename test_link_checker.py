@@ -218,7 +218,10 @@ def test_get_scrapable_links():
 
 
 def test_exception_handler():
-    links_list = ["http://example.com:81", "file://C:/Devil"]
+    links_list = [
+        "http://invalid-example.creativecommons.org:81",
+        "file://C:/Devil",
+    ]
     rs = (grequests.get(link, timeout=3) for link in links_list)
     response = grequests.map(
         rs, exception_handler=link_checker.exception_handler

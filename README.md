@@ -48,7 +48,6 @@ are interested in developing the script
     git clone https://github.com/creativecommons/cc-link-checker.git
     ```
 2. Install dependencies
-   Using **requirements.txt** (Deprecated): `pip install -r requirements.txt`<br>
    Using **Pipfile** (requires [pipenv](https://github.com/pypa/pipenv)): `pipenv install`
 
 

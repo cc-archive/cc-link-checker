@@ -16,9 +16,9 @@ pytest = "*"
 [packages]
 beautifulsoup4 = "*"
 grequests = "*"
+junit-xml = "*"
 lxml = "*"
 requests = "*"
-junit-xml = "*"
 
 [requires]
 python_version = "3"

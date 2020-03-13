@@ -11,6 +11,8 @@ on:
       - ".flake8"
       - "Pipfile"
       - "Pipfile.lock"
+    branches:
+      - master
   pull_request:
     # Only run if,
     paths:
@@ -21,6 +23,8 @@ on:
       - ".flake8"
       - "Pipfile"
       - "Pipfile.lock"
+    branches:
+      - master
 
 jobs:
   unitTest:

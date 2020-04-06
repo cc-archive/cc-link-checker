@@ -97,11 +97,11 @@
         },
         "grequests": {
             "hashes": [
-                "sha256:8667198589765447db2a8d39927144207d9e0578d9142ed87ecc0af9ce937e23",
-                "sha256:d1f75ef1e35cf14ababd33946cef939e8a5870729d463e554c92f06ada4cb7ea"
+                "sha256:6eff964416021bb1dee4182a56cc2b551bfa42d37820e6aee6f2efa00d43a061",
+                "sha256:7dec890c6668e6755a1ea968565535867956639301268394d24df67b478df666"
             ],
             "index": "pypi",
-            "version": "==0.5.0"
+            "version": "==0.6.0"
         },
         "idna": {
             "hashes": [

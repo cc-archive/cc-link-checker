@@ -1,8 +1,13 @@
-import pytest
+# Standard library
 from urllib.parse import urlsplit
-import link_checker
+
+# Third-party
 from bs4 import BeautifulSoup
 import grequests
+import pytest
+
+# Local/library specific
+import link_checker
 
 
 @pytest.fixture
@@ -291,14 +296,14 @@ def test_write_response(tmpdir):
     i += 1
     assert lines[i] == "URL: https://baseurl/goes/here\n"
     i += 1
-    assert lines[i] == (
-        "  Invalid Schema          "
-        '<a href="file://link3">Invalid Scheme</a>\n'
-    )
+    assert lines[i] == f'  {"Invalid Schema":<24}file://link3\n'
+    i += 1
+    assert lines[i] == f'{"":<26}<a href="file://link3">Invalid Scheme</a>\n'
+    i += 1
+    assert lines[i] == f'  {"400":<24}http://httpbin.org/status/400\n'
     i += 1
     assert lines[i] == (
-        "  400                     "
-        '<a href="http://httpbin.org/status/400">Response 400</a>\n'
+        f'{"":<26}<a href="http://httpbin.org/status/400">Response 400</a>\n'
     )
 
 
@@ -403,11 +408,16 @@ def test_output_test_summary(errors_total, map_links, reset_global, tmpdir):
             test_summary.readline()
             test_summary.readline()
             test_summary.readline()
-            assert test_summary.readline() == (
-                "\t\t\t"
-                '<failure message="3 broken links found" type="failure">'
-                "Number of error links: 3\n"
-            )
+
+            # The following is split up because sometimes message= is first and
+            # sometimes type= is first (ex. local macOS dev versus GitHub
+            # Actions Linux)
+            test_line = test_summary.readline()
+            assert test_line.startswith("\t\t\t<failure")
+            assert 'message="3 broken links found"' in test_line
+            assert 'type="failure"' in test_line
+            assert test_line.endswith(">Number of error links: 3\n")
+
             assert (
                 test_summary.readline()
                 == "Number of unique broken links: 2</failure>\n"

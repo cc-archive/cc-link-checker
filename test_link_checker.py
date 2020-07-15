@@ -291,14 +291,14 @@ def test_write_response(tmpdir):
     i += 1
     assert lines[i] == "URL: https://baseurl/goes/here\n"
     i += 1
-    assert lines[i] == (
-        "  Invalid Schema          "
-        '<a href="file://link3">Invalid Scheme</a>\n'
-    )
+    assert lines[i] == f'  {"Invalid Schema":<24}file://link3\n'
+    i += 1
+    assert lines[i] == f'{"":<26}<a href="file://link3">Invalid Scheme</a>\n'
+    i += 1
+    assert lines[i] == f'  {"400":<24}http://httpbin.org/status/400\n'
     i += 1
     assert lines[i] == (
-        "  400                     "
-        '<a href="http://httpbin.org/status/400">Response 400</a>\n'
+        f'{"":<26}<a href="http://httpbin.org/status/400">Response 400</a>\n'
     )
 
 
@@ -403,11 +403,21 @@ def test_output_test_summary(errors_total, map_links, reset_global, tmpdir):
             test_summary.readline()
             test_summary.readline()
             test_summary.readline()
-            assert test_summary.readline() == (
-                "\t\t\t"
-                '<failure message="3 broken links found" type="failure">'
-                "Number of error links: 3\n"
-            )
+            try:
+                # type first, message second
+                assert test_summary.readline() == (
+                    '\t\t\t<failure type="failure"'
+                    ' message="3 broken links found">'
+                    "Number of error links: 3\n"
+                )
+            except AssertionError:
+                # message first, type second
+                assert test_summary.readline() == (
+                    '\t\t\t<failure message="3 broken links found"'
+                    ' type="failure">'
+                    "Number of error links: 3\n"
+                )
+
             assert (
                 test_summary.readline()
                 == "Number of unique broken links: 2</failure>\n"

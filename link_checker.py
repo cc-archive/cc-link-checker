@@ -8,6 +8,7 @@
 from urllib.parse import urljoin, urlsplit
 import argparse
 import os
+import posixpath
 import sys
 import time
 import traceback
@@ -238,24 +239,38 @@ def create_base_link(args, filename):
     """
     parts = filename.split("_")
 
-    if parts[0] == "samplingplus":
-        extra = "/licenses/sampling+"
-    elif parts[0].startswith("zero"):
-        extra = "/publicdomain/" + parts[0]
+    license = parts.pop(0)
+    if license == "samplingplus":
+        license = "sampling+"
+
+    version = parts.pop(0)
+
+    jurisdiction = None
+    language = None
+    if license.startswith("zero"):
+        path_base = "publicdomain"
     else:
-        extra = "/licenses/" + parts[0]
+        path_base = "licenses"
+        if parts and float(version) < 4.0:
+            jurisdiction = parts.pop(0)
 
-    extra = extra + "/" + parts[1]
-    if parts[0] == "samplingplus" and len(parts) == 3:
-        extra = extra + "/" + parts[2] + "/legalcode"
-        return args.root_url + extra
+    if parts:
+        language = parts.pop(0)
 
-    if len(parts) == 4:
-        extra = extra + "/" + parts[2]
-    extra = extra + "/legalcode"
-    if len(parts) >= 3:
-        extra = extra + "." + parts[-1]
-    return args.root_url + extra
+    legalcode = "legalcode"
+    if language:
+        legalcode = f"{legalcode}.{language}"
+
+    url = posixpath.join(args.root_url, path_base)
+    url = posixpath.join(url, license)
+    url = posixpath.join(url, version)
+
+    if jurisdiction:
+        url = posixpath.join(url, jurisdiction)
+
+    url = posixpath.join(url, legalcode)
+
+    return url
 
 
 def get_scrapable_links(
@@ -456,7 +471,9 @@ def write_response(
                 output_write(
                     args, "\n{}\nURL: {}".format(license_name, base_url)
                 )
-            result = "  {:<24}{}".format(str(status), valid_anchors[idx])
+            result = "  {:<24}{}\n{}{}".format(
+                str(status), all_links[idx], " " * 26, valid_anchors[idx]
+            )
             if args.log_level <= ERROR:
                 print(result)
             output_write(args, result)

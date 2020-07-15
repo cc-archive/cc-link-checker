@@ -408,11 +408,16 @@ def test_output_test_summary(errors_total, map_links, reset_global, tmpdir):
             test_summary.readline()
             test_summary.readline()
             test_summary.readline()
+
+            # The following is split up because sometimes message= is first and
+            # sometimes type= is first (ex. local macOS dev versus GitHub
+            # Actions Linux)
             test_line = test_summary.readline()
             assert test_line.startswith("\t\t\t<failure")
             assert 'message="3 broken links found"' in test_line
             assert 'type="failure"' in test_line
             assert test_line.endswith(">Number of error links: 3\n")
+
             assert (
                 test_summary.readline()
                 == "Number of unique broken links: 2</failure>\n"

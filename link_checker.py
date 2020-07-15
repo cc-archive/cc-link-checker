@@ -560,10 +560,6 @@ def main():
     for license_name in license_names:
         caught_errors = 0
         context_printed = False
-        # Refer to issue for more info on samplingplus_1.0.br.htm:
-        #   https://github.com/creativecommons/cc-link-checker/issues/9
-        if license_name == "samplingplus_1.0.br.html":
-            continue
         filename = license_name[: -len(".html")]
         base_url = create_base_link(args, filename)
         context = f"\n\nChecking: {license_name}\nURL: {base_url}"

@@ -1,8 +1,13 @@
-import pytest
+# Standard library
 from urllib.parse import urlsplit
-import link_checker
+
+# Third-party
 from bs4 import BeautifulSoup
 import grequests
+import pytest
+
+# Local/library specific
+import link_checker
 
 
 @pytest.fixture
@@ -403,21 +408,11 @@ def test_output_test_summary(errors_total, map_links, reset_global, tmpdir):
             test_summary.readline()
             test_summary.readline()
             test_summary.readline()
-            try:
-                # type first, message second
-                assert test_summary.readline() == (
-                    '\t\t\t<failure type="failure"'
-                    ' message="3 broken links found">'
-                    "Number of error links: 3\n"
-                )
-            except AssertionError:
-                # message first, type second
-                assert test_summary.readline() == (
-                    '\t\t\t<failure message="3 broken links found"'
-                    ' type="failure">'
-                    "Number of error links: 3\n"
-                )
-
+            test_line = test_summary.readline()
+            assert test_line.startswith("\t\t\t<failure")
+            assert 'message="3 broken links found"' in test_line
+            assert 'type="failure"' in test_line
+            assert test_line.endswith(">Number of error links: 3\n")
             assert (
                 test_summary.readline()
                 == "Number of unique broken links: 2</failure>\n"

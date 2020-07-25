@@ -12,9 +12,12 @@ MEMOIZED_LINKS = {}
 MAP_BROKEN_LINKS = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
 REQUESTS_TIMEOUT = 5
-GITHUB_BASE = (
+LICENSE_GITHUB_BASE = (
     "https://raw.githubusercontent.com/creativecommons/creativecommons.org"
     "/master/docroot/legalcode/"
+)
+TRANSLATIONS_GITHUB_BASE = (
+  "https://github.com/creativecommons/cc.i18n/tree/master/cc/i18n/po"
 )
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
 TEST_ORDER = ["zero", "4.0", "3.0", "2.5", "2.1", "2.0"]

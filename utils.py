@@ -18,21 +18,21 @@ import requests
 
 
 from constants import (
-    START_TIME,
-    HEADER,
-    MEMOIZED_LINKS,
-    MAP_BROKEN_LINKS,
-    GOOD_RESPONSE,
-    REQUESTS_TIMEOUT,
-    GITHUB_BASE,
-    LICENSE_LOCAL_PATH,
-    TEST_ORDER,
-    DEFAULT_ROOT_URL,
-    CRITICAL,
-    ERROR,
-    WARNING,
-    INFO,
-    DEBUG,
+  START_TIME,
+  HEADER,
+  MEMOIZED_LINKS,
+  MAP_BROKEN_LINKS,
+  GOOD_RESPONSE,
+  REQUESTS_TIMEOUT,
+  LICENSE_GITHUB_BASE,
+  TRANSLATIONS_GITHUB_BASE,
+  LICENSE_LOCAL_PATH,
+  TEST_ORDER,
+  DEFAULT_ROOT_URL,
+  CRITICAL,
+  ERROR,
+  WARNING,
+  INFO,
 )
 
 
@@ -44,6 +44,77 @@ class CheckerError(Exception):
 
   def __str__(self):
       return self.message
+
+
+def get_cc_i18n_translations():
+  """ Get a sorted list of all available translations being stored in Transifex
+  """
+  URL = TRANSLATIONS_GITHUB_BASE
+  page_text = request_text(URL)
+  soup = BeautifulSoup(page_text, "lxml")
+  translations = []
+  for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
+      translations.append(link.string)
+  return translations
+
+
+def get_github_licenses():
+  """This function scrapes all the license file in the repo:
+  https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
+
+  Returns:
+      str[]: The list of license/deeds files found in the repository
+  """
+  URL = LICENSE_GITHUB_BASE
+  page_text = request_text(URL)
+  soup = BeautifulSoup(page_text, "lxml")
+  license_names_unordered = []
+  for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
+      license_names_unordered.append(link.string)
+  # Although license_names_unordered is sorted below, is not ordered
+  # according to TEST_ORDER.
+  license_names_unordered.sort()
+  license_names = []
+  # Test newer licenses first (they are the most volatile) and exclude
+  # non-.html files
+  for version in TEST_ORDER:
+      for name in license_names_unordered:
+          if ".html" in name.string and version in name.string:
+              license_names.append(name)
+  for name in license_names_unordered:
+      if ".html" in name.string and name not in license_names:
+          license_names.append(name)
+  return license_names
+
+def get_local_licenses():
+  """This function get all the licenses stored locally
+
+  Returns:
+      list: list of file names of license file
+  """
+  try:
+      license_names_unordered = os.listdir(LICENSE_LOCAL_PATH)
+  except FileNotFoundError:
+      raise CheckerError(
+          "Local license path({}) does not exist".format(LICENSE_LOCAL_PATH)
+      )
+  # Catching permission denied(OS ERROR) or other errors
+  except:
+      raise
+  # Although license_names_unordered is sorted below, is not ordered
+  # according to TEST_ORDER.
+  license_names_unordered.sort()
+  license_names = []
+  # Test newer licenses first (they are the most volatile) and exclude
+  # non-.html files
+  for version in TEST_ORDER:
+      for name in license_names_unordered:
+          if ".html" in name and version in name:
+              license_names.append(name)
+  for name in license_names_unordered:
+      if ".html" in name and name not in license_names:
+          license_names.append(name)
+  return license_names
 
 def request_text(page_url):
   """This function makes a requests get and returns the text result

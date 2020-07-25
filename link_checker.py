@@ -239,11 +239,13 @@ def check_licenses(args):
         output_summary(args, license_names, errors_total)
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
+    
+    return exit_status
 
 def main():
     args = parse_argument(sys.argv[1:])
     if args.licenses:
-        check_licenses(args)
+        exit_status = check_licenses(args)
     sys.exit(exit_status)
 
 

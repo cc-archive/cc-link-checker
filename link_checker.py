@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
 # vim: set fileencoding=utf-8 :
 
-"""Check for broken links in Creative Commons license legalcode
+"""Check for broken links in Creative Commons license legalcode and deeds
 """
 
 # Standard library
-from urllib.parse import urljoin, urlsplit
 import argparse
 import os
-import posixpath
 import sys
 import time
 import traceback
 
 # Third-party
 from bs4 import BeautifulSoup
-from junit_xml import TestCase, TestSuite, to_xml_report_file
 import grequests  # WARNING: Always import grequests before requests
 import requests
 
 from constants import (
     REQUESTS_TIMEOUT,
-    GITHUB_BASE,
+    START_TIME,
+    LICENSE_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
     TEST_ORDER,
     DEFAULT_ROOT_URL,
@@ -32,7 +30,25 @@ from constants import (
     DEBUG,
 )
 
-from utils import *
+from utils import (
+    CheckerError,
+    get_cc_i18n_translations,
+    get_github_licenses,
+    get_local_licenses,
+    request_text,
+    request_local_text,
+    get_scrapable_links,
+    create_base_link,
+    create_absolute_link,
+    get_memoized_result,
+    exception_handler,
+    memoize_result,
+    write_response,
+    map_links_file,
+    output_write,
+    output_summary,
+    output_test_summary,
+)
 
 def parse_argument(arguments):
     """parse arguments from cli
@@ -96,76 +112,12 @@ def parse_argument(arguments):
         args.output_errors = None
     return args
 
-
-def get_local_licenses():
-    """This function get all the licenses stored locally
-
-    Returns:
-        list: list of file names of license file
-    """
-    try:
-        license_names_unordered = os.listdir(LICENSE_LOCAL_PATH)
-    except FileNotFoundError:
-        raise CheckerError(
-            "Local license path({}) does not exist".format(LICENSE_LOCAL_PATH)
-        )
-    # Catching permission denied(OS ERROR) or other errors
-    except:
-        raise
-    # Although license_names_unordered is sorted below, is not ordered
-    # according to TEST_ORDER.
-    license_names_unordered.sort()
-    license_names = []
-    # Test newer licenses first (they are the most volatile) and exclude
-    # non-.html files
-    for version in TEST_ORDER:
-        for name in license_names_unordered:
-            if ".html" in name and version in name:
-                license_names.append(name)
-    for name in license_names_unordered:
-        if ".html" in name and name not in license_names:
-            license_names.append(name)
-    return license_names
-
-
-def get_github_licenses():
-    """This function scrapes all the license file in the repo:
-    https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
-
-    Returns:
-        str[]: The list of license/deeds files found in the repository
-    """
-    URL = (
-        "https://github.com/creativecommons/creativecommons.org/tree/master"
-        "/docroot/legalcode"
-    )
-    page_text = request_text(URL)
-    soup = BeautifulSoup(page_text, "lxml")
-    license_names_unordered = []
-    for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
-        license_names_unordered.append(link.string)
-    # Although license_names_unordered is sorted below, is not ordered
-    # according to TEST_ORDER.
-    license_names_unordered.sort()
-    license_names = []
-    # Test newer licenses first (they are the most volatile) and exclude
-    # non-.html files
-    for version in TEST_ORDER:
-        for name in license_names_unordered:
-            if ".html" in name.string and version in name.string:
-                license_names.append(name)
-    for name in license_names_unordered:
-        if ".html" in name.string and name not in license_names:
-            license_names.append(name)
-    return license_names
-
 def check_licenses(args):
     if args.local:
         license_names = get_local_licenses()
     else:
         license_names = get_github_licenses()
     if args.log_level <= INFO:
-        print("Number of files to be checked:", len(license_names))
     errors_total = 0
     exit_status = 0
     for license_name in license_names:
@@ -177,7 +129,7 @@ def check_licenses(args):
         if args.local:
             source_html = request_local_text(LICENSE_LOCAL_PATH, license_name)
         else:
-            page_url = "{}{}".format(GITHUB_BASE, license_name)
+            page_url = "{}{}".format(LICENSE_GITHUB_BASE, license_name)
             source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
@@ -246,6 +198,9 @@ def main():
     args = parse_argument(sys.argv[1:])
     if args.licenses:
         exit_status = check_licenses(args)
+    else:
+        get_cc_i18n_translations()
+        exit_status = 0
     sys.exit(exit_status)
 
 

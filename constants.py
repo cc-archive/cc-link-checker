@@ -13,8 +13,8 @@ MAP_BROKEN_LINKS = {}
 GOOD_RESPONSE = [200, 300, 301, 302]
 REQUESTS_TIMEOUT = 5
 LICENSE_GITHUB_BASE = (
-    "https://github.com/creativecommons/creativecommons.org/tree/master"
-    "/docroot/legalcode"
+    "https://raw.githubusercontent.com/creativecommons/creativecommons.org"
+    "/master/docroot/legalcode/"
 )
 DEED_GITHUB_BASE = (
     

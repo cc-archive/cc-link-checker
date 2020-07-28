@@ -80,7 +80,10 @@ def get_github_licenses():
   Returns:
       str[]: The list of license/deeds files found in the repository
   """
-    URL = LICENSE_GITHUB_BASE
+    URL = (
+        "https://github.com/creativecommons/creativecommons.org/tree/master"
+        "/docroot/legalcode"
+    )
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
     license_names_unordered = []
@@ -203,7 +206,7 @@ def get_scrapable_links(
     warnings = []
     for link in links_found:
         try:
-            href = link["href"] 
+            href = link["href"]
         except KeyError:
             try:
                 assert link["id"]
@@ -218,7 +221,7 @@ def get_scrapable_links(
                         "  {:<24}{}".format("Anchor w/o href or id", link)
                     )
             continue
-        if href != "" and href[0] == "#":
+        if href[0] == "#":
             # anchor links are valid, but out of scope
             # No need to report non-issue (not actionable)
             # warnings.append(

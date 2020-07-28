@@ -221,7 +221,7 @@ def get_scrapable_links(
                         "  {:<24}{}".format("Anchor w/o href or id", link)
                     )
             continue
-        if href[0] == "#":
+        if href != "" and href[0] == "#":
             # anchor links are valid, but out of scope
             # No need to report non-issue (not actionable)
             # warnings.append(

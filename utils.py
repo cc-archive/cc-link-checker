@@ -185,14 +185,14 @@ def request_local_text(local_path, filename):
 
 
 def get_scrapable_links(
-    args, base_url, links_in_license, context, context_printed
+    args, base_url, links_found, context, context_printed
 ):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links
 
     Args:
         base_url (string): URL on which the license page will be displayed
-        links_in_license (list): List of all the links found in file
+        links_found (list): List of all the links found in file
 
     Returns:
         set: valid_anchors - list of all scrapable anchor tags
@@ -201,7 +201,7 @@ def get_scrapable_links(
     valid_links = []
     valid_anchors = []
     warnings = []
-    for link in links_in_license:
+    for link in links_found:
         try:
             href = link["href"]
         except KeyError:

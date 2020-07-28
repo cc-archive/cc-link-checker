@@ -134,13 +134,13 @@ def check_licenses(args):
             page_url = "{}{}".format(LICENSE_GITHUB_BASE, license_name)
             source_html = request_text(page_url)
         license_soup = BeautifulSoup(source_html, "lxml")
-        links_in_license = license_soup.find_all("a")
-        link_count = len(links_in_license)
+        links_found = license_soup.find_all("a")
+        link_count = len(links_found)
         if args.log_level <= INFO:
             print(f"{context}\nNumber of links found: {link_count}")
             context_printed = True
         valid_anchors, valid_links, context_printed = get_scrapable_links(
-            args, base_url, links_in_license, context, context_printed
+            args, base_url, links_found, context, context_printed
         )
         if valid_links:
             memoized_results = get_memoized_result(valid_links, valid_anchors)
@@ -216,15 +216,14 @@ def check_deeds(args):
         else:
             page_url = base_url
             source_html = request_text(page_url)
-            print('source_html', source_html)
         license_soup = BeautifulSoup(source_html, "lxml")
-        links_in_license = license_soup.find_all("a")
-        link_count = len(links_in_license)
+        links_found = license_soup.find_all("a")
+        link_count = len(links_found)
         if args.log_level <= INFO:
             print(f"{context}\nNumber of links found: {link_count}")
             context_printed = True
         valid_anchors, valid_links, context_printed = get_scrapable_links(
-            args, base_url, links_in_license, context, context_printed
+            args, base_url, links_found, context, context_printed
         )
         if valid_links:
             memoized_results = get_memoized_result(valid_links, valid_anchors)

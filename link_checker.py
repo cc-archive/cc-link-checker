@@ -19,6 +19,7 @@ from constants import (
     START_TIME,
     LICENSE_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
+    DEED_LOCAL_PATH,
     DEFAULT_ROOT_URL,
     CRITICAL,
     WARNING,
@@ -199,7 +200,7 @@ def check_deeds(args):
     if args.local:
         deed_names = get_local_licenses()
     else:
-        deed_names = get_github_licenses(deeds=True)
+        deed_names = get_github_licenses()
     if args.log_level <= INFO:
         print("Number of files to be checked:", len(deed_names))
     errors_total = 0
@@ -208,13 +209,14 @@ def check_deeds(args):
         caught_errors = 0
         context_printed = False
         filename = deed_name[: -len(".html")]
-        base_url = create_base_link(args, filename)
+        base_url = create_base_link(args, filename, for_deeds=True)
         context = f"\n\nChecking: {deed_name}\nURL: {base_url}"
         if args.local:
-            source_html = request_local_text(LICENSE_LOCAL_PATH, deed_name)
+            source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
         else:
-            page_url = "{}{}".format(LICENSE_GITHUB_BASE, deed_name)
+            page_url = base_url
             source_html = request_text(page_url)
+            print('source_html', source_html)
         license_soup = BeautifulSoup(source_html, "lxml")
         links_in_license = license_soup.find_all("a")
         link_count = len(links_in_license)
@@ -283,6 +285,10 @@ def main():
     exit_status = 0
     if args.licenses:
         exit_status = check_licenses(args)
+    if args.deeds:
+        exit_status = check_deeds(args)
+    else:
+        print("\n\nWhoops...Did you forget to choose what links we should be checking?\n")
     sys.exit(exit_status)
 
 

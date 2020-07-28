@@ -16,6 +16,9 @@ LICENSE_GITHUB_BASE = (
     "https://github.com/creativecommons/creativecommons.org/tree/master"
     "/docroot/legalcode"
 )
+DEED_GITHUB_BASE = (
+    
+)
 TRANSLATIONS_GITHUB_BASE = (
     "https://github.com/creativecommons/cc.i18n/tree/master/cc/i18n/po"
 )

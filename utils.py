@@ -244,7 +244,7 @@ def get_scrapable_links(
     return (valid_anchors, valid_links, context_printed)
 
 
-def create_base_link(args, filename):
+def create_base_link(args, filename, for_deeds=False):
     """Generates base URL on which the license file will be displayed
 
     Args:
@@ -285,7 +285,8 @@ def create_base_link(args, filename):
         url = posixpath.join(url, jurisdiction)
 
     url = posixpath.join(url, legalcode)
-
+    if for_deeds:
+        url = get_deed_url_from_legalcode_url(url)
     return url
 
 

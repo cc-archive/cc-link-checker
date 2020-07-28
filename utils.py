@@ -203,7 +203,7 @@ def get_scrapable_links(
     warnings = []
     for link in links_found:
         try:
-            href = link["href"]
+            href = link["href"] 
         except KeyError:
             try:
                 assert link["id"]
@@ -217,24 +217,24 @@ def get_scrapable_links(
                     warnings.append(
                         "  {:<24}{}".format("Anchor w/o href or id", link)
                     )
-                continue
-            if href[0] == "#":
-                # anchor links are valid, but out of scope
-                # No need to report non-issue (not actionable)
-                # warnings.append(
-                #     "  {:<24}{}".format("Skipping internal link ", link)
-                # )
-                continue
-            if href.startswith("mailto:"):
-                # mailto links are valid, but out of scope
-                # No need to report non-issue (not actionable)
-                # warnings.append
-                #     "  {:<24}{}".format("Skipping mailto link ", link)
-                # )
-                continue
-            analyze = urlsplit(href)
-            valid_links.append(create_absolute_link(base_url, analyze))
-            valid_anchors.append(link)
+            continue
+        if href != "" and href[0] == "#":
+            # anchor links are valid, but out of scope
+            # No need to report non-issue (not actionable)
+            # warnings.append(
+            #     "  {:<24}{}".format("Skipping internal link ", link)
+            # )
+            continue
+        if href.startswith("mailto:"):
+            # mailto links are valid, but out of scope
+            # No need to report non-issue (not actionable)
+            # warnings.append
+            #     "  {:<24}{}".format("Skipping mailto link ", link)
+            # )
+            continue
+        analyze = urlsplit(href)
+        valid_links.append(create_absolute_link(base_url, analyze))
+        valid_anchors.append(link)
     # Logging level WARNING or lower
     if warnings and args.log_level <= WARNING:
         print(context)

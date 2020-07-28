@@ -114,6 +114,7 @@ def parse_argument(arguments):
 
 
 def check_licenses(args):
+    print('\n\nChecking Licenses...\n\n')
     if args.local:
         license_names = get_local_licenses()
     else:
@@ -194,9 +195,10 @@ def check_licenses(args):
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
-    return exit_status
+    return [exit_status, 0]
 
 def check_deeds(args):
+    print('\n\nChecking Deeds...\n\n')
     if args.local:
         deed_names = get_local_licenses()
     else:
@@ -210,7 +212,10 @@ def check_deeds(args):
         context_printed = False
         filename = deed_name[: -len(".html")]
         base_url = create_base_link(args, filename, for_deeds=True)
-        context = f"\n\nChecking: {deed_name}\nURL: {base_url}"
+        # Deeds template: https://github.com/creativecommons/cc.engine/blob/master/
+        # cc/engine/templates/licenses/standard_deed.html
+        # Scrapping the html found on the active site
+        context = f"\n\nChecking: \nURL: {base_url}"
         if args.local:
             source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
         else:
@@ -277,18 +282,23 @@ def check_deeds(args):
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
-    return exit_status
+    return [0, exit_status]
 
 def main():
     args = parse_argument(sys.argv[1:])
-    exit_status = 0
+    exit_status_list = []
     if args.licenses:
-        exit_status = check_licenses(args)
+        exit_status_list = check_licenses(args)
     if args.deeds:
-        exit_status = check_deeds(args)
+        exit_status_list = check_deeds(args)
     else:
-        print("\n\nWhoops...Did you forget to choose what links we should be checking?\n")
-    sys.exit(exit_status)
+        print('\nChecking Licenses & Deeds')
+        exit_status_licenses, x = check_licenses(args)
+        y, exit_status_deeds = check_deeds(args)
+        exit_status_list = [exit_status_licenses, exit_status_deeds]
+    if 1 in exit_status_list:
+        return sys.exit(1)
+    return sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,6 @@
 
 # Standard library
 import argparse
-import os
 import sys
 import time
 import traceback
@@ -14,17 +13,14 @@ import traceback
 # Third-party
 from bs4 import BeautifulSoup
 import grequests  # WARNING: Always import grequests before requests
-import requests
 
 from constants import (
     REQUESTS_TIMEOUT,
     START_TIME,
     LICENSE_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
-    TEST_ORDER,
     DEFAULT_ROOT_URL,
     CRITICAL,
-    ERROR,
     WARNING,
     INFO,
     DEBUG,
@@ -39,16 +35,14 @@ from utils import (
     request_local_text,
     get_scrapable_links,
     create_base_link,
-    create_absolute_link,
     get_memoized_result,
     exception_handler,
     memoize_result,
     write_response,
-    map_links_file,
-    output_write,
     output_summary,
     output_test_summary,
 )
+
 
 def parse_argument(arguments):
     """parse arguments from cli
@@ -62,6 +56,11 @@ def parse_argument(arguments):
         "--licenses",
         help="Runs link_checker for licenses only",
         action="store_true",
+    )
+    parser.add_argument(
+        "--deeds",
+        help="Runs link_checker for deeds only",
+        action="store_true"
     )
     parser.add_argument(
         "--local",
@@ -112,12 +111,14 @@ def parse_argument(arguments):
         args.output_errors = None
     return args
 
+
 def check_licenses(args):
     if args.local:
         license_names = get_local_licenses()
     else:
         license_names = get_github_licenses()
     if args.log_level <= INFO:
+        print("Number of files to be checked:", len(license_names))
     errors_total = 0
     exit_status = 0
     for license_name in license_names:
@@ -191,16 +192,97 @@ def check_licenses(args):
         output_summary(args, license_names, errors_total)
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
+
+    return exit_status
+
+def check_deeds(args):
+    if args.local:
+        deed_names = get_local_licenses()
+    else:
+        deed_names = get_github_licenses(deeds=True)
+    if args.log_level <= INFO:
+        print("Number of files to be checked:", len(deed_names))
+    errors_total = 0
+    exit_status = 0
+    for deed_name in deed_names:
+        caught_errors = 0
+        context_printed = False
+        filename = deed_name[: -len(".html")]
+        base_url = create_base_link(args, filename)
+        context = f"\n\nChecking: {deed_name}\nURL: {base_url}"
+        if args.local:
+            source_html = request_local_text(LICENSE_LOCAL_PATH, deed_name)
+        else:
+            page_url = "{}{}".format(LICENSE_GITHUB_BASE, deed_name)
+            source_html = request_text(page_url)
+        license_soup = BeautifulSoup(source_html, "lxml")
+        links_in_license = license_soup.find_all("a")
+        link_count = len(links_in_license)
+        if args.log_level <= INFO:
+            print(f"{context}\nNumber of links found: {link_count}")
+            context_printed = True
+        valid_anchors, valid_links, context_printed = get_scrapable_links(
+            args, base_url, links_in_license, context, context_printed
+        )
+        if valid_links:
+            memoized_results = get_memoized_result(valid_links, valid_anchors)
+            stored_links = memoized_results[0]
+            stored_anchors = memoized_results[1]
+            stored_result = memoized_results[2]
+            check_links = memoized_results[3]
+            check_anchors = memoized_results[4]
+            if check_links:
+                rs = (
+                    # Since we're only checking for validity, we can retreive
+                    # only the headers/metadata
+                    grequests.head(link, timeout=REQUESTS_TIMEOUT)
+                    for link in check_links
+                )
+                responses = list()
+                # Explicitly close connections to free up file handles and
+                # avoid Connection Errors per:
+                # https://stackoverflow.com/a/22839550
+                for response in grequests.map(
+                    rs, exception_handler=exception_handler
+                ):
+                    try:
+                        responses.append(response.status_code)
+                        response.close()
+                    except AttributeError:
+                        responses.append(response)
+                memoize_result(check_links, responses)
+                stored_anchors += check_anchors
+                stored_result += responses
+            stored_links += check_links
+            caught_errors = write_response(
+                args,
+                stored_links,
+                stored_result,
+                base_url,
+                deed_name,
+                stored_anchors,
+                context,
+                context_printed,
+            )
+
+        if caught_errors:
+            errors_total += caught_errors
+            exit_status = 1
     
+    print("\nCompleted in: {}".format(time.time() - START_TIME))
+
+    if args.output_errors:
+        output_summary(args, deed_names, errors_total)
+        print("\nError file present at: ", args.output_errors.name)
+        output_test_summary(errors_total)
+
     return exit_status
 
 def main():
     args = parse_argument(sys.argv[1:])
+    exit_status = 0
     if args.licenses:
         exit_status = check_licenses(args)
-    else:
-        get_cc_i18n_translations()
-        exit_status = 0
     sys.exit(exit_status)
 
 

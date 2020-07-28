@@ -1,123 +1,140 @@
-"""Utility functions 
+"""Utility functions
 """
 
 # Standard library
 from urllib.parse import urljoin, urlsplit
-import argparse
 import os
 import posixpath
-import sys
+import re
 import time
-import traceback
 
 # Third-party
 from bs4 import BeautifulSoup
 from junit_xml import TestCase, TestSuite, to_xml_report_file
-import grequests  # WARNING: Always import grequests before requests
 import requests
 
-
 from constants import (
-  START_TIME,
-  HEADER,
-  MEMOIZED_LINKS,
-  MAP_BROKEN_LINKS,
-  GOOD_RESPONSE,
-  REQUESTS_TIMEOUT,
-  LICENSE_GITHUB_BASE,
-  TRANSLATIONS_GITHUB_BASE,
-  LICENSE_LOCAL_PATH,
-  TEST_ORDER,
-  DEFAULT_ROOT_URL,
-  CRITICAL,
-  ERROR,
-  WARNING,
-  INFO,
+    START_TIME,
+    HEADER,
+    MEMOIZED_LINKS,
+    MAP_BROKEN_LINKS,
+    GOOD_RESPONSE,
+    REQUESTS_TIMEOUT,
+    LICENSE_GITHUB_BASE,
+    TRANSLATIONS_GITHUB_BASE,
+    LICENSE_LOCAL_PATH,
+    LANGUAGE_CODE_REGEX,
+    TEST_ORDER,
+    ERROR,
+    WARNING,
 )
 
 
 class CheckerError(Exception):
-  def __init__(self, message, code=None):
-      self.code = code if code else 1
-      self.message = "({}) {}".format(self.code, message)
-      super(CheckerError, self).__init__(self.message)
+    def __init__(self, message, code=None):
+        self.code = code if code else 1
+        self.message = "({}) {}".format(self.code, message)
+        super(CheckerError, self).__init__(self.message)
 
-  def __str__(self):
-      return self.message
+    def __str__(self):
+        return self.message
 
 
 def get_cc_i18n_translations():
-  """ Get a sorted list of all available translations being stored in Transifex
+    """ Get a sorted list of all available translations being stored in Transifex
   """
-  URL = TRANSLATIONS_GITHUB_BASE
-  page_text = request_text(URL)
-  soup = BeautifulSoup(page_text, "lxml")
-  translations = []
-  for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
-      translations.append(link.string)
-  return translations
+    URL = TRANSLATIONS_GITHUB_BASE
+    page_text = request_text(URL)
+    soup = BeautifulSoup(page_text, "lxml")
+    translations = []
+    for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
+        translations.append(link.string)
+    return translations
 
+def get_deed_url_from_legalcode_url(legalcode_url):
+    """
+    Return the URL of the license that this legalcode url is for.
+    Legalcode URLs are like
+    http://creativecommons.org/licenses/by/4.0/legalcode
+    http://creativecommons.org/licenses/by/4.0/legalcode.es
+    http://opensource.org/licenses/bsd-license.php
+    License URLs are like
+    http://creativecommons.org/licenses/by-nc-nd/4.0/
+    http://creativecommons.org/licenses/BSD/
+    """
+    if legalcode_url == "http://opensource.org/licenses/bsd-license.php":
+        return "http://creativecommons.org/licenses/BSD/"
+    if legalcode_url == "http://opensource.org/licenses/mit-license.php":
+        return "http://creativecommons.org/licenses/MIT/"
+
+    regex = re.compile(r"^(.*)legalcode(\.%s)?" % LANGUAGE_CODE_REGEX)
+    m = regex.match(legalcode_url)
+    if m:
+        return m.group(1)
+    raise ValueError(f"regex did not match {legalcode_url}")
 
 def get_github_licenses():
-  """This function scrapes all the license file in the repo:
+    """This function scrapes all the license file in the repo:
   https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
 
   Returns:
       str[]: The list of license/deeds files found in the repository
   """
-  URL = LICENSE_GITHUB_BASE
-  page_text = request_text(URL)
-  soup = BeautifulSoup(page_text, "lxml")
-  license_names_unordered = []
-  for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
-      license_names_unordered.append(link.string)
-  # Although license_names_unordered is sorted below, is not ordered
-  # according to TEST_ORDER.
-  license_names_unordered.sort()
-  license_names = []
-  # Test newer licenses first (they are the most volatile) and exclude
-  # non-.html files
-  for version in TEST_ORDER:
-      for name in license_names_unordered:
-          if ".html" in name.string and version in name.string:
-              license_names.append(name)
-  for name in license_names_unordered:
-      if ".html" in name.string and name not in license_names:
-          license_names.append(name)
-  return license_names
+    URL = LICENSE_GITHUB_BASE
+    page_text = request_text(URL)
+    soup = BeautifulSoup(page_text, "lxml")
+    license_names_unordered = []
+    for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
+        license_names_unordered.append(link.string)
+    # Although license_names_unordered is sorted below, is not ordered
+    # according to TEST_ORDER.
+    license_names_unordered.sort()
+    license_names = []
+    # Test newer licenses first (they are the most volatile) and exclude
+    # non-.html files
+    for version in TEST_ORDER:
+        for name in license_names_unordered:
+            if ".html" in name.string and version in name.string:
+                license_names.append(name)
+    for name in license_names_unordered:
+        if ".html" in name.string and name not in license_names:
+            license_names.append(name)
+    return license_names
+
 
 def get_local_licenses():
-  """This function get all the licenses stored locally
+    """This function get all the licenses stored locally
 
   Returns:
       list: list of file names of license file
   """
-  try:
-      license_names_unordered = os.listdir(LICENSE_LOCAL_PATH)
-  except FileNotFoundError:
-      raise CheckerError(
-          "Local license path({}) does not exist".format(LICENSE_LOCAL_PATH)
-      )
-  # Catching permission denied(OS ERROR) or other errors
-  except:
-      raise
-  # Although license_names_unordered is sorted below, is not ordered
-  # according to TEST_ORDER.
-  license_names_unordered.sort()
-  license_names = []
-  # Test newer licenses first (they are the most volatile) and exclude
-  # non-.html files
-  for version in TEST_ORDER:
-      for name in license_names_unordered:
-          if ".html" in name and version in name:
-              license_names.append(name)
-  for name in license_names_unordered:
-      if ".html" in name and name not in license_names:
-          license_names.append(name)
-  return license_names
+    try:
+        license_names_unordered = os.listdir(LICENSE_LOCAL_PATH)
+    except FileNotFoundError:
+        raise CheckerError(
+            "Local license path({}) does not exist".format(LICENSE_LOCAL_PATH)
+        )
+    # Catching permission denied(OS ERROR) or other errors
+    except:
+        raise
+    # Although license_names_unordered is sorted below, is not ordered
+    # according to TEST_ORDER.
+    license_names_unordered.sort()
+    license_names = []
+    # Test newer licenses first (they are the most volatile) and exclude
+    # non-.html files
+    for version in TEST_ORDER:
+        for name in license_names_unordered:
+            if ".html" in name and version in name:
+                license_names.append(name)
+    for name in license_names_unordered:
+        if ".html" in name and name not in license_names:
+            license_names.append(name)
+    return license_names
+
 
 def request_text(page_url):
-  """This function makes a requests get and returns the text result
+    """This function makes a requests get and returns the text result
 
   Args:
       page_url (str): URL to perform a GET request for
@@ -125,28 +142,29 @@ def request_text(page_url):
   Returns:
       str: request response text
   """
-  try:
-      r = requests.get(page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT)
-      fetched_text = r.content
-  except requests.exceptions.ConnectionError:
-      raise CheckerError(
-          "FAILED to retreive source HTML ({}) due to"
-          " ConnectionError".format(page_url),
-          1,
-      )
-  except requests.exceptions.Timeout:
-      raise CheckerError(
-          "FAILED to retreive source HTML ({}) due to"
-          " Timeout".format(page_url),
-          1,
-      )
-  except:
-      raise
-  return fetched_text
+    try:
+        r = requests.get(page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT)
+        fetched_text = r.content
+    except requests.exceptions.ConnectionError:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " ConnectionError".format(page_url),
+            1,
+        )
+    except requests.exceptions.Timeout:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " Timeout".format(page_url),
+            1,
+        )
+    except:
+        raise
+    return fetched_text
+
 
 def request_local_text(local_path, filename):
-  """This function reads license, deed, or rdf content from the file stored in local
-  file system
+    """This function reads license, deed, or rdf content from the file
+    stored in local file system
 
   Args:
       local_path (str): Path to license, deed, or rdf
@@ -155,125 +173,124 @@ def request_local_text(local_path, filename):
   Returns:
       str: Content of license file
   """
-  path = os.path.join(local_path, filename)
-  try:
-      with open(path) as lic:
-          return lic.read()
-  except FileNotFoundError:
-      raise CheckerError(
-          "Local file path({}) does not exist".format(path)
-      )
-  # Catching permission denied(OS ERROR) or other errors
-  except:
-      raise
+    path = os.path.join(local_path, filename)
+    try:
+        with open(path) as lic:
+            return lic.read()
+    except FileNotFoundError:
+        raise CheckerError("Local file path({}) does not exist".format(path))
+    # Catching permission denied(OS ERROR) or other errors
+    except:
+        raise
 
 
 def get_scrapable_links(
     args, base_url, links_in_license, context, context_printed
 ):
-  """Filters out anchor tags without href attribute, internal links and
-  mailto scheme links
+    """Filters out anchor tags without href attribute, internal links and
+    mailto scheme links
 
-  Args:
-      base_url (string): URL on which the license page will be displayed
-      links_in_license (list): List of all the links found in file
+    Args:
+        base_url (string): URL on which the license page will be displayed
+        links_in_license (list): List of all the links found in file
 
-  Returns:
-      set: valid_anchors - list of all scrapable anchor tags
-            valid_links - list of all absolute scrapable links
-  """
-  valid_links = []
-  valid_anchors = []
-  warnings = []
-  for link in links_in_license:
-      try:
-          href = link["href"]
-      except KeyError:
-          try:
-              assert link["id"]
-          except KeyError:
-              try:
-                  assert link["name"]
-                  warnings.append(
-                      "  {:<24}{}".format("Anchor uses name", link)
-                  )
-              except:
-                  warnings.append(
-                      "  {:<24}{}".format("Anchor w/o href or id", link)
-                  )
-          continue
-      if href[0] == "#":
-          # anchor links are valid, but out of scope
-          # No need to report non-issue (not actionable)
-          # warnings.append(
-          #     "  {:<24}{}".format("Skipping internal link ", link)
-          # )
-          continue
-      if href.startswith("mailto:"):
-          # mailto links are valid, but out of scope
-          # No need to report non-issue (not actionable)
-          # warnings.append
-          #     "  {:<24}{}".format("Skipping mailto link ", link)
-          # )
-          continue
-      analyze = urlsplit(href)
-      valid_links.append(create_absolute_link(base_url, analyze))
-      valid_anchors.append(link)
-  # Logging level WARNING or lower
-  if warnings and args.log_level <= WARNING:
-      print(context)
-      print("Warnings:")
-      print("\n".join(warnings))
-      context_printed = True
-  return (valid_anchors, valid_links, context_printed)
+    Returns:
+        set: valid_anchors - list of all scrapable anchor tags
+                valid_links - list of all absolute scrapable links
+    """
+    valid_links = []
+    valid_anchors = []
+    warnings = []
+    for link in links_in_license:
+        try:
+            href = link["href"]
+        except KeyError:
+            try:
+                assert link["id"]
+            except KeyError:
+                try:
+                    assert link["name"]
+                    warnings.append(
+                        "  {:<24}{}".format("Anchor uses name", link)
+                    )
+                except:
+                    warnings.append(
+                        "  {:<24}{}".format("Anchor w/o href or id", link)
+                    )
+                continue
+            if href[0] == "#":
+                # anchor links are valid, but out of scope
+                # No need to report non-issue (not actionable)
+                # warnings.append(
+                #     "  {:<24}{}".format("Skipping internal link ", link)
+                # )
+                continue
+            if href.startswith("mailto:"):
+                # mailto links are valid, but out of scope
+                # No need to report non-issue (not actionable)
+                # warnings.append
+                #     "  {:<24}{}".format("Skipping mailto link ", link)
+                # )
+                continue
+            analyze = urlsplit(href)
+            valid_links.append(create_absolute_link(base_url, analyze))
+            valid_anchors.append(link)
+    # Logging level WARNING or lower
+    if warnings and args.log_level <= WARNING:
+        print(context)
+        print("Warnings:")
+        print("\n".join(warnings))
+        context_printed = True
+    return (valid_anchors, valid_links, context_printed)
+
 
 def create_base_link(args, filename):
-  """Generates base URL on which the license file will be displayed
+    """Generates base URL on which the license file will be displayed
 
-  Args:
-      filename (str): Name of the license file
+    Args:
+        filename (str): Name of the license file
 
-  Returns:
-      str: Base URL of the license file
-  """
-  parts = filename.split("_")
+    Returns:
+        str: Base URL of the license file
+    """
+    parts = filename.split("_")
 
-  license = parts.pop(0)
-  if license == "samplingplus":
-      license = "sampling+"
+    license = parts.pop(0)
+    if license == "samplingplus":
+        license = "sampling+"
 
-  version = parts.pop(0)
+    version = parts.pop(0)
 
-  jurisdiction = None
-  language = None
-  if license.startswith("zero"):
-      path_base = "publicdomain"
-  else:
-      path_base = "licenses"
-      if parts and float(version) < 4.0:
-          jurisdiction = parts.pop(0)
+    jurisdiction = None
+    language = None
+    if license.startswith("zero"):
+        path_base = "publicdomain"
+    else:
+        path_base = "licenses"
+        if parts and float(version) < 4.0:
+            jurisdiction = parts.pop(0)
 
-  if parts:
-      language = parts.pop(0)
+    if parts:
+        language = parts.pop(0)
 
-  legalcode = "legalcode"
-  if language:
-      legalcode = f"{legalcode}.{language}"
+    legalcode = "legalcode"
+    if language:
+        legalcode = f"{legalcode}.{language}"
 
-  url = posixpath.join(args.root_url, path_base)
-  url = posixpath.join(url, license)
-  url = posixpath.join(url, version)
+    url = posixpath.join(args.root_url, path_base)
+    url = posixpath.join(url, license)
+    url = posixpath.join(url, version)
 
-  if jurisdiction:
-      url = posixpath.join(url, jurisdiction)
+    if jurisdiction:
+        url = posixpath.join(url, jurisdiction)
 
-  url = posixpath.join(url, legalcode)
+    url = posixpath.join(url, legalcode)
 
-  return url
+    return url
 
 
 def create_absolute_link(base_url, link_analysis):
-  """Creates absolute links from relative links
+    """Creates absolute links from relative links
 
   Args:
       base_url (string): URL on which the license page will be displayed
@@ -283,21 +300,22 @@ def create_absolute_link(base_url, link_analysis):
   Returns:
       str: absolute link
   """
-  href = link_analysis.geturl()
-  # Check for relative link
-  if (
-      link_analysis.scheme == ""
-      and link_analysis.netloc == ""
-      and link_analysis.path != ""
-  ):
-      href = urljoin(base_url, href)
-      return href
-  # Append scheme https where absent
-  if link_analysis.scheme == "":
-      link_analysis = link_analysis._replace(scheme="https")
-      href = link_analysis.geturl()
-      return href
-  return href
+    href = link_analysis.geturl()
+    # Check for relative link
+    if (
+        link_analysis.scheme == ""
+        and link_analysis.netloc == ""
+        and link_analysis.path != ""
+    ):
+        href = urljoin(base_url, href)
+        return href
+    # Append scheme https where absent
+    if link_analysis.scheme == "":
+        link_analysis = link_analysis._replace(scheme="https")
+        href = link_analysis.geturl()
+        return href
+    return href
+
 
 def get_memoized_result(valid_links, valid_anchors):
     """Get memoized result of previously checked links

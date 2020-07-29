@@ -7,18 +7,7 @@ import grequests
 import pytest
 
 # Local/library specific
-from constants import (
-    REQUESTS_TIMEOUT,
-    START_TIME,
-    LICENSE_GITHUB_BASE,
-    LICENSE_LOCAL_PATH,
-    DEED_LOCAL_PATH,
-    DEFAULT_ROOT_URL,
-    CRITICAL,
-    WARNING,
-    INFO,
-    DEBUG,
-)
+import utils
 from utils import (
     CheckerError,
     get_github_licenses,
@@ -27,20 +16,19 @@ from utils import (
     request_local_text,
     get_scrapable_links,
     create_base_link,
+    create_absolute_link,
     get_memoized_result,
     exception_handler,
+    map_links_file,
     memoize_result,
     write_response,
     output_summary,
     output_write,
     output_test_summary,
 )
-
+import constants
 import link_checker
 
-
-MEMOIZED_LINKS = {}
-MAP_BROKEN_LINKS = {}
 
 def test_parse_argument(tmpdir):
     # Test default options
@@ -88,6 +76,12 @@ def test_parse_argument(tmpdir):
     )
     assert bool(args.output_errors) is True
     assert args.output_errors.name == output_file.strpath
+
+@pytest.fixture
+def reset_global():
+    utils.MEMOIZED_LINKS = {}
+    utils.MAP_BROKEN_LINKS = {}
+    return
 
 
 def test_get_github_licenses():
@@ -153,7 +147,7 @@ def test_output_summary(reset_global, tmpdir):
     args = link_checker.parse_argument(
         ["--output-errors", output_file.strpath]
     )
-    MAP_BROKEN_LINKS = {
+    utils.MAP_BROKEN_LINKS = {
         "https://link1.demo": [
             "https://file1.url/here",
             "https://file2.url/goes/here",
@@ -265,7 +259,7 @@ def test_map_links_file(reset_global):
     for idx, link in enumerate(links):
         file_url = file_urls[idx]
         map_links_file(link, file_url)
-    assert MAP_BROKEN_LINKS == {
+    assert utils.MAP_BROKEN_LINKS == {
         "link1": ["file1", "file3"],
         "link2": ["file1"],
     }
@@ -342,7 +336,7 @@ def test_get_memoized_result(reset_global):
     soup = BeautifulSoup(text, "lxml")
     valid_anchors = soup.find_all("a")
     valid_links = ["link1", "link2", "link3_stored", "link4_stored"]
-    MEMOIZED_LINKS = {"link3_stored": 200, "link4_stored": 404}
+    utils.MEMOIZED_LINKS = {"link3_stored": 200, "link4_stored": 404}
     (
         stored_links,
         stored_anchors,
@@ -377,20 +371,20 @@ def test_memoize_result(reset_global):
         rs, exception_handler=exception_handler
     )
     memoize_result(check_links, response)
-    assert len(MEMOIZED_LINKS.keys()) == 3
+    assert len(utils.MEMOIZED_LINKS.keys()) == 3
     assert (
-        MEMOIZED_LINKS[
+        utils.MEMOIZED_LINKS[
             "https://httpbin.org/status/200"
         ].status_code
         == 200
     )
     assert (
-        MEMOIZED_LINKS[
+        utils.MEMOIZED_LINKS[
             "https://httpbin.org/status/400"
         ].status_code
         == 400
     )
-    assert MEMOIZED_LINKS["file://hh"] == "Invalid Schema"
+    assert utils.MEMOIZED_LINKS["file://hh"] == "Invalid Schema"
 
 
 @pytest.mark.parametrize(
@@ -415,8 +409,8 @@ def test_request_local_text():
         test_file.write(random_string)
         test_file.close
     # Change local path to current directory
-    LICENSE_LOCAL_PATH = "./"
-    assert request_local_text("test_file.txt") == random_string
+    constants.LICENSE_LOCAL_PATH = "./"
+    assert request_local_text(constants.LICENSE_LOCAL_PATH, "test_file.txt") == random_string
 
 
 # TODO: Optimize the test using mock
@@ -424,8 +418,8 @@ def test_request_local_text():
     "errors_total, map_links",
     [(3, {"link1": ["file1", "file3"], "link2": ["file1"]}), (0, {})],
 )
-def test_output_test_summary(errors_total, map_links, reset_global, tmpdir):
-    MAP_BROKEN_LINKS = map_links
+def test_output_test_summary(errors_total, map_links, tmpdir):
+    utils.MAP_BROKEN_LINKS = map_links
     output_test_summary(errors_total)
     with open("test-summary/junit-xml-report.xml", "r") as test_summary:
         if errors_total != 0:

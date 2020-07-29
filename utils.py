@@ -62,7 +62,7 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     http://creativecommons.org/licenses/by-nc-nd/4.0/
     http://creativecommons.org/licenses/BSD/
     """
-    versions_needed_to_treated = ["4.0"]
+    versions_needed_to_treated = ["4.0", "zero"]
     translation = legalcode_url.split('.')[-1]
     massage_these_urls = [v for v in versions_needed_to_treated if v in legalcode_url]
     if legalcode_url == "http://opensource.org/licenses/bsd-license.php":

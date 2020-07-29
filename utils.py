@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 from junit_xml import TestCase, TestSuite, to_xml_report_file
 import requests
 
+# Local
 from constants import (
     START_TIME,
     HEADER,

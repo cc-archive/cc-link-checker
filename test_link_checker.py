@@ -7,15 +7,40 @@ import grequests
 import pytest
 
 # Local/library specific
+from constants import (
+    REQUESTS_TIMEOUT,
+    START_TIME,
+    LICENSE_GITHUB_BASE,
+    LICENSE_LOCAL_PATH,
+    DEED_LOCAL_PATH,
+    DEFAULT_ROOT_URL,
+    CRITICAL,
+    WARNING,
+    INFO,
+    DEBUG,
+)
+from utils import (
+    CheckerError,
+    get_github_licenses,
+    get_local_licenses,
+    request_text,
+    request_local_text,
+    get_scrapable_links,
+    create_base_link,
+    get_memoized_result,
+    exception_handler,
+    memoize_result,
+    write_response,
+    output_summary,
+    output_write,
+    output_test_summary,
+)
+
 import link_checker
 
 
-@pytest.fixture
-def reset_global():
-    link_checker.MEMOIZED_LINKS = {}
-    link_checker.MAP_BROKEN_LINKS = {}
-    return
-
+MEMOIZED_LINKS = {}
+MAP_BROKEN_LINKS = {}
 
 def test_parse_argument(tmpdir):
     # Test default options
@@ -66,7 +91,7 @@ def test_parse_argument(tmpdir):
 
 
 def test_get_github_licenses():
-    all_links = link_checker.get_github_licenses()
+    all_links = get_github_licenses()
     assert len(all_links) > 0
 
 
@@ -107,7 +132,7 @@ def test_get_github_licenses():
 )
 def test_create_base_link(filename, result):
     args = link_checker.parse_argument([])
-    baseURL = link_checker.create_base_link(args, filename)
+    baseURL = create_base_link(args, filename)
     assert baseURL == result
 
 
@@ -117,7 +142,7 @@ def test_output_write(tmpdir):
     args = link_checker.parse_argument(
         ["--output-errors", output_file.strpath]
     )
-    link_checker.output_write(args, "Output enabled")
+    output_write(args, "Output enabled")
     args.output_errors.flush()
     assert output_file.read() == "Output enabled\n"
 
@@ -128,7 +153,7 @@ def test_output_summary(reset_global, tmpdir):
     args = link_checker.parse_argument(
         ["--output-errors", output_file.strpath]
     )
-    link_checker.MAP_BROKEN_LINKS = {
+    MAP_BROKEN_LINKS = {
         "https://link1.demo": [
             "https://file1.url/here",
             "https://file2.url/goes/here",
@@ -136,7 +161,7 @@ def test_output_summary(reset_global, tmpdir):
         "https://link2.demo": ["https://file4.url/here"],
     }
     all_links = ["some link"] * 5
-    link_checker.output_summary(args, all_links, 3)
+    output_summary(args, all_links, 3)
     args.output_errors.flush()
     lines = output_file.readlines()
     i = 0
@@ -193,7 +218,7 @@ def test_output_summary(reset_global, tmpdir):
 def test_create_absolute_link(link, result):
     base_url = "https://www.demourl.com/dir1/dir2"
     analyze = urlsplit(link)
-    res = link_checker.create_absolute_link(base_url, analyze)
+    res = create_absolute_link(base_url, analyze)
     assert res == result
 
 
@@ -209,7 +234,7 @@ def test_get_scrapable_links():
     soup = BeautifulSoup(test_file, "lxml")
     test_case = soup.find_all("a")
     base_url = "https://www.demourl.com/dir1/dir2"
-    valid_anchors, valid_links, _ = link_checker.get_scrapable_links(
+    valid_anchors, valid_links, _ = get_scrapable_links(
         args, base_url, test_case, None, False
     )
     assert str(valid_anchors) == (
@@ -229,7 +254,7 @@ def test_exception_handler():
     ]
     rs = (grequests.get(link, timeout=3) for link in links_list)
     response = grequests.map(
-        rs, exception_handler=link_checker.exception_handler
+        rs, exception_handler=exception_handler
     )
     assert response == ["Connection Error", "Invalid Schema"]
 
@@ -239,8 +264,8 @@ def test_map_links_file(reset_global):
     file_urls = ["file1", "file1", "file3"]
     for idx, link in enumerate(links):
         file_url = file_urls[idx]
-        link_checker.map_links_file(link, file_url)
-    assert link_checker.MAP_BROKEN_LINKS == {
+        map_links_file(link, file_url)
+    assert MAP_BROKEN_LINKS == {
         "link1": ["file1", "file3"],
         "link2": ["file1"],
     }
@@ -270,13 +295,13 @@ def test_write_response(tmpdir):
     ]
     rs = (grequests.get(link) for link in all_links)
     response = grequests.map(
-        rs, exception_handler=link_checker.exception_handler
+        rs, exception_handler=exception_handler
     )
     base_url = "https://baseurl/goes/here"
     license_name = "by-cc-nd_2.0"
 
     # Set output to external file
-    caught_errors = link_checker.write_response(
+    caught_errors = write_response(
         args,
         all_links,
         response,
@@ -317,14 +342,14 @@ def test_get_memoized_result(reset_global):
     soup = BeautifulSoup(text, "lxml")
     valid_anchors = soup.find_all("a")
     valid_links = ["link1", "link2", "link3_stored", "link4_stored"]
-    link_checker.MEMOIZED_LINKS = {"link3_stored": 200, "link4_stored": 404}
+    MEMOIZED_LINKS = {"link3_stored": 200, "link4_stored": 404}
     (
         stored_links,
         stored_anchors,
         stored_result,
         check_links,
         check_anchors,
-    ) = link_checker.get_memoized_result(valid_links, valid_anchors)
+    ) = get_memoized_result(valid_links, valid_anchors)
     assert stored_links == ["link3_stored", "link4_stored"]
     assert str(stored_anchors) == (
         '[<a href="link3_stored">Link3 - stored</a>,'
@@ -349,23 +374,23 @@ def test_memoize_result(reset_global):
     ]
     rs = (grequests.get(link, timeout=1) for link in check_links)
     response = grequests.map(
-        rs, exception_handler=link_checker.exception_handler
+        rs, exception_handler=exception_handler
     )
-    link_checker.memoize_result(check_links, response)
-    assert len(link_checker.MEMOIZED_LINKS.keys()) == 3
+    memoize_result(check_links, response)
+    assert len(MEMOIZED_LINKS.keys()) == 3
     assert (
-        link_checker.MEMOIZED_LINKS[
+        MEMOIZED_LINKS[
             "https://httpbin.org/status/200"
         ].status_code
         == 200
     )
     assert (
-        link_checker.MEMOIZED_LINKS[
+        MEMOIZED_LINKS[
             "https://httpbin.org/status/400"
         ].status_code
         == 400
     )
-    assert link_checker.MEMOIZED_LINKS["file://hh"] == "Invalid Schema"
+    assert MEMOIZED_LINKS["file://hh"] == "Invalid Schema"
 
 
 @pytest.mark.parametrize(
@@ -376,8 +401,8 @@ def test_memoize_result(reset_global):
     ],
 )
 def test_request_text(URL, error):
-    with pytest.raises(link_checker.CheckerError) as e:
-        assert link_checker.request_text(URL)
+    with pytest.raises(CheckerError) as e:
+        assert request_text(URL)
         assert str(e.value) == (
             "FAILED to retreive source HTML (https://www.google.com:82) due"
             " to {}".format(error)
@@ -390,8 +415,8 @@ def test_request_local_text():
         test_file.write(random_string)
         test_file.close
     # Change local path to current directory
-    link_checker.LICENSE_LOCAL_PATH = "./"
-    assert link_checker.request_local_text("test_file.txt") == random_string
+    LICENSE_LOCAL_PATH = "./"
+    assert request_local_text("test_file.txt") == random_string
 
 
 # TODO: Optimize the test using mock
@@ -400,8 +425,8 @@ def test_request_local_text():
     [(3, {"link1": ["file1", "file3"], "link2": ["file1"]}), (0, {})],
 )
 def test_output_test_summary(errors_total, map_links, reset_global, tmpdir):
-    link_checker.MAP_BROKEN_LINKS = map_links
-    link_checker.output_test_summary(errors_total)
+    MAP_BROKEN_LINKS = map_links
+    output_test_summary(errors_total)
     with open("test-summary/junit-xml-report.xml", "r") as test_summary:
         if errors_total != 0:
             test_summary.readline()

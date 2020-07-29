@@ -63,8 +63,10 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     http://creativecommons.org/licenses/BSD/
     """
     versions_needed_to_treated = ["4.0", "zero"]
+    exclude_versions = ["zero-assert", "zero-waive"] # deeds do not exist
     translation = legalcode_url.split('.')[-1]
     massage_these_urls = [v for v in versions_needed_to_treated if v in legalcode_url]
+    should_exclude_urls = [v for v in exclude_versions if v in legalcode_url]
     if legalcode_url == "http://opensource.org/licenses/bsd-license.php":
         return "http://creativecommons.org/licenses/BSD/"
     if legalcode_url == "http://opensource.org/licenses/mit-license.php":
@@ -72,10 +74,11 @@ def get_deed_url_from_legalcode_url(legalcode_url):
 
     regex = re.compile(r"^(.*)legalcode(\.%s)?" % LANGUAGE_CODE_REGEX)
     m = regex.match(legalcode_url)
-    if bool(massage_these_urls) and translation != '0/legalcode':
-        print(f"{m.group(1)}deed.{translation}")
-        return f"{m.group(1)}deed.{translation}"
     if m:
+        if bool(massage_these_urls) and translation != '0/legalcode' and bool(should_exclude_urls) == False:
+            return f"{m.group(1)}deed.{translation}"
+        if bool(should_exclude_urls):
+            return ""
         return m.group(1)
     raise ValueError(f"regex did not match {legalcode_url}")
 

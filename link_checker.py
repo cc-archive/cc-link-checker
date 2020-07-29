@@ -215,66 +215,68 @@ def check_deeds(args):
         # Deeds template: https://github.com/creativecommons/cc.engine/blob/master/
         # cc/engine/templates/licenses/standard_deed.html
         # Scrapping the html found on the active site
-        context = f"\n\nChecking: \nURL: {base_url}"
-        if args.local:
-            source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
-        else:
-            page_url = base_url
-            source_html = request_text(page_url)
-        license_soup = BeautifulSoup(source_html, "lxml")
-        links_found = license_soup.find_all("a")
-        link_count = len(links_found)
-        if args.log_level <= INFO:
-            print(f"{context}\nNumber of links found: {link_count}")
-            context_printed = True
-        valid_anchors, valid_links, context_printed = get_scrapable_links(
-            args, base_url, links_found, context, context_printed
-        )
-        if valid_links:
-            memoized_results = get_memoized_result(valid_links, valid_anchors)
-            stored_links = memoized_results[0]
-            stored_anchors = memoized_results[1]
-            stored_result = memoized_results[2]
-            check_links = memoized_results[3]
-            check_anchors = memoized_results[4]
-            if check_links:
-                rs = (
-                    # Since we're only checking for validity, we can retreive
-                    # only the headers/metadata
-                    grequests.head(link, timeout=REQUESTS_TIMEOUT)
-                    for link in check_links
-                )
-                responses = list()
-                # Explicitly close connections to free up file handles and
-                # avoid Connection Errors per:
-                # https://stackoverflow.com/a/22839550
-                for response in grequests.map(
-                    rs, exception_handler=exception_handler
-                ):
-                    try:
-                        responses.append(response.status_code)
-                        response.close()
-                    except AttributeError:
-                        responses.append(response)
-                memoize_result(check_links, responses)
-                stored_anchors += check_anchors
-                stored_result += responses
-            stored_links += check_links
-            caught_errors = write_response(
-                args,
-                stored_links,
-                stored_result,
-                base_url,
-                deed_name,
-                stored_anchors,
-                context,
-                context_printed,
+        print(base_url)
+        if base_url:
+            context = f"\n\nChecking: \nURL: {base_url}"
+            if args.local:
+                source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
+            else:
+                page_url = base_url
+                source_html = request_text(page_url)
+            license_soup = BeautifulSoup(source_html, "lxml")
+            links_found = license_soup.find_all("a")
+            link_count = len(links_found)
+            if args.log_level <= INFO:
+                print(f"{context}\nNumber of links found: {link_count}")
+                context_printed = True
+            valid_anchors, valid_links, context_printed = get_scrapable_links(
+                args, base_url, links_found, context, context_printed
             )
+            if valid_links:
+                memoized_results = get_memoized_result(valid_links, valid_anchors)
+                stored_links = memoized_results[0]
+                stored_anchors = memoized_results[1]
+                stored_result = memoized_results[2]
+                check_links = memoized_results[3]
+                check_anchors = memoized_results[4]
+                if check_links:
+                    rs = (
+                        # Since we're only checking for validity, we can retreive
+                        # only the headers/metadata
+                        grequests.head(link, timeout=REQUESTS_TIMEOUT)
+                        for link in check_links
+                    )
+                    responses = list()
+                    # Explicitly close connections to free up file handles and
+                    # avoid Connection Errors per:
+                    # https://stackoverflow.com/a/22839550
+                    for response in grequests.map(
+                        rs, exception_handler=exception_handler
+                    ):
+                        try:
+                            responses.append(response.status_code)
+                            response.close()
+                        except AttributeError:
+                            responses.append(response)
+                    memoize_result(check_links, responses)
+                    stored_anchors += check_anchors
+                    stored_result += responses
+                stored_links += check_links
+                caught_errors = write_response(
+                    args,
+                    stored_links,
+                    stored_result,
+                    base_url,
+                    deed_name,
+                    stored_anchors,
+                    context,
+                    context_printed,
+                )
 
-        if caught_errors:
-            errors_total += caught_errors
-            exit_status = 1
-    
+            if caught_errors:
+                errors_total += caught_errors
+                exit_status = 1
+        
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if args.output_errors:
@@ -292,7 +294,7 @@ def main():
     if args.deeds:
         exit_status_list = check_deeds(args)
     else:
-        print('\nChecking Licenses & Deeds')
+        print('\nRunning Full Inspection: Checking Links in License LegalCode & Deeds')
         exit_status_licenses, x = check_licenses(args)
         y, exit_status_deeds = check_deeds(args)
         exit_status_list = [exit_status_licenses, exit_status_deeds]

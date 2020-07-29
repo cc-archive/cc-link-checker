@@ -21,7 +21,6 @@ from constants import (
     GOOD_RESPONSE,
     REQUESTS_TIMEOUT,
     LICENSE_GITHUB_BASE,
-    TRANSLATIONS_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
     LANGUAGE_CODE_REGEX,
     TEST_ORDER,
@@ -38,18 +37,6 @@ class CheckerError(Exception):
 
     def __str__(self):
         return self.message
-
-
-def get_cc_i18n_translations():
-    """ Get a sorted list of all available translations being stored in Transifex
-  """
-    URL = TRANSLATIONS_GITHUB_BASE
-    page_text = request_text(URL)
-    soup = BeautifulSoup(page_text, "lxml")
-    translations = []
-    for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
-        translations.append(link.string)
-    return translations
 
 def get_deed_url_from_legalcode_url(legalcode_url):
     """

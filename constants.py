@@ -16,12 +16,6 @@ LICENSE_GITHUB_BASE = (
     "https://raw.githubusercontent.com/creativecommons/creativecommons.org"
     "/master/docroot/legalcode/"
 )
-DEED_GITHUB_BASE = (
-    
-)
-TRANSLATIONS_GITHUB_BASE = (
-    "https://github.com/creativecommons/cc.i18n/tree/master/cc/i18n/po"
-)
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
 DEED_LOCAL_PATH = ""
 LANGUAGE_CODE_REGEX = r"[a-zA-Z_-]*"

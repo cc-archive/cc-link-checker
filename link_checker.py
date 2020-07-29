@@ -29,7 +29,6 @@ from constants import (
 
 from utils import (
     CheckerError,
-    get_cc_i18n_translations,
     get_github_licenses,
     get_local_licenses,
     request_text,

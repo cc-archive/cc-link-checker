@@ -197,6 +197,7 @@ def check_licenses(args):
 
     return [exit_status, 0]
 
+
 def check_deeds(args):
     print('\n\nChecking Deeds...\n\n')
     if args.local:
@@ -211,8 +212,11 @@ def check_deeds(args):
         caught_errors = 0
         context_printed = False
         filename = deed_name[: -len(".html")]
-        base_url = create_base_link(args, filename, for_deeds=True)
-        # Deeds template: https://github.com/creativecommons/cc.engine/blob/master/
+        base_url = create_base_link(
+            args, filename, for_deeds=True
+        )
+        # Deeds template:
+        # https://github.com/creativecommons/cc.engine/blob/master/
         # cc/engine/templates/licenses/standard_deed.html
         # Scrapping the html found on the active site
         if base_url:
@@ -229,10 +233,17 @@ def check_deeds(args):
                 print(f"{context}\nNumber of links found: {link_count}")
                 context_printed = True
             valid_anchors, valid_links, context_printed = get_scrapable_links(
-                args, base_url, links_found, context, context_printed
+                args,
+                base_url,
+                links_found,
+                context,
+                context_printed
             )
             if valid_links:
-                memoized_results = get_memoized_result(valid_links, valid_anchors)
+                memoized_results = get_memoized_result(
+                    valid_links,
+                    valid_anchors
+                )
                 stored_links = memoized_results[0]
                 stored_anchors = memoized_results[1]
                 stored_result = memoized_results[2]
@@ -240,7 +251,8 @@ def check_deeds(args):
                 check_anchors = memoized_results[4]
                 if check_links:
                     rs = (
-                        # Since we're only checking for validity, we can retreive
+                        # Since we're only checking for validity,
+                        # we can retreive
                         # only the headers/metadata
                         grequests.head(link, timeout=REQUESTS_TIMEOUT)
                         for link in check_links
@@ -275,7 +287,7 @@ def check_deeds(args):
             if caught_errors:
                 errors_total += caught_errors
                 exit_status = 1
-        
+
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if args.output_errors:
@@ -285,15 +297,23 @@ def check_deeds(args):
 
     return [0, exit_status]
 
+
 def main():
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
     if args.licenses:
-        exit_status_list = check_licenses(args)
+        exit_status_list = check_licenses(
+            args
+        )
     if args.deeds:
-        exit_status_list = check_deeds(args)
+        exit_status_list = check_deeds(
+            args
+        )
     else:
-        print('\nRunning Full Inspection: Checking Links in LegalCode License & Deeds')
+        print(
+            "\nRunning Full Inspection:"
+            " Checking Links in LegalCode License & Deeds"
+        )
         exit_status_licenses, x = check_licenses(args)
         y, exit_status_deeds = check_deeds(args)
         exit_status_list = [exit_status_licenses, exit_status_deeds]

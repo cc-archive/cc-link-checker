@@ -1,8 +1,6 @@
-# Third-party
-import pytest
-
 # Local/library specific
 import link_checker
+
 
 def test_parse_argument(tmpdir):
     # Test default options

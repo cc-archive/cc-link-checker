@@ -6,13 +6,12 @@ from bs4 import BeautifulSoup
 import grequests
 import pytest
 
-#Local/library specific 
+# Local/library specific
 import utils
-import link_checker 
+import link_checker
 from utils import (
     CheckerError,
     get_github_licenses,
-    get_local_licenses,
     request_text,
     request_local_text,
     get_scrapable_links,
@@ -28,6 +27,7 @@ from utils import (
     output_test_summary,
 )
 import constants
+
 
 @pytest.fixture
 def reset_global():
@@ -370,7 +370,10 @@ def test_request_local_text():
         test_file.close
     # Change local path to current directory
     constants.LICENSE_LOCAL_PATH = "./"
-    assert request_local_text(constants.LICENSE_LOCAL_PATH, "test_file.txt") == random_string
+    assert request_local_text(
+        constants.LICENSE_LOCAL_PATH,
+        "test_file.txt"
+    ) == random_string
 
 
 # TODO: Optimize the test using mock

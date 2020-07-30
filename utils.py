@@ -21,7 +21,6 @@ from constants import (
     MAP_BROKEN_LINKS,
     GOOD_RESPONSE,
     REQUESTS_TIMEOUT,
-    LICENSE_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
     LANGUAGE_CODE_REGEX,
     TEST_ORDER,
@@ -39,6 +38,7 @@ class CheckerError(Exception):
     def __str__(self):
         return self.message
 
+
 def get_deed_url_from_legalcode_url(legalcode_url):
     """
     Return the URL of the license that this legalcode url is for.
@@ -51,10 +51,14 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     http://creativecommons.org/licenses/BSD/
     """
     versions_needed_to_treated = ["4.0", "zero"]
-    exclude_versions = ["zero-assert", "zero-waive"] # deeds do not exist
+    exclude_versions = ["zero-assert", "zero-waive"]  # deeds do not exist
     translation = legalcode_url.split('.')[-1]
-    massage_these_urls = [v for v in versions_needed_to_treated if v in legalcode_url]
-    should_exclude_urls = [v for v in exclude_versions if v in legalcode_url]
+    massage_these_urls = [
+        v for v in versions_needed_to_treated if v in legalcode_url
+    ]
+    should_exclude_urls = [
+        v for v in exclude_versions if v in legalcode_url
+    ]
     if legalcode_url == "http://opensource.org/licenses/bsd-license.php":
         return "http://creativecommons.org/licenses/BSD/"
     if legalcode_url == "http://opensource.org/licenses/mit-license.php":
@@ -63,12 +67,17 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     regex = re.compile(r"^(.*)legalcode(\.%s)?" % LANGUAGE_CODE_REGEX)
     m = regex.match(legalcode_url)
     if m:
-        if bool(massage_these_urls) and translation != '0/legalcode' and bool(should_exclude_urls) == False:
+        if (
+            bool(massage_these_urls)
+            and translation != '0/legalcode'
+            and bool(should_exclude_urls) is False
+        ):
             return f"{m.group(1)}deed.{translation}"
         if bool(should_exclude_urls):
             return ""
         return m.group(1)
     raise ValueError(f"regex did not match {legalcode_url}")
+
 
 def get_github_licenses():
     """This function scrapes all the license file in the repo:

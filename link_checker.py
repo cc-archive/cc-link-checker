@@ -215,7 +215,6 @@ def check_deeds(args):
         # Deeds template: https://github.com/creativecommons/cc.engine/blob/master/
         # cc/engine/templates/licenses/standard_deed.html
         # Scrapping the html found on the active site
-        print(base_url)
         if base_url:
             context = f"\n\nChecking: \nURL: {base_url}"
             if args.local:

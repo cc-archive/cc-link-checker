@@ -114,7 +114,7 @@ def parse_argument(arguments):
 
 
 def check_licenses(args):
-    print('\n\nChecking Licenses...\n\n')
+    print('\n\nChecking LegalCode License...\n\n')
     if args.local:
         license_names = get_local_licenses()
     else:
@@ -293,7 +293,7 @@ def main():
     if args.deeds:
         exit_status_list = check_deeds(args)
     else:
-        print('\nRunning Full Inspection: Checking Links in License LegalCode & Deeds')
+        print('\nRunning Full Inspection: Checking Links in LegalCode License & Deeds')
         exit_status_licenses, x = check_licenses(args)
         y, exit_status_deeds = check_deeds(args)
         exit_status_list = [exit_status_licenses, exit_status_deeds]

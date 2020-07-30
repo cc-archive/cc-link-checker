@@ -59,9 +59,7 @@ def parse_argument(arguments):
         action="store_true",
     )
     parser.add_argument(
-        "--deeds",
-        help="Runs link_checker for deeds only",
-        action="store_true"
+        "--deeds", help="Runs link_checker for deeds only", action="store_true"
     )
     parser.add_argument(
         "--local",
@@ -114,7 +112,7 @@ def parse_argument(arguments):
 
 
 def check_licenses(args):
-    print('\n\nChecking LegalCode License...\n\n')
+    print("\n\nChecking LegalCode License...\n\n")
     if args.local:
         license_names = get_local_licenses()
     else:
@@ -199,7 +197,7 @@ def check_licenses(args):
 
 
 def check_deeds(args):
-    print('\n\nChecking Deeds...\n\n')
+    print("\n\nChecking Deeds...\n\n")
     if args.local:
         deed_names = get_local_licenses()
     else:
@@ -212,9 +210,7 @@ def check_deeds(args):
         caught_errors = 0
         context_printed = False
         filename = deed_name[: -len(".html")]
-        base_url = create_base_link(
-            args, filename, for_deeds=True
-        )
+        base_url = create_base_link(args, filename, for_deeds=True)
         # Deeds template:
         # https://github.com/creativecommons/cc.engine/blob/master/
         # cc/engine/templates/licenses/standard_deed.html
@@ -233,16 +229,11 @@ def check_deeds(args):
                 print(f"{context}\nNumber of links found: {link_count}")
                 context_printed = True
             valid_anchors, valid_links, context_printed = get_scrapable_links(
-                args,
-                base_url,
-                links_found,
-                context,
-                context_printed
+                args, base_url, links_found, context, context_printed
             )
             if valid_links:
                 memoized_results = get_memoized_result(
-                    valid_links,
-                    valid_anchors
+                    valid_links, valid_anchors
                 )
                 stored_links = memoized_results[0]
                 stored_anchors = memoized_results[1]
@@ -302,13 +293,9 @@ def main():
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
     if args.licenses:
-        exit_status_list = check_licenses(
-            args
-        )
+        exit_status_list = check_licenses(args)
     if args.deeds:
-        exit_status_list = check_deeds(
-            args
-        )
+        exit_status_list = check_deeds(args)
     else:
         print(
             "\nRunning Full Inspection:"

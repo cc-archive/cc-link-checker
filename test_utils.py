@@ -207,9 +207,7 @@ def test_exception_handler():
         "file://C:/Devil",
     ]
     rs = (grequests.get(link, timeout=3) for link in links_list)
-    response = grequests.map(
-        rs, exception_handler=exception_handler
-    )
+    response = grequests.map(rs, exception_handler=exception_handler)
     assert response == ["Connection Error", "Invalid Schema"]
 
 
@@ -248,9 +246,7 @@ def test_write_response(tmpdir):
         "http://httpbin.org/status/400",
     ]
     rs = (grequests.get(link) for link in all_links)
-    response = grequests.map(
-        rs, exception_handler=exception_handler
-    )
+    response = grequests.map(rs, exception_handler=exception_handler)
     base_url = "https://baseurl/goes/here"
     license_name = "by-cc-nd_2.0"
 
@@ -327,21 +323,15 @@ def test_memoize_result(reset_global):
         "file://hh",
     ]
     rs = (grequests.get(link, timeout=1) for link in check_links)
-    response = grequests.map(
-        rs, exception_handler=exception_handler
-    )
+    response = grequests.map(rs, exception_handler=exception_handler)
     memoize_result(check_links, response)
     assert len(utils.MEMOIZED_LINKS.keys()) == 3
     assert (
-        utils.MEMOIZED_LINKS[
-            "https://httpbin.org/status/200"
-        ].status_code
+        utils.MEMOIZED_LINKS["https://httpbin.org/status/200"].status_code
         == 200
     )
     assert (
-        utils.MEMOIZED_LINKS[
-            "https://httpbin.org/status/400"
-        ].status_code
+        utils.MEMOIZED_LINKS["https://httpbin.org/status/400"].status_code
         == 400
     )
     assert utils.MEMOIZED_LINKS["file://hh"] == "Invalid Schema"
@@ -370,10 +360,10 @@ def test_request_local_text():
         test_file.close
     # Change local path to current directory
     constants.LICENSE_LOCAL_PATH = "./"
-    assert request_local_text(
-        constants.LICENSE_LOCAL_PATH,
-        "test_file.txt"
-    ) == random_string
+    assert (
+        request_local_text(constants.LICENSE_LOCAL_PATH, "test_file.txt")
+        == random_string
+    )
 
 
 # TODO: Optimize the test using mock

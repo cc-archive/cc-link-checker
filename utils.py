@@ -52,13 +52,11 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     """
     versions_needed_to_treated = ["4.0", "zero"]
     exclude_versions = ["zero-assert", "zero-waive"]  # deeds do not exist
-    translation = legalcode_url.split('.')[-1]
+    translation = legalcode_url.split(".")[-1]
     massage_these_urls = [
         v for v in versions_needed_to_treated if v in legalcode_url
     ]
-    should_exclude_urls = [
-        v for v in exclude_versions if v in legalcode_url
-    ]
+    should_exclude_urls = [v for v in exclude_versions if v in legalcode_url]
     if legalcode_url == "http://opensource.org/licenses/bsd-license.php":
         return "http://creativecommons.org/licenses/BSD/"
     if legalcode_url == "http://opensource.org/licenses/mit-license.php":
@@ -69,7 +67,7 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     if m:
         if (
             bool(massage_these_urls)
-            and translation != '0/legalcode'
+            and translation != "0/legalcode"
             and bool(should_exclude_urls) is False
         ):
             return f"{m.group(1)}deed.{translation}"
@@ -193,9 +191,7 @@ def request_local_text(local_path, filename):
         raise
 
 
-def get_scrapable_links(
-    args, base_url, links_found, context, context_printed
-):
+def get_scrapable_links(args, base_url, links_found, context, context_printed):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links
 

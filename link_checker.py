@@ -62,6 +62,9 @@ def parse_argument(arguments):
         "--deeds", help="Runs link_checker for deeds only", action="store_true"
     )
     parser.add_argument(
+        "--rdf", help="Runs link_checker for rdf only", action="store_true"
+    )
+    parser.add_argument(
         "--local",
         help="Scrapes license files from local file system",
         action="store_true",
@@ -193,12 +196,13 @@ def check_licenses(args):
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
-    return [exit_status, 0]
+    return [exit_status, 0, 0]
 
 
 def check_deeds(args):
     print("\n\nChecking Deeds...\n\n")
     if args.local:
+        print('\n\nUh-Oh! Local Deed link checking has not been setup yet...\n')
         deed_names = get_local_licenses()
     else:
         deed_names = get_github_licenses()
@@ -218,7 +222,8 @@ def check_deeds(args):
         if base_url:
             context = f"\n\nChecking: \nURL: {base_url}"
             if args.local:
-                source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
+                print('Source html not found locally. Has this been setup?')
+                # source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
             else:
                 page_url = base_url
                 source_html = request_text(page_url)
@@ -286,7 +291,103 @@ def check_deeds(args):
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
-    return [0, exit_status]
+    return [0, exit_status, 0]
+
+
+
+def check_rdfs(args):
+    print("\n\nChecking RDFs...\n\n")
+    if args.local:
+        print('\n\nUh-Oh! Local RDF link checking has not been setup yet...\n')
+        # rdf_names = get_local_licenses()
+    else:
+        rdf_names = get_github_licenses()
+    if args.log_level <= INFO:
+        print("Number of files to be checked:", len(rdf_names))
+    errors_total = 0
+    exit_status = 0
+    for rdf_name in rdf_names:
+        caught_errors = 0
+        context_printed = False
+        filename = rdf_name[: -len(".html")]
+        base_url = create_base_link(args, filename, for_rdfs=True)
+        # Deeds template:
+        # https://github.com/creativecommons/cc.engine/blob/master/
+        # cc/engine/templates/licenses/standard_deed.html
+        # Scrapping the html found on the active site
+        if base_url:
+            context = f"\n\nChecking: \nURL: {base_url}"
+            if args.local:
+                print('Source html not found locally. Has this been setup?')
+                # source_html = request_local_text(DEED_LOCAL_PATH, rdf_name)
+            else:
+                page_url = base_url
+                source_html = request_text(page_url)
+            license_soup = BeautifulSoup(source_html, "lxml")
+            links_found = license_soup.find_all("a")
+            link_count = len(links_found)
+            if args.log_level <= INFO:
+                print(f"{context}\nNumber of links found: {link_count}")
+                context_printed = True
+            valid_anchors, valid_links, context_printed = get_scrapable_links(
+                args, base_url, links_found, context, context_printed
+            )
+            if valid_links:
+                memoized_results = get_memoized_result(
+                    valid_links, valid_anchors
+                )
+                stored_links = memoized_results[0]
+                stored_anchors = memoized_results[1]
+                stored_result = memoized_results[2]
+                check_links = memoized_results[3]
+                check_anchors = memoized_results[4]
+                if check_links:
+                    rs = (
+                        # Since we're only checking for validity,
+                        # we can retreive
+                        # only the headers/metadata
+                        grequests.head(link, timeout=REQUESTS_TIMEOUT)
+                        for link in check_links
+                    )
+                    responses = list()
+                    # Explicitly close connections to free up file handles and
+                    # avoid Connection Errors per:
+                    # https://stackoverflow.com/a/22839550
+                    for response in grequests.map(
+                        rs, exception_handler=exception_handler
+                    ):
+                        try:
+                            responses.append(response.status_code)
+                            response.close()
+                        except AttributeError:
+                            responses.append(response)
+                    memoize_result(check_links, responses)
+                    stored_anchors += check_anchors
+                    stored_result += responses
+                stored_links += check_links
+                caught_errors = write_response(
+                    args,
+                    stored_links,
+                    stored_result,
+                    base_url,
+                    rdf_name,
+                    stored_anchors,
+                    context,
+                    context_printed,
+                )
+
+            if caught_errors:
+                errors_total += caught_errors
+                exit_status = 1
+
+    print("\nCompleted in: {}".format(time.time() - START_TIME))
+
+    if args.output_errors:
+        output_summary(args, rdf_names, errors_total)
+        print("\nError file present at: ", args.output_errors.name)
+        output_test_summary(errors_total)
+
+    return [0, 0, exit_status]
 
 
 def main():
@@ -296,14 +397,17 @@ def main():
         exit_status_list = check_licenses(args)
     if args.deeds:
         exit_status_list = check_deeds(args)
+    if args.rdf:
+        exit_status_list = check_rdfs(args)
     else:
         print(
             "\nRunning Full Inspection:"
             " Checking Links in LegalCode License & Deeds"
         )
-        exit_status_licenses, x = check_licenses(args)
-        y, exit_status_deeds = check_deeds(args)
-        exit_status_list = [exit_status_licenses, exit_status_deeds]
+        exit_status_licenses, y, z = check_licenses(args)
+        x, exit_status_deeds, z = check_deeds(args)
+        x, y, exit_status_rdfs = check_rdfs(args)
+        exit_status_list = [exit_status_licenses, exit_status_deeds, exit_status_rdfs]
     if 1 in exit_status_list:
         return sys.exit(1)
     return sys.exit(0)

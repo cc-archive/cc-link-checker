@@ -9,6 +9,15 @@ def test_parse_argument(tmpdir):
     assert bool(args.output_errors) is False
     assert args.local is False
     assert args.root_url == "https://creativecommons.org"
+    # Test --licenses
+    args = link_checker.parse_argument(["--licenses"])
+    assert args.licenses is True
+    # Test --deeds
+    args = link_checker.parse_argument(["--deeds"])
+    assert args.deeds is True
+    # Test --licenses
+    args = link_checker.parse_argument(["--rdf"])
+    assert args.rdf is True
     # Test --local
     args = link_checker.parse_argument(["--local"])
     assert args.local is True

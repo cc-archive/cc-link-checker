@@ -20,7 +20,6 @@ from constants import (
     START_TIME,
     LICENSE_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
-    DEED_LOCAL_PATH,
     DEFAULT_ROOT_URL,
     CRITICAL,
     WARNING,
@@ -200,8 +199,8 @@ def check_deeds(args):
     print("\n\nChecking Deeds...\n\n")
     license_names = get_github_licenses()
     if args.local:
-        print (
-            "Deeds are checked from the live site and not locally.\n" 
+        print(
+            "Deeds are checked from the live site and not locally.\n"
             "Please remove the --local argument to link check deeds.\n"
         )
         exit_status = 0

@@ -198,36 +198,38 @@ def check_licenses(args):
 
 def check_deeds(args):
     print("\n\nChecking Deeds...\n\n")
+    license_names = get_github_licenses()
     if args.local:
-        deed_names = get_local_licenses()
-    else:
-        deed_names = get_github_licenses()
+        print (
+            "Deeds are checked from the live site and not locally.\n" 
+            "Please remove the --local argument to link check deeds.\n"
+        )
+        exit_status = 0
+        return [0, exit_status]
     if args.log_level <= INFO:
-        print("Number of files to be checked:", len(deed_names))
+        print("Number of files to be checked:", len(license_names))
     errors_total = 0
     exit_status = 0
-    for deed_name in deed_names:
+    for license_name in license_names:
         caught_errors = 0
         context_printed = False
-        filename = deed_name[: -len(".html")]
-        base_url = create_base_link(args, filename, for_deeds=True)
+        filename = license_name[: -len(".html")]
+        deed_base_url = create_base_link(args, filename, for_deeds=True)
         # Deeds template:
         # https://github.com/creativecommons/cc.engine/blob/master/
         # cc/engine/templates/licenses/standard_deed.html
         # Scrapping the html found on the active site
-        if base_url:
-            context = f"\n\nChecking: \nURL: {base_url}"
-            if args.local:
-                source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
-            else:
-                page_url = base_url
-                source_html = request_text(page_url)
+        if deed_base_url:
+            context = f"\n\nChecking: \nURL: {deed_base_url}"
+            page_url = deed_base_url
+            source_html = request_text(page_url)
             license_soup = BeautifulSoup(source_html, "lxml")
             links_found = license_soup.find_all("a")
             link_count = len(links_found)
             if args.log_level <= INFO:
                 print(f"{context}\nNumber of links found: {link_count}")
                 context_printed = True
+            base_url = deed_base_url
             valid_anchors, valid_links, context_printed = get_scrapable_links(
                 args, base_url, links_found, context, context_printed
             )
@@ -269,7 +271,7 @@ def check_deeds(args):
                     stored_links,
                     stored_result,
                     base_url,
-                    deed_name,
+                    license_name,
                     stored_anchors,
                     context,
                     context_printed,
@@ -282,7 +284,7 @@ def check_deeds(args):
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if args.output_errors:
-        output_summary(args, deed_names, errors_total)
+        output_summary(args, license_names, errors_total)
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 

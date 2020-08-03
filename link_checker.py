@@ -29,8 +29,7 @@ from constants import (
 
 from utils import (
     CheckerError,
-    get_github_licenses,
-    get_local_licenses,
+    get_licenses,
     request_text,
     request_local_text,
     get_scrapable_links,
@@ -112,10 +111,7 @@ def parse_argument(arguments):
 
 def check_licenses(args):
     print("\n\nChecking LegalCode License...\n\n")
-    if args.local:
-        license_names = get_local_licenses()
-    else:
-        license_names = get_github_licenses()
+    license_names = get_licenses(args)
     if args.log_level <= INFO:
         print("Number of files to be checked:", len(license_names))
     errors_total = 0
@@ -197,14 +193,7 @@ def check_licenses(args):
 
 def check_deeds(args):
     print("\n\nChecking Deeds...\n\n")
-    license_names = get_github_licenses()
-    if args.local:
-        print(
-            "Deeds are checked from the live site and not locally.\n"
-            "Please remove the --local argument to link check deeds.\n"
-        )
-        exit_status = 0
-        return [0, exit_status]
+    license_names = get_licenses(args)
     if args.log_level <= INFO:
         print("Number of files to be checked:", len(license_names))
     errors_total = 0
@@ -239,6 +228,7 @@ def check_deeds(args):
                 stored_links = memoized_results[0]
                 stored_anchors = memoized_results[1]
                 stored_result = memoized_results[2]
+
                 check_links = memoized_results[3]
                 check_anchors = memoized_results[4]
                 if check_links:

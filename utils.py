@@ -77,6 +77,20 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     raise ValueError(f"regex did not match {legalcode_url}")
 
 
+def get_licenses(args):
+    """Determine if local legalcode files or remote (GitHub) legalcode files
+    should be parsed and call the appropriate function.
+
+    Returns:
+        str[]: The list of license/deeds files found in the repository
+    """
+    if args.local:
+        license_names = get_local_licenses()
+    else:
+        license_names = get_github_licenses()
+    return license_names
+
+
 def get_github_licenses():
     """This function scrapes all the license file in the repo:
   https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode

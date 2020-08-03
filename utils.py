@@ -42,13 +42,15 @@ class CheckerError(Exception):
 def get_deed_url_from_legalcode_url(legalcode_url):
     """
     Return the URL of the license that this legalcode url is for.
+
     Legalcode URLs are like
-    http://creativecommons.org/licenses/by/4.0/legalcode
-    http://creativecommons.org/licenses/by/4.0/legalcode.es
-    http://opensource.org/licenses/bsd-license.php
+    - http://creativecommons.org/licenses/by/4.0/legalcode
+    - http://creativecommons.org/licenses/by/4.0/legalcode.es
+    - http://opensource.org/licenses/bsd-license.php
+
     License URLs are like
-    http://creativecommons.org/licenses/by-nc-nd/4.0/
-    http://creativecommons.org/licenses/BSD/
+    - http://creativecommons.org/licenses/by-nc-nd/4.0/
+    - http://creativecommons.org/licenses/BSD/
     """
     versions_needed_to_treated = ["4.0", "zero"]
     exclude_versions = ["zero-assert", "zero-waive"]  # deeds do not exist
@@ -93,11 +95,11 @@ def get_legalcode(args):
 
 def get_github_legalcode():
     """This function scrapes all the license file in the repo:
-  https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
+    https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
 
-  Returns:
-      str[]: The list of license/deeds files found in the repository
-  """
+    Returns:
+        str[]: The list of license/deeds files found in the repository
+    """
     URL = (
         "https://github.com/creativecommons/creativecommons.org/tree/master"
         "/docroot/legalcode"
@@ -126,9 +128,9 @@ def get_github_legalcode():
 def get_local_legalcode():
     """This function get all the legalcode stored locally
 
-  Returns:
-      list: list of file names of license file
-  """
+    Returns:
+        list: list of file names of license file
+    """
     try:
         license_names_unordered = os.listdir(LICENSE_LOCAL_PATH)
     except FileNotFoundError:
@@ -157,12 +159,12 @@ def get_local_legalcode():
 def request_text(page_url):
     """This function makes a requests get and returns the text result
 
-  Args:
-      page_url (str): URL to perform a GET request for
+    Args:
+        page_url (str): URL to perform a GET request for
 
-  Returns:
-      str: request response text
-  """
+    Returns:
+        str: request response text
+    """
     try:
         r = requests.get(page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT)
         fetched_text = r.content
@@ -187,13 +189,13 @@ def request_local_text(local_path, filename):
     """This function reads license, deed, or rdf content from the file
     stored in local file system
 
-  Args:
-      local_path (str): Path to license, deed, or rdf
-      filename (str): Name of the license, deed, or rdf
+    Args:
+        local_path (str): Path to license, deed, or rdf
+        filename (str): Name of the license, deed, or rdf
 
-  Returns:
-      str: Content of license file
-  """
+    Returns:
+        str: Content of license file
+    """
     path = os.path.join(local_path, filename)
     try:
         with open(path) as lic:

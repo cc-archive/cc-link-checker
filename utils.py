@@ -77,7 +77,7 @@ def get_deed_url_from_legalcode_url(legalcode_url):
     raise ValueError(f"regex did not match {legalcode_url}")
 
 
-def get_licenses(args):
+def get_legalcode(args):
     """Determine if local legalcode files or remote (GitHub) legalcode files
     should be parsed and call the appropriate function.
 
@@ -85,13 +85,13 @@ def get_licenses(args):
         str[]: The list of license/deeds files found in the repository
     """
     if args.local:
-        license_names = get_local_licenses()
+        license_names = get_local_legalcode()
     else:
-        license_names = get_github_licenses()
+        license_names = get_github_legalcode()
     return license_names
 
 
-def get_github_licenses():
+def get_github_legalcode():
     """This function scrapes all the license file in the repo:
   https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
 
@@ -111,7 +111,7 @@ def get_github_licenses():
     # according to TEST_ORDER.
     license_names_unordered.sort()
     license_names = []
-    # Test newer licenses first (they are the most volatile) and exclude
+    # Test newer legalcode first (they are the most volatile) and exclude
     # non-.html files
     for version in TEST_ORDER:
         for name in license_names_unordered:
@@ -123,8 +123,8 @@ def get_github_licenses():
     return license_names
 
 
-def get_local_licenses():
-    """This function get all the licenses stored locally
+def get_local_legalcode():
+    """This function get all the legalcode stored locally
 
   Returns:
       list: list of file names of license file
@@ -142,7 +142,7 @@ def get_local_licenses():
     # according to TEST_ORDER.
     license_names_unordered.sort()
     license_names = []
-    # Test newer licenses first (they are the most volatile) and exclude
+    # Test newer legalcode first (they are the most volatile) and exclude
     # non-.html files
     for version in TEST_ORDER:
         for name in license_names_unordered:

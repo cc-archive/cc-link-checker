@@ -29,7 +29,7 @@ from constants import (
 
 from utils import (
     CheckerError,
-    get_licenses,
+    get_legalcode,
     request_text,
     request_local_text,
     get_scrapable_links,
@@ -52,16 +52,22 @@ def parse_argument(arguments):
     # Setup argument parser
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--legalcode",
         "--licenses",
-        help="Runs link_checker for licenses only",
+        help="Runs link_checker for legalcode only. (Note: --licenses is"
+        " deprecated and will be dropped from a future release. Please use"
+        " --legalcode instead.)",
         action="store_true",
     )
     parser.add_argument(
-        "--deeds", help="Runs link_checker for deeds only", action="store_true"
+        "--deeds",
+        help="Runs link_checker for deeds only (the legalcode files will still"
+        " be scraped, but not checked for broken links)",
+        action="store_true",
     )
     parser.add_argument(
         "--local",
-        help="Scrapes license files from local file system",
+        help="Scrapes legalcode files from local file system",
         action="store_true",
     )
     parser.add_argument(
@@ -109,9 +115,9 @@ def parse_argument(arguments):
     return args
 
 
-def check_licenses(args):
+def check_legalcode(args):
     print("\n\nChecking LegalCode License...\n\n")
-    license_names = get_licenses(args)
+    license_names = get_legalcode(args)
     if args.log_level <= INFO:
         print("Number of files to be checked:", len(license_names))
     errors_total = 0
@@ -193,7 +199,7 @@ def check_licenses(args):
 
 def check_deeds(args):
     print("\n\nChecking Deeds...\n\n")
-    license_names = get_licenses(args)
+    license_names = get_legalcode(args)
     if args.log_level <= INFO:
         print("Number of files to be checked:", len(license_names))
     errors_total = 0
@@ -205,7 +211,7 @@ def check_deeds(args):
         deed_base_url = create_base_link(args, filename, for_deeds=True)
         # Deeds template:
         # https://github.com/creativecommons/cc.engine/blob/master/
-        # cc/engine/templates/licenses/standard_deed.html
+        # cc/engine/templates/legalcode/standard_deed.html
         # Scrapping the html found on the active site
         if deed_base_url:
             context = f"\n\nChecking: \nURL: {deed_base_url}"
@@ -283,8 +289,8 @@ def check_deeds(args):
 def main():
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
-    if args.licenses:
-        exit_status_list = check_licenses(args)
+    if args.legalcode:
+        exit_status_list = check_legalcode(args)
     if args.deeds:
         exit_status_list = check_deeds(args)
     else:
@@ -292,9 +298,9 @@ def main():
             "\nRunning Full Inspection:"
             " Checking Links in LegalCode License & Deeds"
         )
-        exit_status_licenses, x = check_licenses(args)
+        exit_status_legalcode, x = check_legalcode(args)
         y, exit_status_deeds = check_deeds(args)
-        exit_status_list = [exit_status_licenses, exit_status_deeds]
+        exit_status_list = [exit_status_legalcode, exit_status_deeds]
     if 1 in exit_status_list:
         return sys.exit(1)
     return sys.exit(0)

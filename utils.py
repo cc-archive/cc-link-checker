@@ -220,11 +220,13 @@ def get_links_from_rdf(rdf_obj):
         links_found: list of links found in rdf soup object
     """
     tags = rdf_obj.findChildren()
+    links_found = []
     for t in tags:
         # check link to deed and resources
         if t.has_attr("rdf:resource"):
-            print(t["rdf:resource"])
-    links_found = rdf_obj
+            links_found.append(t["rdf:resource"])
+        if t.has_attr("rdf:about"):
+            links_found.append(t["rdf:resource"])
     return links_found
 
 

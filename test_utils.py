@@ -11,7 +11,7 @@ import utils
 import link_checker
 from utils import (
     CheckerError,
-    get_github_licenses,
+    get_github_legalcode,
     request_text,
     request_local_text,
     get_scrapable_links,
@@ -36,8 +36,8 @@ def reset_global():
     return
 
 
-def test_get_github_licenses():
-    all_links = get_github_licenses()
+def test_get_github_legalcode():
+    all_links = get_github_legalcode()
     assert len(all_links) > 0
 
 

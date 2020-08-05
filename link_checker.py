@@ -20,7 +20,6 @@ from constants import (
     START_TIME,
     LICENSE_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
-    DEED_LOCAL_PATH,
     DEFAULT_ROOT_URL,
     CRITICAL,
     WARNING,
@@ -30,8 +29,7 @@ from constants import (
 
 from utils import (
     CheckerError,
-    get_github_licenses,
-    get_local_licenses,
+    get_legalcode,
     request_text,
     request_local_text,
     get_scrapable_links,
@@ -54,19 +52,25 @@ def parse_argument(arguments):
     # Setup argument parser
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--legalcode",
         "--licenses",
-        help="Runs link_checker for licenses only",
+        help="Runs link_checker for legalcode only. (Note: --licenses is"
+        " deprecated and will be dropped from a future release. Please use"
+        " --legalcode instead.)",
         action="store_true",
     )
     parser.add_argument(
-        "--deeds", help="Runs link_checker for deeds only", action="store_true"
+        "--deeds",
+        help="Runs link_checker for deeds only (the legalcode files will still"
+        " be scraped, but not checked for broken links)",
+        action="store_true",
     )
     parser.add_argument(
         "--rdf", help="Runs link_checker for rdf only", action="store_true"
     )
     parser.add_argument(
         "--local",
-        help="Scrapes license files from local file system",
+        help="Scrapes legalcode files from local file system",
         action="store_true",
     )
     parser.add_argument(
@@ -114,12 +118,9 @@ def parse_argument(arguments):
     return args
 
 
-def check_licenses(args):
+def check_legalcode(args):
     print("\n\nChecking LegalCode License...\n\n")
-    if args.local:
-        license_names = get_local_licenses()
-    else:
-        license_names = get_github_licenses()
+    license_names = get_legalcode(args)
     if args.log_level <= INFO:
         print("Number of files to be checked:", len(license_names))
     errors_total = 0
@@ -201,38 +202,31 @@ def check_licenses(args):
 
 def check_deeds(args):
     print("\n\nChecking Deeds...\n\n")
-    if args.local:
-        print('\n\nUh-Oh! Local Deed link checking has not been setup yet...\n')
-        deed_names = get_local_licenses()
-    else:
-        deed_names = get_github_licenses()
+    license_names = get_legalcode(args)
     if args.log_level <= INFO:
-        print("Number of files to be checked:", len(deed_names))
+        print("Number of files to be checked:", len(license_names))
     errors_total = 0
     exit_status = 0
-    for deed_name in deed_names:
+    for license_name in license_names:
         caught_errors = 0
         context_printed = False
-        filename = deed_name[: -len(".html")]
-        base_url = create_base_link(args, filename, for_deeds=True)
+        filename = license_name[: -len(".html")]
+        deed_base_url = create_base_link(args, filename, for_deeds=True)
         # Deeds template:
         # https://github.com/creativecommons/cc.engine/blob/master/
-        # cc/engine/templates/licenses/standard_deed.html
+        # cc/engine/templates/legalcode/standard_deed.html
         # Scrapping the html found on the active site
-        if base_url:
-            context = f"\n\nChecking: \nURL: {base_url}"
-            if args.local:
-                print('Source html not found locally. Has this been setup?')
-                # source_html = request_local_text(DEED_LOCAL_PATH, deed_name)
-            else:
-                page_url = base_url
-                source_html = request_text(page_url)
+        if deed_base_url:
+            context = f"\n\nChecking: \nURL: {deed_base_url}"
+            page_url = deed_base_url
+            source_html = request_text(page_url)
             license_soup = BeautifulSoup(source_html, "lxml")
             links_found = license_soup.find_all("a")
             link_count = len(links_found)
             if args.log_level <= INFO:
                 print(f"{context}\nNumber of links found: {link_count}")
                 context_printed = True
+            base_url = deed_base_url
             valid_anchors, valid_links, context_printed = get_scrapable_links(
                 args, base_url, links_found, context, context_printed
             )
@@ -243,6 +237,7 @@ def check_deeds(args):
                 stored_links = memoized_results[0]
                 stored_anchors = memoized_results[1]
                 stored_result = memoized_results[2]
+
                 check_links = memoized_results[3]
                 check_anchors = memoized_results[4]
                 if check_links:
@@ -274,7 +269,7 @@ def check_deeds(args):
                     stored_links,
                     stored_result,
                     base_url,
-                    deed_name,
+                    license_name,
                     stored_anchors,
                     context,
                     context_printed,
@@ -287,7 +282,7 @@ def check_deeds(args):
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if args.output_errors:
-        output_summary(args, deed_names, errors_total)
+        output_summary(args, license_names, errors_total)
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
@@ -393,8 +388,8 @@ def check_rdfs(args):
 def main():
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
-    if args.licenses:
-        exit_status_list = check_licenses(args)
+    if args.legalcode:
+        exit_status_list = check_legalcode(args)
     if args.deeds:
         exit_status_list = check_deeds(args)
     if args.rdf:
@@ -404,10 +399,14 @@ def main():
             "\nRunning Full Inspection:"
             " Checking Links in LegalCode License & Deeds"
         )
-        exit_status_licenses, y, z = check_licenses(args)
+        exit_status_legalcode, y, z = check_legalcode(args)
         x, exit_status_deeds, z = check_deeds(args)
-        x, y, exit_status_rdfs = check_rdfs(args)
-        exit_status_list = [exit_status_licenses, exit_status_deeds, exit_status_rdfs]
+        x, y, exit_status_rdf = check_rdfs(args)
+        exit_status_list = [
+            exit_status_legalcode,
+            exit_status_deeds,
+            exit_status_rdf
+        ]
     if 1 in exit_status_list:
         return sys.exit(1)
     return sys.exit(0)

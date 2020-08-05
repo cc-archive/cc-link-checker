@@ -30,9 +30,11 @@ from constants import (
 from utils import (
     CheckerError,
     get_legalcode,
+    get_local_rdf,
     request_text,
     request_local_text,
     get_scrapable_links,
+    get_links_from_rdf,
     create_base_link,
     get_memoized_result,
     exception_handler,
@@ -292,95 +294,86 @@ def check_deeds(args):
 
 def check_rdfs(args):
     print("\n\nChecking RDFs...\n\n")
-    if args.local:
-        print('\n\nUh-Oh! Local RDF link checking has not been setup yet...\n')
-        # rdf_names = get_local_licenses()
-    else:
-        rdf_names = get_github_licenses()
-    if args.log_level <= INFO:
-        print("Number of files to be checked:", len(rdf_names))
-    errors_total = 0
     exit_status = 0
-    for rdf_name in rdf_names:
-        caught_errors = 0
-        context_printed = False
-        filename = rdf_name[: -len(".html")]
-        base_url = create_base_link(args, filename, for_rdfs=True)
-        # Deeds template:
-        # https://github.com/creativecommons/cc.engine/blob/master/
-        # cc/engine/templates/licenses/standard_deed.html
-        # Scrapping the html found on the active site
-        if base_url:
-            context = f"\n\nChecking: \nURL: {base_url}"
-            if args.local:
-                print('Source html not found locally. Has this been setup?')
-                # source_html = request_local_text(DEED_LOCAL_PATH, rdf_name)
-            else:
-                page_url = base_url
-                source_html = request_text(page_url)
-            license_soup = BeautifulSoup(source_html, "lxml")
-            links_found = license_soup.find_all("a")
-            link_count = len(links_found)
-            if args.log_level <= INFO:
-                print(f"{context}\nNumber of links found: {link_count}")
-                context_printed = True
-            valid_anchors, valid_links, context_printed = get_scrapable_links(
-                args, base_url, links_found, context, context_printed
-            )
-            if valid_links:
-                memoized_results = get_memoized_result(
-                    valid_links, valid_anchors
-                )
-                stored_links = memoized_results[0]
-                stored_anchors = memoized_results[1]
-                stored_result = memoized_results[2]
-                check_links = memoized_results[3]
-                check_anchors = memoized_results[4]
-                if check_links:
-                    rs = (
-                        # Since we're only checking for validity,
-                        # we can retreive
-                        # only the headers/metadata
-                        grequests.head(link, timeout=REQUESTS_TIMEOUT)
-                        for link in check_links
-                    )
-                    responses = list()
-                    # Explicitly close connections to free up file handles and
-                    # avoid Connection Errors per:
-                    # https://stackoverflow.com/a/22839550
-                    for response in grequests.map(
-                        rs, exception_handler=exception_handler
-                    ):
-                        try:
-                            responses.append(response.status_code)
-                            response.close()
-                        except AttributeError:
-                            responses.append(response)
-                    memoize_result(check_links, responses)
-                    stored_anchors += check_anchors
-                    stored_result += responses
-                stored_links += check_links
-                caught_errors = write_response(
-                    args,
-                    stored_links,
-                    stored_result,
-                    base_url,
-                    rdf_name,
-                    stored_anchors,
-                    context,
-                    context_printed,
-                )
+    get_local_rdf()
+    if args.local:
+        rdf_obj_list = get_local_rdf()
+        if args.log_level <= INFO:
+            print("Number of rdf files to be checked:", len(rdf_text_list))
+        errors_total = 0
+        exit_status = 0
+        for rdf_obj in rdf_obj_list:
+            caught_errors = 0
+            context_printed = False
+            rdf_deed_url = rdf_obj["rdf:about"]
+            links_found = get_links_from_rdf(rdf_obj)
+            context = f"\n\nChecking: \nURL: {rdf_deed_url}"
+    #         license_soup = BeautifulSoup(source_html, "lxml")
+    #         links_found = license_soup.find_all("a")
+    #         link_count = len(links_found)
+    #         if args.log_level <= INFO:
+    #             print(f"{context}\nNumber of links found: {link_count}")
+    #             context_printed = True
+    #         valid_anchors, valid_links, context_printed = get_scrapable_links(
+    #             args, base_url, links_found, context, context_printed
+    #         )
+    #         if valid_links:
+    #             memoized_results = get_memoized_result(
+    #                 valid_links, valid_anchors
+    #             )
+    #             stored_links = memoized_results[0]
+    #             stored_anchors = memoized_results[1]
+    #             stored_result = memoized_results[2]
+    #             check_links = memoized_results[3]
+    #             check_anchors = memoized_results[4]
+    #             if check_links:
+    #                 rs = (
+    #                     # Since we're only checking for validity,
+    #                     # we can retreive
+    #                     # only the headers/metadata
+    #                     grequests.head(link, timeout=REQUESTS_TIMEOUT)
+    #                     for link in check_links
+    #                 )
+    #                 responses = list()
+    #                 # Explicitly close connections to free up file handles and
+    #                 # avoid Connection Errors per:
+    #                 # https://stackoverflow.com/a/22839550
+    #                 for response in grequests.map(
+    #                     rs, exception_handler=exception_handler
+    #                 ):
+    #                     try:
+    #                         responses.append(response.status_code)
+    #                         response.close()
+    #                     except AttributeError:
+    #                         responses.append(response)
+    #                 memoize_result(check_links, responses)
+    #                 stored_anchors += check_anchors
+    #                 stored_result += responses
+    #             stored_links += check_links
+    #             caught_errors = write_response(
+    #                 args,
+    #                 stored_links,
+    #                 stored_result,
+    #                 base_url,
+    #                 rdf_name,
+    #                 stored_anchors,
+    #                 context,
+    #                 context_printed,
+    #             )
 
-            if caught_errors:
-                errors_total += caught_errors
-                exit_status = 1
+    #         if caught_errors:
+    #             errors_total += caught_errors
+    #             exit_status = 1
+    # else:
+    #     print('\n\nUh-Oh! Local RDF link checking is not availble remotely...\n')
+    #     print('Please import index.rdf and reference a path to the file\n')
+    #     print('See import_rdf_index command in cc_licenses repo.')
+    # print("\nCompleted in: {}".format(time.time() - START_TIME))
 
-    print("\nCompleted in: {}".format(time.time() - START_TIME))
-
-    if args.output_errors:
-        output_summary(args, rdf_names, errors_total)
-        print("\nError file present at: ", args.output_errors.name)
-        output_test_summary(errors_total)
+    # if args.output_errors:
+    #     output_summary(args, rdf_names, errors_total)
+    #     print("\nError file present at: ", args.output_errors.name)
+    #     output_test_summary(errors_total)
 
     return [0, 0, exit_status]
 

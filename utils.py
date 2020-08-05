@@ -22,6 +22,7 @@ from constants import (
     GOOD_RESPONSE,
     REQUESTS_TIMEOUT,
     LICENSE_LOCAL_PATH,
+    INDEX_RDF_LOCAL_PATH,
     LANGUAGE_CODE_REGEX,
     TEST_ORDER,
     ERROR,
@@ -191,6 +192,40 @@ def get_local_legalcode():
         if ".html" in name and name not in license_names:
             license_names.append(name)
     return license_names
+
+def get_local_rdf():
+    """This function reads from index.rdf stored locally
+    Returns:
+        rdf_list: list of rdfs in index.rdf
+    """
+    try:
+        index_rdf = open(INDEX_RDF_LOCAL_PATH, "r")
+        rdf_text = index_rdf.read()
+    except FileNotFoundError:
+        raise CheckerError(
+            "Local index.rdf path({}) does not exist".format(INDEX_RDF_LOCAL_PATH)
+        )
+    except:
+        raise
+    soup = BeautifulSoup(rdf_text, "xml")
+    rdfs = soup.find_all("cc:License")
+    rdf_obj_list = list(rdfs)
+    return rdf_obj_list
+
+def get_links_from_rdf(rdf_obj):
+    """This function parses an rdf and returns links found
+    Parameters:
+        rdf_obj: soup object
+    Returns:
+        links_found: list of links found in rdf soup object
+    """
+    tags = rdf_obj.findChildren()
+    for t in tags:
+        # check link to deed and resources
+        if t.has_attr("rdf:resource"):
+            print(t["rdf:resource"])
+    links_found = rdf_obj
+    return links_found
 
 
 def request_text(page_url):

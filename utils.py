@@ -159,6 +159,11 @@ def get_local_legalcode():
 
 def get_local_rdf(local_path=""):
     """This function reads from index.rdf stored locally
+    Parameters:
+        local_path: path to rdf file. If not supplied
+        your environment will be checked for
+        INDEX_RDF_LOCAL_PATH. If that is not supplied
+        local_path will default to "./index.rdf".
     Returns:
         rdf_list: list of rdfs in index.rdf
     """

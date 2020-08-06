@@ -226,19 +226,20 @@ def test_get_scrapable_links():
         '<cc:requires rdf:resource="http://creativecommons.org/ns#Notice"/>]'
     )
     assert str(valid_links) == (
-        '["http://creativecommons.org/ns#DerivativeWorks",'
-        '"http://creativecommons.org/ns#Reproduction",'
-        '"http://creativecommons.org/ns#Distribution",'
-        '"http://creativecommons.org/international/ch/",'
-        '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png",'
-        '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png",'
-        '"http://creativecommons.org/licenses/by-nc-sa/2.5/ch/legalcode.de",'
-        '"http://creativecommons.org/licenses/by-nc-sa/2.5/",'
-        '"http://creativecommons.org",'
-        '"http://creativecommons.org/ns#CommercialUse",'
-        '"http://creativecommons.org/ns#ShareAlike",'
-        '"http://creativecommons.org/ns#Attribution",'
-        '"http://creativecommons.org/ns#Notice"]'
+        "['http://creativecommons.org/ns#DerivativeWorks', "
+        "'http://creativecommons.org/ns#Reproduction', "
+        "'http://creativecommons.org/ns#Distribution', "
+        "'http://creativecommons.org/international/ch/', "
+        "'https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png', "
+        "'https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png', "
+        "'http://creativecommons.org/licenses/by-nc-sa/2.5/ch/legalcode.de', "
+        "'http://creativecommons.org/licenses/by-nc-sa/2.5/', "
+        "'http://creativecommons.org', "
+        "'http://creativecommons.org/ns#CommercialUse', "
+        "'http://creativecommons.org/license/', "
+        "'http://creativecommons.org/ns#ShareAlike', "
+        "'http://creativecommons.org/ns#Attribution', "
+        "'http://creativecommons.org/ns#Notice']"
     )
 
 

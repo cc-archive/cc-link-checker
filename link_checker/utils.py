@@ -14,7 +14,7 @@ from junit_xml import TestCase, TestSuite, to_xml_report_file
 import requests
 
 # Local
-from constants import (
+from .constants import (
     START_TIME,
     HEADER,
     MEMOIZED_LINKS,

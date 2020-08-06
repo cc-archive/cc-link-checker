@@ -8,3 +8,7 @@ test-reports
 test_file.txt
 err_file.txt
 test-summary
+.pyc
+/dist/
+/*.egg-info
+/*.egg

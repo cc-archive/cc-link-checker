@@ -7,9 +7,9 @@ import grequests
 import pytest
 
 # Local/library specific
-import utils
-import link_checker
-from utils import (
+from link_checker import utils
+from link_checker import link_checker
+from ..utils import (
     CheckerError,
     get_github_legalcode,
     request_text,
@@ -26,7 +26,7 @@ from utils import (
     output_write,
     output_test_summary,
 )
-import constants
+from link_checker import constants
 
 
 @pytest.fixture

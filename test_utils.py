@@ -210,36 +210,36 @@ def test_get_scrapable_links():
         args, base_url, links_found, None, False, rdf=True,
     )
     assert str(valid_anchors) == (
-        '[<cc:permits '
+        "[<cc:permits "
         'rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>, '
-        '<cc:permits '
+        "<cc:permits "
         'rdf:resource="http://creativecommons.org/ns#Reproduction"/>, '
-        '<cc:permits '
+        "<cc:permits "
         'rdf:resource="http://creativecommons.org/ns#Distribution"/>, '
-        '<cc:jurisdiction '
+        "<cc:jurisdiction "
         'rdf:resource="http://creativecommons.org/international/ch/"/>, '
-        '<foaf:logo '
+        "<foaf:logo "
         'rdf:resource="https://i.creativecommons.org/'
         'l/by-nc-sa/2.5/ch/88x31.png"/>, '
-        '<foaf:logo '
+        "<foaf:logo "
         'rdf:resource="https://i.creativecommons.org/'
         'l/by-nc-sa/2.5/ch/80x15.png"/>, '
-        '<cc:legalcode '
+        "<cc:legalcode "
         'rdf:resource="http://creativecommons.org/'
         'licenses/by-nc-sa/2.5/ch/legalcode.de"/>, '
-        '<dc:source '
+        "<dc:source "
         'rdf:resource="http://creativecommons.org/licenses/by-nc-sa/2.5/"/>, '
-        '<dc:creator '
+        "<dc:creator "
         'rdf:resource="http://creativecommons.org"/>, '
-        '<cc:prohibits '
+        "<cc:prohibits "
         'rdf:resource="http://creativecommons.org/ns#CommercialUse"/>, '
-        '<cc:licenseClass '
+        "<cc:licenseClass "
         'rdf:resource="http://creativecommons.org/license/"/>, '
-        '<cc:requires '
+        "<cc:requires "
         'rdf:resource="http://creativecommons.org/ns#ShareAlike"/>, '
-        '<cc:requires '
+        "<cc:requires "
         'rdf:resource="http://creativecommons.org/ns#Attribution"/>, '
-        '<cc:requires '
+        "<cc:requires "
         'rdf:resource="http://creativecommons.org/ns#Notice"/>]'
     )
     assert str(valid_links) == (

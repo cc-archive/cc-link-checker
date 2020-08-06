@@ -251,12 +251,7 @@ def request_local_text(local_path, filename):
 
 
 def get_scrapable_links(
-    args,
-    base_url,
-    links_found,
-    context,
-    context_printed,
-    rdf=False
+    args, base_url, links_found, context, context_printed, rdf=False
 ):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links

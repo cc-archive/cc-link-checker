@@ -366,10 +366,10 @@ def check_rdfs(args):
                 exit_status = 1
     else:
         exit_status = 0
-        print('\n\nUh-Oh! RDF link checking is not ')
-        print('available remotely...\n')
-        print('Please import index.rdf and reference a path to the file\n')
-        print('See import_rdf_index command in cc_licenses repo.')
+        print("\n\nUh-Oh! RDF link checking is not ")
+        print("available remotely...\n")
+        print("Please import index.rdf and reference a path to the file\n")
+        print("See import_rdf_index command in cc_licenses repo.")
     print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if args.output_errors:
@@ -400,7 +400,7 @@ def main():
         exit_status_list = [
             exit_status_legalcode,
             exit_status_deeds,
-            exit_status_rdf
+            exit_status_rdf,
         ]
     if 1 in exit_status_list:
         return sys.exit(1)

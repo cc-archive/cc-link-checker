@@ -17,8 +17,8 @@ LICENSE_GITHUB_BASE = (
     "/master/docroot/legalcode/"
 )
 LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
-INDEX_RDF_LOCAL_PATH = './index.rdf'
-TEST_RDF_LOCAL_PATH = './test.rdf'
+INDEX_RDF_LOCAL_PATH = "./index.rdf"
+TEST_RDF_LOCAL_PATH = "./test.rdf"
 DEED_LOCAL_PATH = ""
 LANGUAGE_CODE_REGEX = r"[a-zA-Z_-]*"
 TEST_ORDER = ["zero", "4.0", "3.0", "2.5", "2.1", "2.0"]

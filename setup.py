@@ -10,9 +10,6 @@ setup(
     "license legalcode, deeds, and rdf files"
   ),
   url="https://github.com/creativecommons/cc-link-checker",
-  dependency_links=[
-    'https://github.com/creativecommons/cc-link-checker/tarball/master/'
-  ],
   install_requires=[
     'beautifulsoup4',
     'grequests',
@@ -21,6 +18,10 @@ setup(
     'lxml',
     'requests'
   ],
+  packages=['link_checker'],
   tests_require=['pytest'],
-  entry_points={'console_scripts': 'link_checker=link_checker:main'}
+  entry_points={
+    'console_scripts': ['link_checker=link_checker.link-checker:main']
+  },
+  include_package_data=True,
 )

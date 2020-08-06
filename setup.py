@@ -18,10 +18,11 @@ setup(
     'lxml',
     'requests'
   ],
+  license="MIT",
   packages=['link_checker'],
   tests_require=['pytest'],
   entry_points={
-    'console_scripts': ['link_checker=link_checker.link-checker:main']
+    'console_scripts': ['link_checker=link_checker:link_checker']
   },
   include_package_data=True,
 )

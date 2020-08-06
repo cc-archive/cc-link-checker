@@ -10,8 +10,8 @@ def test_parse_argument(tmpdir):
     assert args.local is False
     assert args.root_url == "https://creativecommons.org"
     # Test --licenses
-    args = link_checker.parse_argument(["--licenses"])
-    assert args.licenses is True
+    args = link_checker.parse_argument(["--legalcode"])
+    assert args.legalcode is True
     # Test --deeds
     args = link_checker.parse_argument(["--deeds"])
     assert args.deeds is True

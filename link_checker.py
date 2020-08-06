@@ -55,7 +55,6 @@ def parse_argument(arguments):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--legalcode",
-        "--licenses",
         help="Runs link_checker for legalcode only. (Note: --licenses is"
         " deprecated and will be dropped from a future release. Please use"
         " --legalcode instead.)",
@@ -314,6 +313,8 @@ def check_rdfs(args):
             valid_anchors, valid_links, context_printed = get_scrapable_links(
                 args, base_url, links_found, context, context_printed, rdf=True,
             )
+            print('valid_anchors', valid_anchors)
+            print('valid_links', valid_links)
             if valid_links:
                 memoized_results = get_memoized_result(
                     valid_links, valid_anchors

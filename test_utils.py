@@ -12,6 +12,8 @@ import link_checker
 from utils import (
     CheckerError,
     get_github_legalcode,
+    get_local_rdf,
+    get_links_from_rdf,
     request_text,
     request_local_text,
     get_scrapable_links,
@@ -198,6 +200,45 @@ def test_get_scrapable_links():
     assert (
         str(valid_links)
         == "['https://creativecommons.ca', 'https://www.demourl.com/index']"
+    )
+    # test rdf local
+    rdf_obj_list = get_local_rdf(constants.TEST_RDF_LOCAL_PATH)
+    rdf_obj = rdf_obj_list[0]
+    base_url = rdf_obj["rdf:about"]
+    links_found = get_links_from_rdf(rdf_obj)
+    valid_anchors, valid_links, _ = get_scrapable_links(
+        args, base_url, links_found, None, False, rdf=True,
+    )
+    assert str(valid_anchors) == (
+        '[<cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>, '
+        '<cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>, '
+        '<cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>, '
+        '<cc:jurisdiction rdf:resource="http://creativecommons.org/international/ch/"/>, '
+        '<foaf:logo rdf:resource="https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png"/>, '
+        '<foaf:logo rdf:resource="https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png"/>, '
+        '<cc:legalcode rdf:resource="http://creativecommons.org/licenses/by-nc-sa/2.5/ch/legalcode.de"/>, '
+        '<dc:source rdf:resource="http://creativecommons.org/licenses/by-nc-sa/2.5/"/>, '
+        '<dc:creator rdf:resource="http://creativecommons.org"/>, '
+        '<cc:prohibits rdf:resource="http://creativecommons.org/ns#CommercialUse"/>, '
+        '<cc:licenseClass rdf:resource="http://creativecommons.org/license/"/>, '
+        '<cc:requires rdf:resource="http://creativecommons.org/ns#ShareAlike"/>, '
+        '<cc:requires rdf:resource="http://creativecommons.org/ns#Attribution"/>, '
+        '<cc:requires rdf:resource="http://creativecommons.org/ns#Notice"/>]'
+    )
+    assert str(valid_links) == (
+        '["http://creativecommons.org/ns#DerivativeWorks",'
+        '"http://creativecommons.org/ns#Reproduction",'
+        '"http://creativecommons.org/ns#Distribution",'
+        '"http://creativecommons.org/international/ch/",'
+        '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png",'
+        '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png",'
+        '"http://creativecommons.org/licenses/by-nc-sa/2.5/ch/legalcode.de",'
+        '"http://creativecommons.org/licenses/by-nc-sa/2.5/",'
+        '"http://creativecommons.org",'
+        '"http://creativecommons.org/ns#CommercialUse",'
+        '"http://creativecommons.org/ns#ShareAlike",'
+        '"http://creativecommons.org/ns#Attribution",'
+        '"http://creativecommons.org/ns#Notice"]'
     )
 
 

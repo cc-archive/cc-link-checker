@@ -193,13 +193,14 @@ def get_local_legalcode():
             license_names.append(name)
     return license_names
 
-def get_local_rdf():
+def get_local_rdf(local_path=""):
     """This function reads from index.rdf stored locally
     Returns:
         rdf_list: list of rdfs in index.rdf
     """
     try:
-        index_rdf = open(INDEX_RDF_LOCAL_PATH, "r")
+        local_path = local_path or INDEX_RDF_LOCAL_PATH
+        index_rdf = open(local_path, "r")
         rdf_text = index_rdf.read()
     except FileNotFoundError:
         raise CheckerError(
@@ -209,6 +210,7 @@ def get_local_rdf():
         raise
     soup = BeautifulSoup(rdf_text, "xml")
     rdfs = soup.find_all("cc:License")
+    print(rdfs)
     rdf_obj_list = list(rdfs)
     return rdf_obj_list
 

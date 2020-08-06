@@ -217,16 +217,19 @@ def get_links_from_rdf(rdf_obj):
     Parameters:
         rdf_obj: soup object
     Returns:
-        links_found: list of links found in rdf soup object
+        links_found: list of link dictionaries found in rdf soup object
     """
     tags = rdf_obj.findChildren()
     links_found = []
     for t in tags:
         # check link to deed and resources
+        el = {"tag": t, "href": ""}
         if t.has_attr("rdf:resource"):
-            links_found.append(t["rdf:resource"])
+            el["href"] = t["rdf:resource"]
+            links_found.append(el)
         if t.has_attr("rdf:about"):
-            links_found.append(t["rdf:resource"])
+            el["href"] = t["rdf:resource"]
+            links_found.append(el)
     return links_found
 
 
@@ -281,7 +284,7 @@ def request_local_text(local_path, filename):
         raise
 
 
-def get_scrapable_links(args, base_url, links_found, context, context_printed):
+def get_scrapable_links(args, base_url, links_found, context, context_printed, rdf=False):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links
 
@@ -297,39 +300,61 @@ def get_scrapable_links(args, base_url, links_found, context, context_printed):
     valid_anchors = []
     warnings = []
     for link in links_found:
-        try:
-            href = link["href"]
-        except KeyError:
+        if rdf:
             try:
-                assert link["id"]
+                href = link["href"]
+            except KeyError:
+                if href[0] == "#":
+                    # anchor links are valid, but out of scope
+                    # No need to report non-issue (not actionable)
+                    # warnings.append(
+                    #     "  {:<24}{}".format("Skipping internal link ", link)
+                    # )
+                    continue
+                if href.startswith("mailto:"):
+                    # mailto links are valid, but out of scope
+                    # No need to report non-issue (not actionable)
+                    # warnings.append
+                    #     "  {:<24}{}".format("Skipping mailto link ", link)
+                    # )
+                    continue
+        else:
+            try:
+                href = link["href"]
             except KeyError:
                 try:
-                    assert link["name"]
-                    warnings.append(
-                        "  {:<24}{}".format("Anchor uses name", link)
-                    )
-                except:
-                    warnings.append(
-                        "  {:<24}{}".format("Anchor w/o href or id", link)
-                    )
-            continue
-        if href != "" and href[0] == "#":
-            # anchor links are valid, but out of scope
-            # No need to report non-issue (not actionable)
-            # warnings.append(
-            #     "  {:<24}{}".format("Skipping internal link ", link)
-            # )
-            continue
-        if href.startswith("mailto:"):
-            # mailto links are valid, but out of scope
-            # No need to report non-issue (not actionable)
-            # warnings.append
-            #     "  {:<24}{}".format("Skipping mailto link ", link)
-            # )
-            continue
+                    assert link["id"]
+                except KeyError:
+                    try:
+                        assert link["name"]
+                        warnings.append(
+                            "  {:<24}{}".format("Anchor uses name", link)
+                        )
+                    except:
+                        warnings.append(
+                            "  {:<24}{}".format("Anchor w/o href or id", link)
+                        )
+                continue
+            if href != "" and href[0] == "#":
+                # anchor links are valid, but out of scope
+                # No need to report non-issue (not actionable)
+                # warnings.append(
+                #     "  {:<24}{}".format("Skipping internal link ", link)
+                # )
+                continue
+            if href.startswith("mailto:"):
+                # mailto links are valid, but out of scope
+                # No need to report non-issue (not actionable)
+                # warnings.append
+                #     "  {:<24}{}".format("Skipping mailto link ", link)
+                # )
+                continue
         analyze = urlsplit(href)
         valid_links.append(create_absolute_link(base_url, analyze))
-        valid_anchors.append(link)
+        if rdf:
+            valid_anchors.append(link["tag"])
+        else:
+            valid_anchors.append(link)
     # Logging level WARNING or lower
     if warnings and args.log_level <= WARNING:
         print(context)

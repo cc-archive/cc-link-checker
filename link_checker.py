@@ -290,7 +290,6 @@ def check_deeds(args):
     return [0, exit_status, 0]
 
 
-
 def check_rdfs(args):
     print("\n\nChecking RDFs...\n\n")
     if args.local:
@@ -311,7 +310,12 @@ def check_rdfs(args):
                 context_printed = True
             base_url = rdf_deed_url
             valid_anchors, valid_links, context_printed = get_scrapable_links(
-                args, base_url, links_found, context, context_printed, rdf=True,
+                args,
+                base_url,
+                links_found,
+                context,
+                context_printed,
+                rdf=True,
             )
             if valid_links:
                 memoized_results = get_memoized_result(
@@ -361,7 +365,9 @@ def check_rdfs(args):
                 errors_total += caught_errors
                 exit_status = 1
     else:
-        print('\n\nUh-Oh! Local RDF link checking is not availble remotely...\n')
+        exit_status = 0
+        print('\n\nUh-Oh! RDF link checking is not ')
+        print('available remotely...\n')
         print('Please import index.rdf and reference a path to the file\n')
         print('See import_rdf_index command in cc_licenses repo.')
     print("\nCompleted in: {}".format(time.time() - START_TIME))

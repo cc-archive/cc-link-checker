@@ -79,43 +79,6 @@ def get_deed_url_from_legalcode_url(legalcode_url):
         return m.group(1)
     raise ValueError(f"regex did not match {legalcode_url}")
 
-def get_rdf_url_from_legalcode_url(legalcode_url):
-    """
-    Return the URL of the license that this legalcode url is for.
-    Legalcode URLs are like
-    http://creativecommons.org/licenses/by/4.0/legalcode
-    http://creativecommons.org/licenses/by/4.0/legalcode.es
-    http://opensource.org/licenses/bsd-license.php
-    License URLs are like
-    http://creativecommons.org/licenses/by-nc-nd/4.0/
-    http://creativecommons.org/licenses/BSD/
-    """
-    versions_needed_to_treated = ["4.0", "zero"]
-    exclude_versions = ["zero-assert", "zero-waive"]  # deeds do not exist
-    translation = legalcode_url.split(".")[-1]
-    massage_these_urls = [
-        v for v in versions_needed_to_treated if v in legalcode_url
-    ]
-    should_exclude_urls = [v for v in exclude_versions if v in legalcode_url]
-    if legalcode_url == "http://opensource.org/licenses/bsd-license.php":
-        return "http://creativecommons.org/licenses/BSD/"
-    if legalcode_url == "http://opensource.org/licenses/mit-license.php":
-        return "http://creativecommons.org/licenses/MIT/"
-
-    regex = re.compile(r"^(.*)legalcode(\.%s)?" % LANGUAGE_CODE_REGEX)
-    m = regex.match(legalcode_url)
-    if m:
-        if (
-            bool(massage_these_urls)
-            and translation != "0/legalcode"
-            and bool(should_exclude_urls) is False
-        ):
-            return f"{m.group(1)}deed.{translation}"
-        if bool(should_exclude_urls):
-            return ""
-        return m.group(1)
-    raise ValueError(f"regex did not match {legalcode_url}")
-
 
 def get_legalcode(args):
     """Determine if local legalcode files or remote (GitHub) legalcode files
@@ -193,6 +156,7 @@ def get_local_legalcode():
             license_names.append(name)
     return license_names
 
+
 def get_local_rdf(local_path=""):
     """This function reads from index.rdf stored locally
     Returns:
@@ -204,7 +168,7 @@ def get_local_rdf(local_path=""):
         rdf_text = index_rdf.read()
     except FileNotFoundError:
         raise CheckerError(
-            "Local index.rdf path({}) does not exist".format(INDEX_RDF_LOCAL_PATH)
+            f"Local index.rdf path({INDEX_RDF_LOCAL_PATH}) does not exist"
         )
     except:
         raise
@@ -212,6 +176,7 @@ def get_local_rdf(local_path=""):
     rdfs = soup.find_all("cc:License")
     rdf_obj_list = list(rdfs)
     return rdf_obj_list
+
 
 def get_links_from_rdf(rdf_obj):
     """This function parses an rdf and returns links found
@@ -285,7 +250,14 @@ def request_local_text(local_path, filename):
         raise
 
 
-def get_scrapable_links(args, base_url, links_found, context, context_printed, rdf=False):
+def get_scrapable_links(
+    args,
+    base_url,
+    links_found,
+    context,
+    context_printed,
+    rdf=False
+):
     """Filters out anchor tags without href attribute, internal links and
     mailto scheme links
 
@@ -365,7 +337,7 @@ def get_scrapable_links(args, base_url, links_found, context, context_printed, r
     return (valid_anchors, valid_links, context_printed)
 
 
-def create_base_link(args, filename, for_deeds=False, for_rdfs=False):
+def create_base_link(args, filename, for_deeds=False):
     """Generates base URL on which the license file will be displayed
 
     Args:
@@ -408,8 +380,6 @@ def create_base_link(args, filename, for_deeds=False, for_rdfs=False):
     url = posixpath.join(url, legalcode)
     if for_deeds:
         url = get_deed_url_from_legalcode_url(url)
-    if for_rdfs:
-        url = get_rdf_url_from_legalcode_url(url)
     return url
 
 

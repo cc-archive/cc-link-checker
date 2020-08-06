@@ -313,8 +313,6 @@ def check_rdfs(args):
             valid_anchors, valid_links, context_printed = get_scrapable_links(
                 args, base_url, links_found, context, context_printed, rdf=True,
             )
-            print('valid_anchors', valid_anchors)
-            print('valid_links', valid_links)
             if valid_links:
                 memoized_results = get_memoized_result(
                     valid_links, valid_anchors

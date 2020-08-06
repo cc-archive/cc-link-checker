@@ -210,7 +210,6 @@ def get_local_rdf(local_path=""):
         raise
     soup = BeautifulSoup(rdf_text, "xml")
     rdfs = soup.find_all("cc:License")
-    print(rdfs)
     rdf_obj_list = list(rdfs)
     return rdf_obj_list
 

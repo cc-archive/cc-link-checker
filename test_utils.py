@@ -12,7 +12,7 @@ import link_checker
 from utils import (
     CheckerError,
     get_github_legalcode,
-    get_local_rdf,
+    get_rdf,
     get_links_from_rdf,
     request_text,
     request_local_text,
@@ -201,8 +201,9 @@ def test_get_scrapable_links():
         str(valid_links)
         == "['https://creativecommons.ca', 'https://www.demourl.com/index']"
     )
-    # test rdf local
-    rdf_obj_list = get_local_rdf(constants.TEST_RDF_LOCAL_PATH)
+    # Testing RDF
+    args = link_checker.parse_argument(["--local"])
+    rdf_obj_list = get_rdf(args, local_path=constants.TEST_RDF_LOCAL_PATH)
     rdf_obj = rdf_obj_list[0]
     base_url = rdf_obj["rdf:about"]
     links_found = get_links_from_rdf(rdf_obj)

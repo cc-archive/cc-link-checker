@@ -157,15 +157,45 @@ def get_local_legalcode():
     return license_names
 
 
+def get_rdf(args, local_path=""):
+    """Determine if local rdf files or remote rdf files
+    should be parsed and call the appropriate function.
+
+    Returns:
+        rdf_obj_list: list of rdf objects found in index.rdf
+    """
+    if args.local:
+        rdf_obj_list = get_local_rdf(local_path)
+    else:
+        rdf_obj_list = get_remote_rdf()
+    return rdf_obj_list
+
+
+def get_remote_rdf():
+    """This function reads rdfs found at
+    https://creativecommons.org/licenses/index.rdf
+
+    Returns:
+        rdf_obj_list: list of rdf objects found in index.rdf
+    """
+    URL = "https://creativecommons.org/licenses/index.rdf"
+    page_text = request_text(URL)
+    soup = BeautifulSoup(page_text, "xml")
+    rdfs = soup.find_all("cc:License")
+    rdf_obj_list = list(rdfs)
+    return rdf_obj_list
+
+
 def get_local_rdf(local_path=""):
     """This function reads from index.rdf stored locally
+
     Parameters:
         local_path: path to rdf file. If not supplied
-        your environment will be checked for
-        INDEX_RDF_LOCAL_PATH. If that is not supplied
-        local_path will default to "./index.rdf".
+        the INDEX_RDF_LOCAL_PATH constant is used
+        (which uses your environment or defaults to
+        "./index.rdf"; see constants.py)
     Returns:
-        rdf_list: list of rdfs in index.rdf
+        rdf_obj_list: list of rdf objects found in index.rdf
     """
     try:
         local_path = local_path or INDEX_RDF_LOCAL_PATH
@@ -173,7 +203,7 @@ def get_local_rdf(local_path=""):
         rdf_text = index_rdf.read()
     except FileNotFoundError:
         raise CheckerError(
-            f"Local index.rdf path({INDEX_RDF_LOCAL_PATH}) does not exist"
+            f"Local index.rdf path({local_path}) does not exist"
         )
     except:
         raise

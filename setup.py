@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 from setuptools import setup
 
 setup(
   name="link_checker",
-  version="0.0.1",
+  version="0.1.0",
   author="Creative Commons",
   description=(
     "Checks links across creativecommons.org for "
@@ -21,6 +22,7 @@ setup(
   packages=['link_checker'],
   tests_require=['pytest'],
   entry_points={
-    'console_scripts': ['link_checker=__main__:main']
-  }
+    'console_scripts': ['link_checker=main:run']
+  },
+  include_package_data=True,
 )

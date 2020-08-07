@@ -8,7 +8,7 @@ import pytest
 
 # Local/library specific
 from link_checker import utils
-from link_checker import __main__ as link_checker
+from link_checker import main as link_checker
 from ..utils import (
     CheckerError,
     get_github_legalcode,

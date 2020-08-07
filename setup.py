@@ -22,7 +22,7 @@ setup(
   packages=['link_checker'],
   tests_require=['pytest'],
   entry_points={
-    'console_scripts': ['link_checker=__main__:main']
+    'console_scripts': ['link_checker=__main__:run']
   },
   include_package_data=True,
 )

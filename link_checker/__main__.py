@@ -286,7 +286,7 @@ def check_deeds(args):
     return [0, exit_status]
 
 
-def main():
+def run():
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
     if args.legalcode:
@@ -308,7 +308,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        run()
     except SystemExit as e:
         sys.exit(e.code)
     except KeyboardInterrupt:

@@ -30,9 +30,11 @@ from constants import (
 from utils import (
     CheckerError,
     get_legalcode,
+    get_rdf,
     request_text,
     request_local_text,
     get_scrapable_links,
+    get_links_from_rdf,
     create_base_link,
     get_memoized_result,
     exception_handler,
@@ -53,7 +55,6 @@ def parse_argument(arguments):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--legalcode",
-        "--licenses",
         help="Runs link_checker for legalcode only. (Note: --licenses is"
         " deprecated and will be dropped from a future release. Please use"
         " --legalcode instead.)",
@@ -64,6 +65,9 @@ def parse_argument(arguments):
         help="Runs link_checker for deeds only (the legalcode files will still"
         " be scraped, but not checked for broken links)",
         action="store_true",
+    )
+    parser.add_argument(
+        "--rdf", help="Runs link_checker for rdf only", action="store_true"
     )
     parser.add_argument(
         "--local",
@@ -194,7 +198,7 @@ def check_legalcode(args):
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
-    return [exit_status, 0]
+    return [exit_status, 0, 0]
 
 
 def check_deeds(args):
@@ -283,7 +287,84 @@ def check_deeds(args):
         print("\nError file present at: ", args.output_errors.name)
         output_test_summary(errors_total)
 
-    return [0, exit_status]
+    return [0, exit_status, 0]
+
+
+def check_rdfs(args):
+    print("\n\nChecking RDFs...\n\n")
+    rdf_obj_list = get_rdf(args)
+    if args.log_level <= INFO:
+        print("Number of rdf files to be checked:", len(rdf_obj_list))
+    errors_total = 0
+    exit_status = 0
+    for rdf_obj in rdf_obj_list:
+        caught_errors = 0
+        context_printed = False
+        rdf_deed_url = rdf_obj["rdf:about"]
+        links_found = get_links_from_rdf(rdf_obj)
+        context = f"\n\nChecking: \nURL: {rdf_deed_url}"
+        link_count = len(links_found)
+        if args.log_level <= INFO:
+            print(f"{context}\nNumber of links found: {link_count}")
+            context_printed = True
+        base_url = rdf_deed_url
+        valid_anchors, valid_links, context_printed = get_scrapable_links(
+            args, base_url, links_found, context, context_printed, rdf=True,
+        )
+        if valid_links:
+            memoized_results = get_memoized_result(valid_links, valid_anchors)
+            stored_links = memoized_results[0]
+            stored_anchors = memoized_results[1]
+            stored_result = memoized_results[2]
+            check_links = memoized_results[3]
+            check_anchors = memoized_results[4]
+            if check_links:
+                rs = (
+                    # Since we're only checking for validity,
+                    # we can retreive
+                    # only the headers/metadata
+                    grequests.head(link, timeout=REQUESTS_TIMEOUT)
+                    for link in check_links
+                )
+                responses = list()
+                # Explicitly close connections to free up file handles and
+                # avoid Connection Errors per:
+                # https://stackoverflow.com/a/22839550
+                for response in grequests.map(
+                    rs, exception_handler=exception_handler
+                ):
+                    try:
+                        responses.append(response.status_code)
+                        response.close()
+                    except AttributeError:
+                        responses.append(response)
+                memoize_result(check_links, responses)
+                stored_anchors += check_anchors
+                stored_result += responses
+            stored_links += check_links
+            caught_errors = write_response(
+                args,
+                stored_links,
+                stored_result,
+                rdf_deed_url,
+                rdf_obj,
+                stored_anchors,
+                context,
+                context_printed,
+            )
+
+        if caught_errors:
+            errors_total += caught_errors
+            exit_status = 1
+
+    print("\nCompleted in: {}".format(time.time() - START_TIME))
+
+    if args.output_errors:
+        output_summary(args, rdf_obj_list, errors_total)
+        print("\nError file present at: ", args.output_errors.name)
+        output_test_summary(errors_total)
+
+    return [0, 0, exit_status]
 
 
 def main():
@@ -293,14 +374,21 @@ def main():
         exit_status_list = check_legalcode(args)
     if args.deeds:
         exit_status_list = check_deeds(args)
+    if args.rdf:
+        exit_status_list = check_rdfs(args)
     else:
         print(
             "\nRunning Full Inspection:"
             " Checking Links in LegalCode License & Deeds"
         )
-        exit_status_legalcode, x = check_legalcode(args)
-        y, exit_status_deeds = check_deeds(args)
-        exit_status_list = [exit_status_legalcode, exit_status_deeds]
+        exit_status_legalcode, y, z = check_legalcode(args)
+        x, exit_status_deeds, z = check_deeds(args)
+        x, y, exit_status_rdf = check_rdfs(args)
+        exit_status_list = [
+            exit_status_legalcode,
+            exit_status_deeds,
+            exit_status_rdf,
+        ]
     if 1 in exit_status_list:
         return sys.exit(1)
     return sys.exit(0)

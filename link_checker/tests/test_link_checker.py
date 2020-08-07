@@ -1,5 +1,5 @@
 # Local/library specific
-from link_checker import link_checker
+from link_checker import __main__ as link_checker
 
 
 def test_parse_argument(tmpdir):

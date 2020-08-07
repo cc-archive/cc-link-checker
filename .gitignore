@@ -10,5 +10,6 @@ err_file.txt
 test-summary
 .pyc
 /dist/
+build
 /*.egg-info
 /*.egg

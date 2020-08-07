@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 import grequests  # WARNING: Always import grequests before requests
 
 # Local
-from .constants import (
+from link_checker.constants import (
     REQUESTS_TIMEOUT,
     START_TIME,
     LICENSE_GITHUB_BASE,
@@ -27,7 +27,7 @@ from .constants import (
     DEBUG,
 )
 
-from .utils import (
+from link_checker.utils import (
     CheckerError,
     get_legalcode,
     request_text,

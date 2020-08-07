@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # vim: set fileencoding=utf-8 :
 
 """Check for broken links in Creative Commons license legalcode and deeds
@@ -286,7 +285,7 @@ def check_deeds(args):
     return [0, exit_status]
 
 
-def main(args=None):
+def main():
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
     if args.legalcode:

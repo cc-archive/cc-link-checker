@@ -23,6 +23,5 @@ setup(
   tests_require=['pytest'],
   entry_points={
     'console_scripts': ['link_checker=__main__:main']
-  },
-  include_package_data=True,
+  }
 )

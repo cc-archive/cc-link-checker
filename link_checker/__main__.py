@@ -304,3 +304,21 @@ def main():
     if 1 in exit_status_list:
         return sys.exit(1)
     return sys.exit(0)
+
+
+# if __name__ == "__main__":
+#     try:
+#         main()
+#     except SystemExit as e:
+#         sys.exit(e.code)
+#     except KeyboardInterrupt:
+#         print("INFO (130) Halted via KeyboardInterrupt.", file=sys.stderr)
+#         sys.exit(130)
+#     except CheckerError:
+#         error_type, error_value, error_traceback = sys.exc_info()
+#         print("ERROR {}".format(error_value), file=sys.stderr)
+#         sys.exit(error_value.code)
+#     except:
+#         print("ERROR (1) Unhandled exception:", file=sys.stderr)
+#         print(traceback.print_exc(), file=sys.stderr)
+#         sys.exit(1)

@@ -286,7 +286,7 @@ def check_deeds(args):
     return [0, exit_status]
 
 
-def main():
+def main(args=None):
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
     if args.legalcode:
@@ -306,19 +306,19 @@ def main():
     return sys.exit(0)
 
 
-# if __name__ == "__main__":
-#     try:
-#         main()
-#     except SystemExit as e:
-#         sys.exit(e.code)
-#     except KeyboardInterrupt:
-#         print("INFO (130) Halted via KeyboardInterrupt.", file=sys.stderr)
-#         sys.exit(130)
-#     except CheckerError:
-#         error_type, error_value, error_traceback = sys.exc_info()
-#         print("ERROR {}".format(error_value), file=sys.stderr)
-#         sys.exit(error_value.code)
-#     except:
-#         print("ERROR (1) Unhandled exception:", file=sys.stderr)
-#         print(traceback.print_exc(), file=sys.stderr)
-#         sys.exit(1)
+if __name__ == "__main__":
+    try:
+        main()
+    except SystemExit as e:
+        sys.exit(e.code)
+    except KeyboardInterrupt:
+        print("INFO (130) Halted via KeyboardInterrupt.", file=sys.stderr)
+        sys.exit(130)
+    except CheckerError:
+        error_type, error_value, error_traceback = sys.exc_info()
+        print("ERROR {}".format(error_value), file=sys.stderr)
+        sys.exit(error_value.code)
+    except:
+        print("ERROR (1) Unhandled exception:", file=sys.stderr)
+        print(traceback.print_exc(), file=sys.stderr)
+        sys.exit(1)

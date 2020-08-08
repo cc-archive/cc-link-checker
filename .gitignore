@@ -1,15 +1,19 @@
-__pycache__
-venv
-errorlog.txt
-.vscode
-.pytest_cache
-test-reports
 .coverage
-test_file.txt
+.pytest_cache
+.vscode
+__pycache__
 err_file.txt
+errorlog.txt
+index.rdf
+test-reports
 test-summary
+<<<<<<< HEAD
 .pyc
 /dist/
 build
 /*.egg-info
 /*.egg
+=======
+test_file.txt
+venv
+>>>>>>> 6651bcfd75d388824baa0c27301edf758b12ce68

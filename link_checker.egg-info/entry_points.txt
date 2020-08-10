@@ -1,0 +1,3 @@
+[console_scripts]
+link_checker = link_checker.__main__:main
+

@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: link-checker
+Version: 0.1.0
+Summary: Checks links across creativecommons.org for license legalcode, deeds, and rdf files
+Home-page: https://github.com/creativecommons/cc-link-checker
+Author: Creative Commons
+Author-email: UNKNOWN
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN

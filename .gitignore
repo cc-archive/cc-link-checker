@@ -8,9 +8,6 @@ index.rdf
 test-reports
 test-summary
 .pyc
-/dist/
 build
-/*.egg-info
-/*.egg
 test_file.txt
 venv

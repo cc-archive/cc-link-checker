@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
   name="link_checker",
@@ -19,8 +19,8 @@ setup(
     'requests'
   ],
   license="MIT",
-  packages=['link_checker'],
   tests_require=['pytest'],
+  packages=['link_checker'],
   entry_points={
     'console_scripts': ['link_checker=link_checker.__main__:main']
   },

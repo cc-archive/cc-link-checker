@@ -367,7 +367,7 @@ def check_rdfs(args):
     return [0, 0, exit_status]
 
 
-def run():
+def main():
     args = parse_argument(sys.argv[1:])
     exit_status_list = []
     if args.legalcode:
@@ -394,9 +394,9 @@ def run():
     return sys.exit(0)
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     try:
-        run()
+        main()
     except SystemExit as e:
         sys.exit(e.code)
     except KeyboardInterrupt:

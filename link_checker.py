@@ -70,6 +70,9 @@ def parse_argument(arguments):
         "--rdf", help="Runs link_checker for rdf only", action="store_true"
     )
     parser.add_argument(
+        "--index", help="Runs link_checker for index.rdf only", action="store_true"
+    )
+    parser.add_argument(
         "--local",
         help="Scrapes legalcode files from local file system",
         action="store_true",

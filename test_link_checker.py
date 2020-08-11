@@ -15,9 +15,12 @@ def test_parse_argument(tmpdir):
     # Test --deeds
     args = link_checker.parse_argument(["--deeds"])
     assert args.deeds is True
-    # Test --licenses
+    # Test --rdf
     args = link_checker.parse_argument(["--rdf"])
     assert args.rdf is True
+    # Test --index
+    args = link_checker.parse_argument(["--index"])
+    assert args.index is True
     # Test --local
     args = link_checker.parse_argument(["--local"])
     assert args.local is True

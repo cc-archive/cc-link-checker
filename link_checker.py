@@ -308,14 +308,14 @@ def check_rdfs(args):
     for rdf_obj in rdf_obj_list:
         caught_errors = 0
         context_printed = False
-        rdf_deed_url = rdf_obj["rdf:about"]
+        rdf_url = rdf_obj["rdf:about"] if args.index else f'{rdf_obj["rdf:about"]}rdf'
         links_found = get_links_from_rdf(rdf_obj)
-        context = f"\n\nChecking: \nURL: {rdf_deed_url}"
+        context = f"\n\nChecking: \nURL: {rdf_url}"
         link_count = len(links_found)
         if args.log_level <= INFO:
             print(f"{context}\nNumber of links found: {link_count}")
             context_printed = True
-        base_url = rdf_deed_url
+        base_url = rdf_url
         valid_anchors, valid_links, context_printed = get_scrapable_links(
             args, base_url, links_found, context, context_printed, rdf=True,
         )
@@ -354,7 +354,7 @@ def check_rdfs(args):
                 args,
                 stored_links,
                 stored_result,
-                rdf_deed_url,
+                rdf_url,
                 rdf_obj,
                 stored_anchors,
                 context,

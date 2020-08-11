@@ -12,7 +12,7 @@ import link_checker
 from utils import (
     CheckerError,
     get_github_legalcode,
-    get_rdf,
+    get_index_rdf,
     get_links_from_rdf,
     request_text,
     request_local_text,
@@ -44,19 +44,21 @@ def test_get_github_legalcode():
 
 
 @pytest.mark.parametrize(
-    "filename, result, deed_result",
+    "filename, result, deed_result, rdf_result",
     [
         # 2 part URL
         (
             "by-nc-nd_2.0",
             "https://creativecommons.org/licenses/by-nc-nd/2.0/legalcode",
             "https://creativecommons.org/licenses/by-nc-nd/2.0/",
+            "https://creativecommons.org/licenses/by-nc-nd/2.0/rdf",
         ),
         # 3 part URL
         (
             "by-nc-nd_4.0_cs",
             "https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.cs",
             "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.cs",
+            "https://creativecommons.org/licenses/by-nc-nd/4.0/rdf",
         ),
         # 4 part URL
         (
@@ -64,32 +66,38 @@ def test_get_github_legalcode():
             "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/"
             "legalcode.sr-Latn",
             "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/",
+            "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/rdf",
         ),
         # Special case - samplingplus
         (
             "samplingplus_1.0",
             "https://creativecommons.org/licenses/sampling+/1.0/legalcode",
             "https://creativecommons.org/licenses/sampling+/1.0/",
+            "https://creativecommons.org/licenses/sampling+/1.0/rdf",
         ),
         (
             "samplingplus_1.0_br",
             "https://creativecommons.org/licenses/sampling+/1.0/br/legalcode",
             "https://creativecommons.org/licenses/sampling+/1.0/br/",
+            "https://creativecommons.org/licenses/sampling+/1.0/br/rdf",
         ),
         # Special case - CC0
         (
             "zero_1.0",
             "https://creativecommons.org/publicdomain/zero/1.0/legalcode",
             "https://creativecommons.org/publicdomain/zero/1.0/",
+            "https://creativecommons.org/publicdomain/zero/1.0/rdf",
         ),
     ],
 )
-def test_create_base_link(filename, result, deed_result):
+def test_create_base_link(filename, result, deed_result, rdf_result):
     args = link_checker.parse_argument([])
     baseURL = create_base_link(args, filename)
     assert baseURL == result
     baseURL = create_base_link(args, filename, for_deeds=True)
     assert baseURL == deed_result
+    baseURL = create_base_link(args, filename, for_rdfs=True)
+    assert baseURL == rdf_result
 
 
 def test_output_write(tmpdir):
@@ -203,7 +211,9 @@ def test_get_scrapable_links():
     )
     # Testing RDF
     args = link_checker.parse_argument(["--local"])
-    rdf_obj_list = get_rdf(args, local_path=constants.TEST_RDF_LOCAL_PATH)
+    rdf_obj_list = get_index_rdf(
+        args, local_path=constants.TEST_RDF_LOCAL_PATH
+    )
     rdf_obj = rdf_obj_list[0]
     base_url = rdf_obj["rdf:about"]
     links_found = get_links_from_rdf(rdf_obj)

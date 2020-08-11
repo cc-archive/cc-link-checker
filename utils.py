@@ -158,6 +158,13 @@ def get_local_legalcode():
 
 
 def get_rdf(args):
+    """Helper function that determines rdf urls
+    from license_names found locally or on github and
+    then returns a list of valid rdf objects found.
+
+    Returns:
+        rdf_obj_list: list of rdf objects
+    """
     license_names = get_legalcode(args)
     rdf_urls = []
     rdf_obj_list = []

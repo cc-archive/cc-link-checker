@@ -170,10 +170,8 @@ def get_rdf(args):
         if url:
             page_text = request_text(url)
             soup = BeautifulSoup(page_text, "xml")
-            rdf = soup.find_all("cc:License")
-            rdf_list = list(rdf)
-            rdf_obj_list.append(rdf_list[0])
-    print(rdf_obj_list)
+            rdf = soup.find("cc:License")
+            rdf_obj_list.append(rdf)
     return rdf_obj_list
 
 

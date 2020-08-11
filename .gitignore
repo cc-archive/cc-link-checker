@@ -9,5 +9,6 @@ test-reports
 test-summary
 .pyc
 build
+dist
 test_file.txt
 venv

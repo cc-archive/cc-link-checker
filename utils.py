@@ -178,7 +178,8 @@ def get_rdf(args):
             page_text = request_text(url)
             soup = BeautifulSoup(page_text, "xml")
             rdf = soup.find("cc:License")
-            rdf_obj_list.append(rdf)
+            if rdf is not None:
+                rdf_obj_list.append(rdf)
     return rdf_obj_list
 
 

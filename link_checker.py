@@ -71,7 +71,9 @@ def parse_argument(arguments):
         "--rdf", help="Runs link_checker for rdf only", action="store_true"
     )
     parser.add_argument(
-        "--index", help="Runs link_checker for index.rdf only", action="store_true"
+        "--index",
+        help="Runs link_checker for index.rdf only",
+        action="store_true",
     )
     parser.add_argument(
         "--local",
@@ -308,7 +310,11 @@ def check_rdfs(args):
     for rdf_obj in rdf_obj_list:
         caught_errors = 0
         context_printed = False
-        rdf_url = rdf_obj["rdf:about"] if args.index else f'{rdf_obj["rdf:about"]}rdf'
+        rdf_url = (
+            rdf_obj["rdf:about"]
+            if args.index
+            else f'{rdf_obj["rdf:about"]}rdf'
+        )
         links_found = get_links_from_rdf(rdf_obj)
         context = f"\n\nChecking: \nURL: {rdf_url}"
         link_count = len(links_found)

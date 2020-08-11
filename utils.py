@@ -73,7 +73,11 @@ def get_url_from_legalcode_url(legalcode_url, for_rdfs=False):
             and translation != "0/legalcode"
             and bool(should_exclude_urls) is False
         ):
-            return f"{m.group(1)}deed.{translation}" if not for_rdfs else f"{m.group(1)}rdf"
+            return (
+                f"{m.group(1)}deed.{translation}"
+                if not for_rdfs
+                else f"{m.group(1)}rdf"
+            )
         if bool(should_exclude_urls):
             return ""
         return m.group(1) if not for_rdfs else f"{m.group(1)}rdf"
@@ -653,15 +657,16 @@ def output_test_summary(errors_total):
         ts = TestSuite("cc-link-checker", [test_case])
         to_xml_report_file(test_summary, [ts])
 
-def unique(list1): 
+
+def unique(list1):
     """Takes a list and returns a list of unique
     values
     """
-    # intilize a null list 
-    unique_list = [] 
-    # traverse for all elements 
-    for x in list1: 
-        # check if value exists in unique_list or not 
-        if x not in unique_list: 
-            unique_list.append(x) 
+    # intilize a null list
+    unique_list = []
+    # traverse for all elements
+    for x in list1:
+        # check if value exists in unique_list or not
+        if x not in unique_list:
+            unique_list.append(x)
     return unique_list

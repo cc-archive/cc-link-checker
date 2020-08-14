@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-"""Check for broken links in Creative Commons license legalcode and deeds
+"""Check for broken links in Creative Commons license deeds, legalcode, and rdf
 """
 
 # Standard library

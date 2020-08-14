@@ -1,6 +1,0 @@
-beautifulsoup4
-grequests
-importlib-metadata
-junit-xml
-lxml
-requests

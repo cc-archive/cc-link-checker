@@ -1,11 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Unit test / coverage reports
 .coverage
-.pytest_cache
+.pytest_cache/
+
+# Environments
+venv/
+
+# Editor / IDE
+*.swo
+*.swp
 .vscode
-__pycache__
+
+# link_checker targets
+index.rdf
+
+# link_checker outputs
 err_file.txt
 errorlog.txt
-index.rdf
 test-reports
 test-summary
 test_file.txt
-venv

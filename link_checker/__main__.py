@@ -52,7 +52,9 @@ def parse_argument(arguments):
         args (list): list of arguments parsed from command line
     """
     # Setup argument parser
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="link_checker.py", description=__doc__
+    )
     parser.add_argument(
         "--legalcode",
         help="Runs link_checker for legalcode only. (Note: --licenses is"

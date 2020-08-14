@@ -90,14 +90,21 @@ It provides the help text related to the script
 pipenv run link_checker.py -h
 ```
 ```
-usage: link_checker.py [-h] [--local] [--output-errors [output_file]] [-q]
-                       [--root-url ROOT_URL] [-v]
+usage: link_checker.py [-h] [--legalcode] [--deeds] [--rdf] [--local]
+                       [--output-errors [output_file]] [-q] [--root-url ROOT_URL]
+                       [-v]
 
-Check for broken links in Creative Commons licenses
+Check for broken links in Creative Commons license deeds, legalcode, and rdf
 
 optional arguments:
   -h, --help            show this help message and exit
-  --local               Scrapes license files from local file system
+  --legalcode           Runs link_checker for legalcode only. (Note: --licenses is
+                        deprecated and will be dropped from a future release.
+                        Please use --legalcode instead.)
+  --deeds               Runs link_checker for deeds only (the legalcode files will
+                        still be scraped, but not checked for broken links)
+  --rdf                 Runs link_checker for rdf only
+  --local               Scrapes legalcode files from local file system
   --output-errors [output_file]
                         Outputs all link errors to file (default: errorlog.txt)
                         and creates junit-xml type summary(test-summary/junit-xml-
@@ -106,6 +113,7 @@ optional arguments:
   --root-url ROOT_URL   Set root URL (default: https://creativecommons.org)
   -v, --verbose         Increase verbosity. Can be specified multiple times.
 ```
+
 
 ### Default mode
 

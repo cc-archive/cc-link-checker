@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 
-"""Check for broken links in Creative Commons license legalcode and deeds
+"""Check for broken links in Creative Commons license deeds, legalcode, and rdf
 """
 
 # Standard library
@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 import grequests  # WARNING: Always import grequests before requests
 
 # Local
-from constants import (
+from link_checker.constants import (
     REQUESTS_TIMEOUT,
     START_TIME,
     LICENSE_GITHUB_BASE,
@@ -27,7 +27,7 @@ from constants import (
     DEBUG,
 )
 
-from utils import (
+from link_checker.utils import (
     CheckerError,
     get_legalcode,
     get_rdf,
@@ -52,7 +52,9 @@ def parse_argument(arguments):
         args (list): list of arguments parsed from command line
     """
     # Setup argument parser
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="link_checker.py", description=__doc__
+    )
     parser.add_argument(
         "--legalcode",
         help="Runs link_checker for legalcode only. (Note: --licenses is"

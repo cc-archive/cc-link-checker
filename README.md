@@ -94,7 +94,7 @@ usage: link_checker.py [-h] [--legalcode] [--deeds] [--rdf] [--local]
                        [--output-errors [output_file]] [-q] [--root-url ROOT_URL]
                        [-v]
 
-Check for broken links in Creative Commons license legalcode and deeds
+Check for broken links in Creative Commons license deeds, legalcode, and rdf
 
 optional arguments:
   -h, --help            show this help message and exit

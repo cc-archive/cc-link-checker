@@ -13,12 +13,9 @@ flake8 = "*"
 pytest = "*"
 
 [packages]
-beautifulsoup4 = "*"
-grequests = "*"
-importlib-metadata = "*"
-junit-xml = "*"
-lxml = "*"
-requests = "*"
+    [packages.link_checker]
+        editable = true
+        path = "."
 
 [requires]
 python_version = "3"

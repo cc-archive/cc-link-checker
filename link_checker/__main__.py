@@ -306,7 +306,13 @@ def check_rdfs(args):
         print("\n\nChecking RDFs...\n\n")
         rdf_obj_list = get_rdf(args)
     if args.log_level <= INFO:
-        print("Number of rdf files to be checked:", len(rdf_obj_list))
+        if not args.index:
+            print("Number of rdf files to be checked:", len(rdf_obj_list))
+        else:
+            print(
+                "Number of rdf objects/sections to be checked in index.rdf:",
+                len(rdf_obj_list),
+            )
     errors_total = 0
     exit_status = 0
     for rdf_obj in rdf_obj_list:

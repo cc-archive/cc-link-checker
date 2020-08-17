@@ -176,7 +176,7 @@ def get_rdf(args):
         filename = license_name[: -len(".html")]
         rdf_base_url = create_base_link(args, filename, for_rdfs=True)
         rdf_urls.append(rdf_base_url)
-    unique_rdf_urls = unique(rdf_urls)
+    unique_rdf_urls = list(set(rdf_urls))
     for url in unique_rdf_urls:
         if url:
             page_text = request_text(url)
@@ -656,17 +656,3 @@ def output_test_summary(errors_total):
             )
         ts = TestSuite("cc-link-checker", [test_case])
         to_xml_report_file(test_summary, [ts])
-
-
-def unique(list1):
-    """Takes a list and returns a list of unique
-    values
-    """
-    # intilize a null list
-    unique_list = []
-    # traverse for all elements
-    for x in list1:
-        # check if value exists in unique_list or not
-        if x not in unique_list:
-            unique_list.append(x)
-    return unique_list

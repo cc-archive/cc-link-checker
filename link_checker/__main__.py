@@ -413,7 +413,7 @@ def main():
             exit_status_legalcode,
             exit_status_deeds,
             exit_status_rdf,
-            exit_status_index_rdf
+            exit_status_index_rdf,
         ]
     if 1 in exit_status_list:
         return sys.exit(1)

@@ -402,15 +402,18 @@ def main():
     else:
         print(
             "\nRunning Full Inspection:"
-            " Checking Links in LegalCode License & Deeds"
+            " Checking Links for LegalCode, Deed, RDF, and index.rdf files"
         )
         exit_status_legalcode, y, z = check_legalcode(args)
         x, exit_status_deeds, z = check_deeds(args)
         x, y, exit_status_rdf = check_rdfs(args)
+        args.index = True
+        x, y, exit_status_index_rdf = check_rdfs(args)
         exit_status_list = [
             exit_status_legalcode,
             exit_status_deeds,
             exit_status_rdf,
+            exit_status_index_rdf
         ]
     if 1 in exit_status_list:
         return sys.exit(1)

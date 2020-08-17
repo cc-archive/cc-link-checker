@@ -324,7 +324,8 @@ def check_rdfs(args):
             else f'{rdf_obj["rdf:about"]}rdf'
         )
         links_found = get_links_from_rdf(rdf_obj)
-        context = f"\n\nChecking: \nURL: {rdf_url}"
+        checking = 'URL' if not args.index else 'RDF_ABOUT'
+        context = f"\n\nChecking: \n{checking}: {rdf_url}"
         link_count = len(links_found)
         if args.log_level <= INFO:
             print(f"{context}\nNumber of links found: {link_count}")

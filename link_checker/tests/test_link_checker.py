@@ -12,12 +12,26 @@ def test_parse_argument(tmpdir):
     # Test --licenses
     args = link_checker.parse_argument(["--legalcode"])
     assert args.legalcode is True
+    args = link_checker.parse_argument(["legalcode"])
+    assert args.func.__name__ == 'check_legalcode'
+    args = link_checker.parse_argument(["legalcode", "--local"])
+    assert args.local is True
     # Test --deeds
     args = link_checker.parse_argument(["--deeds"])
     assert args.deeds is True
+    args = link_checker.parse_argument(["deeds"])
+    assert args.func.__name__ == 'check_deeds'
+    args = link_checker.parse_argument(["deeds", "--local"])
+    assert args.local is True
     # Test --rdf
     args = link_checker.parse_argument(["--rdf"])
     assert args.rdf is True
+    args = link_checker.parse_argument(["rdf"])
+    assert args.func.__name__ == 'check_rdfs'
+    args = link_checker.parse_argument(["rdf", "--index"])
+    assert args.index is True
+    args = link_checker.parse_argument(["rdf", "--local"])
+    assert args.local is True
     # Test --index
     args = link_checker.parse_argument(["--index"])
     assert args.index is True

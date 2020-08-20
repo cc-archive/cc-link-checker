@@ -19,6 +19,7 @@ from link_checker.constants import (
     REQUESTS_TIMEOUT,
     START_TIME,
     LICENSE_GITHUB_BASE,
+    LICENSE_LOCAL_PATH,
     LICENSES_DIR,
     DEFAULT_ROOT_URL,
     CRITICAL,
@@ -113,7 +114,9 @@ def parse_argument(arguments):
     # Sub-Parser Section
     subparsers = parser.add_subparsers(help="sub-command help")
     # legalcode section: link_checker legalcode -h
-    parser_legalcode = subparsers.add_parser("legalcode", help="legalcode help")
+    parser_legalcode = subparsers.add_parser(
+        "legalcode", help="legalcode help"
+    )
     parser_legalcode.add_argument(
         "--local",
         help=(
@@ -130,7 +133,8 @@ def parse_argument(arguments):
     parser_deeds.add_argument(
         "--local",
         help=(
-            "Scrapes deed files based on the legalcode files found on the local file system.\n"
+            "Scrapes deed files based on the legalcode files "
+            "found on the local file system.\n"
             "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
             "otherwise this tool will search for legalcode files\n"
             f"in '{LICENSES_DIR}'."
@@ -143,7 +147,8 @@ def parse_argument(arguments):
     parser_rdf.add_argument(
         "--local",
         help=(
-            "Scrapes rdf files based on the legalcode files found on the local file system.\n"
+            "Scrapes rdf files based on the legalcode files "
+            "found on the local file system.\n"
             "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
             "otherwise this tool will search for legalcode files\n"
             f"in '{LICENSES_DIR}'."
@@ -161,7 +166,6 @@ def parse_argument(arguments):
         action="store_true",
     )
     parser_rdf.set_defaults(func=check_rdfs)
-
 
     args = parser.parse_args(arguments)
     if args.root_url is None:
@@ -444,15 +448,27 @@ def check_rdfs(args):
 
 def main():
     args = parse_argument(sys.argv[1:])
-    print(args)
+    args_dict = vars(args)
+    run_sub_command = args_dict.get("func", False)
+    no_parser_args = not any(
+        [args.legalcode, args.deeds, args.rdf, run_sub_command]
+    )
+    all_parser_args_but_no_subparser_args = (
+        all([args.legalcode, args.deeds, args.rdf]) and not run_sub_command
+    )
+    run_full_inspection = (
+        no_parser_args or all_parser_args_but_no_subparser_args
+    )
+    if run_sub_command:
+        exit_status_list = args.func(args)
     exit_status_list = []
-    if args.legalcode:
+    if args.legalcode and not all_parser_args_but_no_subparser_args:
         exit_status_list = check_legalcode(args)
-    if args.deeds:
+    if args.deeds and not all_parser_args_but_no_subparser_args:
         exit_status_list = check_deeds(args)
-    if args.rdf:
+    if args.rdf and not all_parser_args_but_no_subparser_args:
         exit_status_list = check_rdfs(args)
-    else:
+    if run_full_inspection:
         print(
             "\nRunning Full Inspection:"
             " Checking Links for LegalCode, Deed, RDF, and index.rdf files"

@@ -17,7 +17,8 @@ LICENSE_GITHUB_BASE = (
     "https://raw.githubusercontent.com/creativecommons/creativecommons.org"
     "/master/docroot/legalcode/"
 )
-LICENSE_LOCAL_PATH = "../creativecommons.org/docroot/legalcode"
+LICENSES_DIR = "../creativecommons.org/docroot/legalcode"
+LICENSE_LOCAL_PATH = os.environ.get("LICENSE_LOCAL_PATH", LICENSES_DIR)
 INDEX_RDF_LOCAL_PATH = os.environ.get("INDEX_RDF_LOCAL_PATH", "./index.rdf")
 TEST_RDF_LOCAL_PATH = "./test.rdf"
 DEED_LOCAL_PATH = ""

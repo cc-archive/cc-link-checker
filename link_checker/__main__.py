@@ -19,7 +19,7 @@ from link_checker.constants import (
     REQUESTS_TIMEOUT,
     START_TIME,
     LICENSE_GITHUB_BASE,
-    LICENSE_LOCAL_PATH,
+    LICENSES_DIR,
     DEFAULT_ROOT_URL,
     CRITICAL,
     WARNING,
@@ -110,6 +110,58 @@ def parse_argument(arguments):
         dest="verbosity",
         help="Increase verbosity. Can be specified multiple times.",
     )
+    # Sub-Parser Section
+    subparsers = parser.add_subparsers(help="sub-command help")
+    # legalcode section: link_checker legalcode -h
+    parser_legalcode = subparsers.add_parser("legalcode", help="legalcode help")
+    parser_legalcode.add_argument(
+        "--local",
+        help=(
+            "Scrapes legalcode files from local file system.\n"
+            "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
+            "otherwise this tool will search for legalcode files\n"
+            f"in '{LICENSES_DIR}'."
+        ),
+        action="store_true",
+    )
+    parser_legalcode.set_defaults(func=check_legalcode)
+    # deeds section: link_checker deeds -h
+    parser_deeds = subparsers.add_parser("deeds", help="deeds help")
+    parser_deeds.add_argument(
+        "--local",
+        help=(
+            "Scrapes deed files based on the legalcode files found on the local file system.\n"
+            "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
+            "otherwise this tool will search for legalcode files\n"
+            f"in '{LICENSES_DIR}'."
+        ),
+        action="store_true",
+    )
+    parser_deeds.set_defaults(func=check_deeds)
+    # rdf section: link_checker rdf -h
+    parser_rdf = subparsers.add_parser("rdf", help="rdf help")
+    parser_rdf.add_argument(
+        "--local",
+        help=(
+            "Scrapes rdf files based on the legalcode files found on the local file system.\n"
+            "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
+            "otherwise this tool will search for legalcode files\n"
+            f"in '{LICENSES_DIR}'."
+        ),
+        action="store_true",
+    )
+    parser_rdf.add_argument(
+        "--index",
+        help=(
+            "Checks index.rdf file instead of checking rdf files.\n"
+            "If you want to check the index.rdf file locally add\n"
+            "'INDEX_RDF_LOCAL_PATH' to your environment; otherwise this\n"
+            "variable defaults to './index.rdf'."
+        ),
+        action="store_true",
+    )
+    parser_rdf.set_defaults(func=check_rdfs)
+
 
     args = parser.parse_args(arguments)
     if args.root_url is None:
@@ -392,6 +444,7 @@ def check_rdfs(args):
 
 def main():
     args = parse_argument(sys.argv[1:])
+    print(args)
     exit_status_list = []
     if args.legalcode:
         exit_status_list = check_legalcode(args)

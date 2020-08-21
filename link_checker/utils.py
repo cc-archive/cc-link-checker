@@ -40,7 +40,7 @@ class CheckerError(Exception):
         return self.message
 
 
-def get_deed_url_from_legalcode_url(legalcode_url):
+def get_url_from_legalcode_url(legalcode_url, for_rdfs=False):
     """
     Return the URL of the license that this legalcode url is for.
 
@@ -73,10 +73,14 @@ def get_deed_url_from_legalcode_url(legalcode_url):
             and translation != "0/legalcode"
             and bool(should_exclude_urls) is False
         ):
-            return f"{m.group(1)}deed.{translation}"
+            return (
+                f"{m.group(1)}deed.{translation}"
+                if not for_rdfs
+                else f"{m.group(1)}rdf"
+            )
         if bool(should_exclude_urls):
             return ""
-        return m.group(1)
+        return m.group(1) if not for_rdfs else f"{m.group(1)}rdf"
     raise ValueError(f"regex did not match {legalcode_url}")
 
 
@@ -157,7 +161,33 @@ def get_local_legalcode():
     return license_names
 
 
-def get_rdf(args, local_path=""):
+def get_rdf(args):
+    """Helper function that determines rdf urls
+    from license_names found locally or on github and
+    returns a list of valid rdf objects.
+
+    Returns:
+        rdf_obj_list: list of rdf objects
+    """
+    license_names = get_legalcode(args)
+    rdf_urls = []
+    rdf_obj_list = []
+    for license_name in license_names:
+        filename = license_name[: -len(".html")]
+        rdf_base_url = create_base_link(args, filename, for_rdfs=True)
+        rdf_urls.append(rdf_base_url)
+    unique_rdf_urls = list(set(rdf_urls))
+    for url in unique_rdf_urls:
+        if url:
+            page_text = request_text(url)
+            soup = BeautifulSoup(page_text, "xml")
+            rdf = soup.find("cc:License")
+            if rdf is not None:
+                rdf_obj_list.append(rdf)
+    return rdf_obj_list
+
+
+def get_index_rdf(args, local_path=""):
     """Determine if local rdf files or remote rdf files
     should be parsed and call the appropriate function.
 
@@ -165,13 +195,13 @@ def get_rdf(args, local_path=""):
         rdf_obj_list: list of rdf objects found in index.rdf
     """
     if args.local:
-        rdf_obj_list = get_local_rdf(local_path)
+        rdf_obj_list = get_local_index_rdf(local_path)
     else:
-        rdf_obj_list = get_remote_rdf()
+        rdf_obj_list = get_remote_index_rdf()
     return rdf_obj_list
 
 
-def get_remote_rdf():
+def get_remote_index_rdf():
     """This function reads rdfs found at
     https://creativecommons.org/licenses/index.rdf
 
@@ -186,7 +216,7 @@ def get_remote_rdf():
     return rdf_obj_list
 
 
-def get_local_rdf(local_path=""):
+def get_local_index_rdf(local_path=""):
     """This function reads from index.rdf stored locally
 
     Parameters:
@@ -367,7 +397,7 @@ def get_scrapable_links(
     return (valid_anchors, valid_links, context_printed)
 
 
-def create_base_link(args, filename, for_deeds=False):
+def create_base_link(args, filename, for_deeds=False, for_rdfs=False):
     """Generates base URL on which the license file will be displayed
 
     Args:
@@ -409,7 +439,9 @@ def create_base_link(args, filename, for_deeds=False):
 
     url = posixpath.join(url, legalcode)
     if for_deeds:
-        url = get_deed_url_from_legalcode_url(url)
+        url = get_url_from_legalcode_url(url)
+    if for_rdfs:
+        url = get_url_from_legalcode_url(url, for_rdfs)
     return url
 
 

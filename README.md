@@ -81,20 +81,24 @@ environment and install dependencies
 
 ## Usage
 
-
-### `-h` or `--help`
-
-It provides the help text related to the script
-
 ```shell
-pipenv run link_checker.py -h
+pipenv run link_checker -h
 ```
+
 ```
-usage: link_checker.py [-h] [--legalcode] [--deeds] [--rdf] [--local]
+usage: link_checker.py [-h] [--legalcode] [--deeds] [--rdf] [--index] [--local]
                        [--output-errors [output_file]] [-q] [--root-url ROOT_URL]
                        [-v]
+                       {legalcode,deeds,rdf} ...
 
 Check for broken links in Creative Commons license deeds, legalcode, and rdf
+
+positional arguments:
+  {legalcode,deeds,rdf}
+                        sub-command help
+    legalcode           legalcode help
+    deeds               deeds help
+    rdf                 rdf help
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -104,6 +108,7 @@ optional arguments:
   --deeds               Runs link_checker for deeds only (the legalcode files will
                         still be scraped, but not checked for broken links)
   --rdf                 Runs link_checker for rdf only
+  --index               Runs link_checker for index.rdf only
   --local               Scrapes legalcode files from local file system
   --output-errors [output_file]
                         Outputs all link errors to file (default: errorlog.txt)
@@ -114,88 +119,58 @@ optional arguments:
   -v, --verbose         Increase verbosity. Can be specified multiple times.
 ```
 
-
-### Default mode
-
-This mode shows which file is currently being checked along with warnings and
-errors encountered in the links
+### legalcode
 
 ```shell
-pipenv run link_checker.py
+pipenv run link_checker legalcode -h
+```
+```
+usage: link_checker.py legalcode [-h] [--local]
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --local     Scrapes legalcode files from local file system. Add
+              'LICENSE_LOCAL_PATH' to your environment, otherwise this tool will
+              search for legalcode files in
+              '../creativecommons.org/docroot/legalcode'.
 ```
 
 
-### `-q` or `--quiet`
-
-This flag decreases the verbosity of the output. This mode is useful for
-reducing the noise. By default, WARNING and higher output is displayed.
+### deeds
 
 ```shell
-pipenv run link_checker.py -q
+pipenv run link_checker deeds -h
+```
+```
+usage: link_checker.py deeds [-h] [--local]
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --local     Scrapes deed files based on the legalcode files found on the local
+              file system. Add 'LICENSE_LOCAL_PATH' to your environment, otherwise
+              this tool will search for legalcode files in
+              '../creativecommons.org/docroot/legalcode'.
 ```
 
 
-### `-v` or `--verbose`
-
-This flag increases the verbosity of the output. This mode is useful for
-in-depth debugging. By default, WARNING and higher output is displayed.
+### rdf
 
 ```shell
-pipenv run link_checker.py -v
+pipenv run link_checker rdf -h
 ```
-
-
-### `--output-error`
-
-This flag outputs all the link errors to file. By default, the output is saved
-in file `errorlog.txt`
-
-```shell
-pipenv run link_checker.py --output-error
 ```
+usage: link_checker.py rdf [-h] [--local] [--index]
 
-The output file can also be explicitly defined by passing a value to the flag
-
-```shell
-pipenv run link_checker.py --output-error output\results.txt
+optional arguments:
+  -h, --help  show this help message and exit
+  --local     Scrapes rdf files based on the legalcode files found on the local
+              file system. Add 'LICENSE_LOCAL_PATH' to your environment, otherwise
+              this tool will search for legalcode files in
+              '../creativecommons.org/docroot/legalcode'.
+  --index     Checks index.rdf file instead of checking rdf files. If you want to
+              check the index.rdf file locally add 'INDEX_RDF_LOCAL_PATH' to your
+              environment; otherwise this variable defaults to './index.rdf'.
 ```
-
-This flag also creates a `junit-xml` format summary of script run containing
-number of error links and number of unique error links.
-
-The location of this file will be `test-summary/junit-xml-report.xml`. This xml
-file can be passed to CI to show failure result.
-
-
-### `--local`
-
-This flag allows script to test license files stored locally rather than
-fetching each license file from Github.
-
-The relative directory structure should be:
-
-```
-/
-├── cc-link-checker/
-│   ├── link_checker.py
-│   ├── Pipfile
-│   ├── Pipfile.lock
-│   .
-|   .
-|
-├── creativecommons.org/
-│   ├── docroot
-|   |   ├── legalcode
-|   |   |   ├── by-nc-nd_4.0.html
-│   .   .   .
-|   .   .   .
-|
-```
-
-This mode can be helpful for using script as a CI.
-
-**Note:** You can manually change the relative local path by changing
-`LICENSE_LOCAL_PATH` global variable in the script.
 
 
 ## Integrating with CI

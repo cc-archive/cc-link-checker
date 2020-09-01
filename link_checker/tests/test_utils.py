@@ -99,7 +99,7 @@ def id_generator(data):
 @pytest.mark.parametrize(
     "filename, result, deed_result, rdf_result",
     license_url_data,
-    ids=id_generator(license_url_data)
+    ids=id_generator(license_url_data),
 )
 def test_create_base_link(filename, result, deed_result, rdf_result):
     args = link_checker.parse_argument([])

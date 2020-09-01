@@ -448,14 +448,14 @@ def create_base_link(args, filename, for_deeds=False, for_rdfs=False):
 def create_absolute_link(base_url, link_analysis):
     """Creates absolute links from relative links
 
-  Args:
-      base_url (string): URL on which the license page will be displayed
-      link_analysis (class 'urllib.parse.SplitResult'): Link splitted by
-          urlsplit, that is to be converted
+    Args:
+        base_url (string): URL on which the license page will be displayed
+        link_analysis (class 'urllib.parse.SplitResult'): Link splitted by
+            urlsplit, that is to be converted
 
-  Returns:
-      str: absolute link
-  """
+    Returns:
+        str: absolute link
+    """
     href = link_analysis.geturl()
     # Check for relative link
     if (
@@ -607,8 +607,7 @@ def map_links_file(link, file_url):
 
 
 def output_write(args, *args_, **kwargs):
-    """Prints to output file is --output-error flag is set
-    """
+    """Prints to output file is --output-error flag is set"""
     if args.output_errors:
         kwargs["file"] = args.output_errors
         print(*args_, **kwargs)

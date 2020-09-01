@@ -43,7 +43,6 @@ def test_get_github_legalcode():
     assert len(all_links) > 0
 
 
-
 license_url_data = [
     # 2 part URL
     (
@@ -89,11 +88,13 @@ license_url_data = [
     ),
 ]
 
+
 def id_generator(data):
     id_list = []
     for license in data:
         id_list.append(license[0])
     return id_list
+
 
 @pytest.mark.parametrize(
     "filename, result, deed_result, rdf_result",

@@ -43,9 +43,8 @@ def test_get_github_legalcode():
     assert len(all_links) > 0
 
 
-@pytest.mark.parametrize(
-    "filename, result, deed_result, rdf_result",
-    [
+
+license_url_data = [
         # 2 part URL
         (
             "by-nc-nd_2.0",
@@ -88,7 +87,16 @@ def test_get_github_legalcode():
             "https://creativecommons.org/publicdomain/zero/1.0/",
             "https://creativecommons.org/publicdomain/zero/1.0/rdf",
         ),
-    ],
+    ]
+
+def id_generator(data):
+    id_list = []
+    for license in data:
+        id_list.append(license[0])
+    return id_list
+
+@pytest.mark.parametrize(
+    "filename, result, deed_result, rdf_result", license_url_data, ids = id_generator(license_url_data)
 )
 def test_create_base_link(filename, result, deed_result, rdf_result):
     args = link_checker.parse_argument([])

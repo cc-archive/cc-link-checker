@@ -392,7 +392,7 @@ def test_memoize_result(reset_global):
         # Invalid schema - Caught by exception handler
         "file://hh",
     ]
-    rs = (grequests.get(link, timeout=1) for link in check_links)
+    rs = (grequests.get(link, timeout=3) for link in check_links)
     response = grequests.map(rs, exception_handler=exception_handler)
     memoize_result(check_links, response)
     assert len(utils.MEMOIZED_LINKS.keys()) == 3

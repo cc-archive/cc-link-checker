@@ -459,9 +459,9 @@ def main():
     run_full_inspection = (
         no_parser_args or all_parser_args_but_no_subparser_args
     )
+    exit_status_list = []
     if run_sub_command:
         exit_status_list = args.func(args)
-    exit_status_list = []
     if args.legalcode and not all_parser_args_but_no_subparser_args:
         exit_status_list = check_legalcode(args)
     if args.deeds and not all_parser_args_but_no_subparser_args:

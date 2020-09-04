@@ -43,52 +43,63 @@ def test_get_github_legalcode():
     assert len(all_links) > 0
 
 
+license_url_data = [
+    # 2 part URL
+    (
+        "by-nc-nd_2.0",
+        "https://creativecommons.org/licenses/by-nc-nd/2.0/legalcode",
+        "https://creativecommons.org/licenses/by-nc-nd/2.0/",
+        "https://creativecommons.org/licenses/by-nc-nd/2.0/rdf",
+    ),
+    # 3 part URL
+    (
+        "by-nc-nd_4.0_cs",
+        "https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.cs",
+        "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.cs",
+        "https://creativecommons.org/licenses/by-nc-nd/4.0/rdf",
+    ),
+    # 4 part URL
+    (
+        "by-nc-nd_3.0_rs_sr-Latn",
+        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/"
+        "legalcode.sr-Latn",
+        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/",
+        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/rdf",
+    ),
+    # Special case - samplingplus
+    (
+        "samplingplus_1.0",
+        "https://creativecommons.org/licenses/sampling+/1.0/legalcode",
+        "https://creativecommons.org/licenses/sampling+/1.0/",
+        "https://creativecommons.org/licenses/sampling+/1.0/rdf",
+    ),
+    (
+        "samplingplus_1.0_br",
+        "https://creativecommons.org/licenses/sampling+/1.0/br/legalcode",
+        "https://creativecommons.org/licenses/sampling+/1.0/br/",
+        "https://creativecommons.org/licenses/sampling+/1.0/br/rdf",
+    ),
+    # Special case - CC0
+    (
+        "zero_1.0",
+        "https://creativecommons.org/publicdomain/zero/1.0/legalcode",
+        "https://creativecommons.org/publicdomain/zero/1.0/",
+        "https://creativecommons.org/publicdomain/zero/1.0/rdf",
+    ),
+]
+
+
+def id_generator(data):
+    id_list = []
+    for license in data:
+        id_list.append(license[0])
+    return id_list
+
+
 @pytest.mark.parametrize(
     "filename, result, deed_result, rdf_result",
-    [
-        # 2 part URL
-        (
-            "by-nc-nd_2.0",
-            "https://creativecommons.org/licenses/by-nc-nd/2.0/legalcode",
-            "https://creativecommons.org/licenses/by-nc-nd/2.0/",
-            "https://creativecommons.org/licenses/by-nc-nd/2.0/rdf",
-        ),
-        # 3 part URL
-        (
-            "by-nc-nd_4.0_cs",
-            "https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.cs",
-            "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.cs",
-            "https://creativecommons.org/licenses/by-nc-nd/4.0/rdf",
-        ),
-        # 4 part URL
-        (
-            "by-nc-nd_3.0_rs_sr-Latn",
-            "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/"
-            "legalcode.sr-Latn",
-            "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/",
-            "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/rdf",
-        ),
-        # Special case - samplingplus
-        (
-            "samplingplus_1.0",
-            "https://creativecommons.org/licenses/sampling+/1.0/legalcode",
-            "https://creativecommons.org/licenses/sampling+/1.0/",
-            "https://creativecommons.org/licenses/sampling+/1.0/rdf",
-        ),
-        (
-            "samplingplus_1.0_br",
-            "https://creativecommons.org/licenses/sampling+/1.0/br/legalcode",
-            "https://creativecommons.org/licenses/sampling+/1.0/br/",
-            "https://creativecommons.org/licenses/sampling+/1.0/br/rdf",
-        ),
-        # Special case - CC0
-        (
-            "zero_1.0",
-            "https://creativecommons.org/publicdomain/zero/1.0/legalcode",
-            "https://creativecommons.org/publicdomain/zero/1.0/",
-            "https://creativecommons.org/publicdomain/zero/1.0/rdf",
-        ),
-    ],
+    license_url_data,
+    ids=id_generator(license_url_data),
 )
 def test_create_base_link(filename, result, deed_result, rdf_result):
     args = link_checker.parse_argument([])

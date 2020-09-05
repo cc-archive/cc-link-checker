@@ -86,7 +86,7 @@ def parse_arguments():
         "--limit",
         default=10,
         type=int,
-        help=f"Limit check lists to specified integer (default: 10)",
+        help="Limit check lists to specified integer (default: 10)",
     )
     parser_shared.add_argument(
         "-v",
@@ -469,8 +469,7 @@ def check_rdfs(args, index=False):
 
 
 def check_index_rdf(args):
-    exit_status_list = check_rdfs(args, index=True)
-    return license_names, errors_total, exit_status_list
+    return check_rdfs(args, index=True)
 
 
 def check_combined(args):

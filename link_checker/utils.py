@@ -338,7 +338,7 @@ def get_scrapable_links(
             try:
                 href = link["href"]
             except KeyError:
-                if href[0] == "#":
+                if href.startswith("#"):
                     # anchor links are valid, but out of scope
                     # No need to report non-issue (not actionable)
                     # warnings.append(
@@ -362,14 +362,22 @@ def get_scrapable_links(
                     try:
                         assert link["name"]
                         warnings.append(
-                            "  {:<24}{}".format("Anchor uses name", link)
+                            "  {:<24}{}".format("Anchor uses name",
+                            str(link).replace("\n", ""))
                         )
                     except:
                         warnings.append(
-                            "  {:<24}{}".format("Anchor w/o href or id", link)
+                            "  {:<24}{}".format("Anchor w/o href or id",
+                            str(link).replace("\n", ""))
                         )
                 continue
-            if href != "" and href[0] == "#":
+            if href == "":
+                warnings.append(
+                    "  {:<24}{}".format("Empty href",
+                    str(link).replace("\n", ""))
+                )
+                continue
+            elif href.startswith("#"):
                 # anchor links are valid, but out of scope
                 # No need to report non-issue (not actionable)
                 # warnings.append(
@@ -586,12 +594,10 @@ def write_response(
                     if not context_printed:
                         print(context)
                     print("Errors:")
-                output_write(
-                    args, "\n{}\nURL: {}".format(license_name, base_url)
-                )
-            result = "  {:<24}{}\n{}{}".format(
-                str(status), all_links[idx], " " * 26, valid_anchors[idx]
-            )
+                output_write(args, f"\n{license_name}\nURL: {base_url}")
+            link = all_links[idx]
+            anchor = str(valid_anchors[idx]).replace("\n", "").strip()
+            result = f"  {str(status):<24}{link}\n{'':<26}{anchor}"
             if args.log_level <= ERROR:
                 print(result)
             output_write(args, result)
@@ -619,7 +625,7 @@ def output_write(args, *args_, **kwargs):
         print(*args_, **kwargs)
 
 
-def output_summary(args, license_names, num_errors):
+def output_issues_summary(args, license_names, num_errors):
     """Prints short summary of broken links in the output error file
 
     Args:
@@ -661,3 +667,12 @@ def output_test_summary(errors_total):
             )
         ts = TestSuite("cc-link-checker", [test_case])
         to_xml_report_file(test_summary, [ts])
+
+
+def output_summaries(args, license_names, errors_total):
+    if not args.output_errors:
+        return
+    output_issues_summary(args, license_names, errors_total)
+    if args.log_level <= INFO:
+        print("\nOutput to error file: ", args.output_errors.name)
+    output_test_summary(errors_total)

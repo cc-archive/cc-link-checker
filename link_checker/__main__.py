@@ -41,8 +41,7 @@ from link_checker.utils import (
     exception_handler,
     memoize_result,
     write_response,
-    output_summary,
-    output_test_summary,
+    output_summaries,
 )
 
 
@@ -176,11 +175,11 @@ def parse_arguments():
     )
     parser_index.set_defaults(func=check_index_rdf)
 
-    # complete subcommand: link_checker complete -h
-    parser_complete = subparsers.add_parser(
-        "complete",
+    # combined subcommand: link_checker combined -h
+    parser_combined = subparsers.add_parser(
+        "combined",
         add_help=False,
-        help="Complete check (deeds, legalcode, rdf, and index)",
+        help="Combined check (deeds, legalcode, rdf, and index)",
         parents=[
             parser_shared,
             parser_shared_licenses,
@@ -188,7 +187,7 @@ def parse_arguments():
             parser_shared_reporting,
         ],
     )
-    parser_complete.set_defaults(func=check_complete)
+    parser_combined.set_defaults(func=check_combined)
 
     # Canonical License URLs subcommand: link_checker canonical -h
     parser_canonical = subparsers.add_parser(
@@ -302,13 +301,7 @@ def check_deeds(args):
                 errors_total += caught_errors
                 exit_status = 1
 
-
-    if args.output_errors:
-        output_summary(args, license_names, errors_total)
-        print("\nError file present at: ", args.output_errors.name)
-        output_test_summary(errors_total)
-
-    return [0, exit_status, 0]
+    return license_names, errors_total, exit_status
 
 
 def check_legalcode(args):
@@ -324,7 +317,7 @@ def check_legalcode(args):
         filename = license_name[: -len(".html")]
         base_url = create_base_link(args, filename)
         context = f"\n\nChecking: {license_name}\nURL: {base_url}"
-        if args.local_index:
+        if args.local:
             source_html = request_local_text(LICENSE_LOCAL_PATH, license_name)
         else:
             page_url = "{}{}".format(LICENSE_GITHUB_BASE, license_name)
@@ -383,12 +376,7 @@ def check_legalcode(args):
             errors_total += caught_errors
             exit_status = 1
 
-    if args.output_errors:
-        output_summary(args, license_names, errors_total)
-        print("\nError file present at: ", args.output_errors.name)
-        output_test_summary(errors_total)
-
-    return [exit_status, 0, 0]
+    return license_names, errors_total, exit_status
 
 
 def check_rdfs(args, index=False):
@@ -471,17 +459,12 @@ def check_rdfs(args, index=False):
             errors_total += caught_errors
             exit_status = 1
 
-    if args.output_errors:
-        output_summary(args, rdf_obj_list, errors_total)
-        print("\nError file present at: ", args.output_errors.name)
-        output_test_summary(errors_total)
-
-    return [0, 0, exit_status]
+    return rdf_obj_list, errors_total, exit_status
 
 
 def check_index_rdf(args):
     exit_status_list = check_rdfs(args, index=True)
-    return exit_status_list
+    return license_names, errors_total, exit_status_list
 
 
 def check_complete(args):
@@ -489,17 +472,35 @@ def check_complete(args):
         "Running Full Inspection:"
         " Checking links for LegalCode, Deeds, RDF, and index.rdf"
     )
-    exit_status_legalcode, _, _ = check_legalcode(args)
-    _, exit_status_deeds, _ = check_deeds(args)
-    _, _, exit_status_rdf = check_rdfs(args)
-    _, _, exit_status_index_rdf = check_rdfs(args, index=True)
+    license_names = []
+    errors_total = 0
+    exit_status = 0
+
+    names, total, exit_status_legalcode = check_legalcode(args)
+    license_names += names
+    errors_total += total
+
+    names, total, exit_status_deeds = check_deeds(args)
+    license_names += names
+    errors_total += total
+
+    names, total, exit_status_rdf = check_rdfs(args)
+    license_names += names
+    errors_total += total
+
+    names, total, exit_status_index_rdf = check_rdfs(args, index=True)
+    license_names += names
+    errors_total += total
+
     exit_status_list = [
         exit_status_legalcode,
         exit_status_deeds,
         exit_status_rdf,
         exit_status_index_rdf,
     ]
-    return exit_status_list
+    if 1 in exit_status_list:
+        exit_status = 1
+    return license_names, errors_total, exit_status
 
 
 def print_canonical(args):
@@ -548,18 +549,17 @@ def print_canonical(args):
         urls.sort()
         for url in urls:
             print(url)
-    return [0, 0, 0]
+    return [], 0, 0
 
 
 def main():
     args = parse_arguments()
-    exit_status_list = args.func(args)
+    license_names, errors_total, exit_status = args.func(args)
+    output_summaries(args, license_names, errors_total)
     if args.log_level <= INFO:
         print()
         print(f"Completed in: {time.time() - START_TIME:.2f} seconds")
-    if 1 in exit_status_list:
-        return sys.exit(1)
-    return sys.exit(0)
+    return sys.exit(exit_status)
 
 
 if __name__ == "__main__":

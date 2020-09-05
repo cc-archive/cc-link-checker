@@ -102,7 +102,7 @@ def get_legalcode(args):
             print("DEBUG: processing GitHub legacode files")
         license_names = get_github_legalcode()
     if args.limit and args.subcommand != "rdf":
-        license_names = license_names[0:args.limit]
+        license_names = license_names[0 : args.limit]  # noqa: E203
     return license_names
 
 
@@ -188,7 +188,7 @@ def get_rdf(args):
         rdf_urls.append(rdf_base_url)
     unique_rdf_urls = list(set(rdf_urls))
     if args.limit:
-        unique_rdf_urls = unique_rdf_urls[0:args.limit]
+        unique_rdf_urls = unique_rdf_urls[0 : args.limit]  # noqa: E203
     for url in unique_rdf_urls:
         if url:
             page_text = request_text(url)
@@ -211,7 +211,7 @@ def get_index_rdf(args, local_path=""):
     else:
         rdf_obj_list = get_remote_index_rdf()
     if args.limit:
-        rdf_obj_list = rdf_obj_list[0:args.limit]
+        rdf_obj_list = rdf_obj_list[0 : args.limit]  # noqa: E203
     return rdf_obj_list
 
 

@@ -162,7 +162,7 @@ def get_local_legalcode():
 
 
 def get_rdf(args):
-    """Helper function that determines rdf urls
+    """Helper function that determines RDF urls
     from license_names found locally or on github and
     returns a list of valid rdf objects.
 
@@ -188,13 +188,13 @@ def get_rdf(args):
 
 
 def get_index_rdf(args, local_path=""):
-    """Determine if local rdf files or remote rdf files
-    should be parsed and call the appropriate function.
+    """Determine if local index.rdf file or remote index.rdf file
+    should be parsed and then call the appropriate function.
 
     Returns:
-        rdf_obj_list: list of rdf objects found in index.rdf
+        rdf_obj_list: list of RDF objects found in index.rdf
     """
-    if args.local:
+    if args.local_index:
         rdf_obj_list = get_local_index_rdf(local_path)
     else:
         rdf_obj_list = get_remote_index_rdf()
@@ -202,7 +202,7 @@ def get_index_rdf(args, local_path=""):
 
 
 def get_remote_index_rdf():
-    """This function reads rdfs found at
+    """This function reads RDFs found at
     https://creativecommons.org/licenses/index.rdf
 
     Returns:
@@ -220,12 +220,12 @@ def get_local_index_rdf(local_path=""):
     """This function reads from index.rdf stored locally
 
     Parameters:
-        local_path: path to rdf file. If not supplied
-        the INDEX_RDF_LOCAL_PATH constant is used
-        (which uses your environment or defaults to
-        "./index.rdf"; see constants.py)
+        local_path: path to index.rdf file. If not supplied
+                    the INDEX_RDF_LOCAL_PATH constant is used
+                    (which uses your environment or defaults to
+                    "./index.rdf"; see constants.py)
     Returns:
-        rdf_obj_list: list of rdf objects found in index.rdf
+        rdf_obj_list: list of RDF objects found in index.rdf
     """
     try:
         local_path = local_path or INDEX_RDF_LOCAL_PATH
@@ -244,11 +244,11 @@ def get_local_index_rdf(local_path=""):
 
 
 def get_links_from_rdf(rdf_obj):
-    """This function parses an rdf and returns links found
+    """This function parses an RDF and returns links found
     Parameters:
         rdf_obj: soup object
     Returns:
-        links_found: list of link dictionaries found in rdf soup object
+        links_found: list of link dictionaries found in RDF soup object
     """
     tags = rdf_obj.findChildren()
     links_found = []
@@ -326,8 +326,9 @@ def get_scrapable_links(
         links_found (list): List of all the links found in file
 
     Returns:
-        set: valid_anchors - list of all scrapable anchor tags
-                valid_links - list of all absolute scrapable links
+        list: valid_anchors - list of all scrapable anchor tags
+        list: valid_links - list of all absolute scrapable links
+        bool: context_printed
     """
     valid_links = []
     valid_anchors = []
@@ -344,7 +345,7 @@ def get_scrapable_links(
                     #     "  {:<24}{}".format("Skipping internal link ", link)
                     # )
                     continue
-                if href.startswith("mailto:"):
+                elif href.startswith("mailto:"):
                     # mailto links are valid, but out of scope
                     # No need to report non-issue (not actionable)
                     # warnings.append
@@ -375,7 +376,7 @@ def get_scrapable_links(
                 #     "  {:<24}{}".format("Skipping internal link ", link)
                 # )
                 continue
-            if href.startswith("mailto:"):
+            elif href.startswith("mailto:"):
                 # mailto links are valid, but out of scope
                 # No need to report non-issue (not actionable)
                 # warnings.append

@@ -325,7 +325,7 @@ def check_legalcode(args):
         filename = license_name[: -len(".html")]
         base_url = create_base_link(args, filename)
         context = f"\n\nChecking: {license_name}\nURL: {base_url}"
-        if args.local:
+        if args.local_index:
             source_html = request_local_text(LICENSE_LOCAL_PATH, license_name)
         else:
             page_url = "{}{}".format(LICENSE_GITHUB_BASE, license_name)
@@ -402,7 +402,7 @@ def check_rdfs(args, index=False):
         print("\n\nChecking RDFs...\n\n")
         rdf_obj_list = get_rdf(args)
     if args.log_level <= INFO:
-        if not args.index:
+        if not index:
             print("Number of rdf files to be checked:", len(rdf_obj_list))
         else:
             print(
@@ -415,12 +415,10 @@ def check_rdfs(args, index=False):
         caught_errors = 0
         context_printed = False
         rdf_url = (
-            rdf_obj["rdf:about"]
-            if args.index
-            else f'{rdf_obj["rdf:about"]}rdf'
+            rdf_obj["rdf:about"] if index else f"{rdf_obj['rdf:about']}rdf"
         )
         links_found = get_links_from_rdf(rdf_obj)
-        checking = "URL" if not args.index else "RDF_ABOUT"
+        checking = "URL" if not index else "RDF_ABOUT"
         context = f"\n\nChecking: \n{checking}: {rdf_url}"
         link_count = len(links_found)
         if args.log_level <= INFO:

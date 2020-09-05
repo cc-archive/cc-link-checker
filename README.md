@@ -13,12 +13,12 @@
     -   [User](#User)
     -   [Development](#Development)
 -   [Usage](#Usage)
-    -   [`-h` or `--help`](#-h-or---help)
-    -   [Default mode](#default-mode)
-    -   [`-q` or `--quiet`](#-q-or---quiet)
-    -   [`-v` or `--verbose`](#-v-or---verbose)
-    -   [`--output-error`](#--output-error)
-    -   [`--local`](#--local)
+    -   [deeds](#deeds)
+    -   [legalcode](#legalcode)
+    -   [rdf](#rdf)
+    -   [index](#index)
+    -   [combined](#combined)
+    -   [canonical](#canonical)
 -   [Integrating with CI](#Integrating-with-CI)
 -   [Unit Testing](#Unit-Testing)
 -   [Troubleshooting](#Troubleshooting)
@@ -84,55 +84,24 @@ environment and install dependencies
 ```shell
 pipenv run link_checker -h
 ```
-
 ```
-usage: link_checker.py [-h] [--legalcode] [--deeds] [--rdf] [--index] [--local]
-                       [--output-errors [output_file]] [-q] [--root-url ROOT_URL]
-                       [-v]
-                       {legalcode,deeds,rdf} ...
+usage: link_checker [-h] {deeds,legalcode,rdf,index,combined,canonical} ...
 
 Check for broken links in Creative Commons license deeds, legalcode, and rdf
 
-positional arguments:
-  {legalcode,deeds,rdf}
-                        sub-command help
-    legalcode           legalcode help
-    deeds               deeds help
-    rdf                 rdf help
-
 optional arguments:
   -h, --help            show this help message and exit
-  --legalcode           Runs link_checker for legalcode only. (Note: --licenses is
-                        deprecated and will be dropped from a future release.
-                        Please use --legalcode instead.)
-  --deeds               Runs link_checker for deeds only (the legalcode files will
-                        still be scraped, but not checked for broken links)
-  --rdf                 Runs link_checker for rdf only
-  --index               Runs link_checker for index.rdf only
-  --local               Scrapes legalcode files from local file system
-  --output-errors [output_file]
-                        Outputs all link errors to file (default: errorlog.txt)
-                        and creates junit-xml type summary(test-summary/junit-xml-
-                        report.xml)
-  -q, --quiet           Decrease verbosity. Can be specified multiple times.
-  --root-url ROOT_URL   Set root URL (default: https://creativecommons.org)
-  -v, --verbose         Increase verbosity. Can be specified multiple times.
-```
 
-### legalcode
+subcommands (a single subcomamnd is required):
+  {deeds,legalcode,rdf,index,combined,canonical}
+    deeds               check the links for each license's deed
+    legalcode           check the links for each license's legalcode
+    rdf                 check the links for each license's RDF
+    index               check the links within index.rdf
+    combined            Combined check (deeds, legalcode, rdf, and index)
+    canonical           print canonical license URLs
 
-```shell
-pipenv run link_checker legalcode -h
-```
-```
-usage: link_checker.py legalcode [-h] [--local]
-
-optional arguments:
-  -h, --help  show this help message and exit
-  --local     Scrapes legalcode files from local file system. Add
-              'LICENSE_LOCAL_PATH' to your environment, otherwise this tool will
-              search for legalcode files in
-              '../creativecommons.org/docroot/legalcode'.
+Also see the help output each subcommand
 ```
 
 
@@ -142,14 +111,49 @@ optional arguments:
 pipenv run link_checker deeds -h
 ```
 ```
-usage: link_checker.py deeds [-h] [--local]
+usage: link_checker deeds [-h] [-q] [--root-url ROOT_URL] [--limit LIMIT] [-v]
+                          [--local] [--output-errors [output_file]]
 
 optional arguments:
-  -h, --help  show this help message and exit
-  --local     Scrapes deed files based on the legalcode files found on the local
-              file system. Add 'LICENSE_LOCAL_PATH' to your environment, otherwise
-              this tool will search for legalcode files in
-              '../creativecommons.org/docroot/legalcode'.
+  -h, --help            show this help message and exit
+  -q, --quiet           decrease verbosity (can be specified multiple times)
+  --root-url ROOT_URL   set root URL (default: 'https://creativecommons.org')
+  --limit LIMIT         Limit check lists to specified integer (default: 10)
+  -v, --verbose         increase verbosity (can be specified multiple times)
+  --local               process local filesystem legalcode files to determine
+                        valid license paths (uses LICENSE_LOCAL_PATH environment
+                        variable and falls back to default:
+                        '../creativecommons.org/docroot/legalcode')
+  --output-errors [output_file]
+                        output all link errors to file (default: errorlog.txt) and
+                        create junit-xml type summary (test-summary/junit-xml-
+                        report.xml)
+```
+
+
+### legalcode
+
+```shell
+pipenv run link_checker legalcode -h
+```
+```
+usage: link_checker legalcode [-h] [-q] [--root-url ROOT_URL] [--limit LIMIT] [-v]
+                              [--local] [--output-errors [output_file]]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -q, --quiet           decrease verbosity (can be specified multiple times)
+  --root-url ROOT_URL   set root URL (default: 'https://creativecommons.org')
+  --limit LIMIT         Limit check lists to specified integer (default: 10)
+  -v, --verbose         increase verbosity (can be specified multiple times)
+  --local               process local filesystem legalcode files to determine
+                        valid license paths (uses LICENSE_LOCAL_PATH environment
+                        variable and falls back to default:
+                        '../creativecommons.org/docroot/legalcode')
+  --output-errors [output_file]
+                        output all link errors to file (default: errorlog.txt) and
+                        create junit-xml type summary (test-summary/junit-xml-
+                        report.xml)
 ```
 
 
@@ -159,17 +163,105 @@ optional arguments:
 pipenv run link_checker rdf -h
 ```
 ```
-usage: link_checker.py rdf [-h] [--local] [--index]
+usage: link_checker rdf [-h] [-q] [--root-url ROOT_URL] [--limit LIMIT] [-v]
+                        [--local] [--local-index] [--output-errors [output_file]]
 
 optional arguments:
-  -h, --help  show this help message and exit
-  --local     Scrapes rdf files based on the legalcode files found on the local
-              file system. Add 'LICENSE_LOCAL_PATH' to your environment, otherwise
-              this tool will search for legalcode files in
-              '../creativecommons.org/docroot/legalcode'.
-  --index     Checks index.rdf file instead of checking rdf files. If you want to
-              check the index.rdf file locally add 'INDEX_RDF_LOCAL_PATH' to your
-              environment; otherwise this variable defaults to './index.rdf'.
+  -h, --help            show this help message and exit
+  -q, --quiet           decrease verbosity (can be specified multiple times)
+  --root-url ROOT_URL   set root URL (default: 'https://creativecommons.org')
+  --limit LIMIT         Limit check lists to specified integer (default: 10)
+  -v, --verbose         increase verbosity (can be specified multiple times)
+  --local               process local filesystem legalcode files to determine
+                        valid license paths (uses LICENSE_LOCAL_PATH environment
+                        variable and falls back to default:
+                        '../creativecommons.org/docroot/legalcode')
+  --local-index         process local filesystem index.rdf (uses
+                        INDEX_RDF_LOCAL_PATH environment variable and falls back
+                        to default: './index.rdf')
+  --output-errors [output_file]
+                        output all link errors to file (default: errorlog.txt) and
+                        create junit-xml type summary (test-summary/junit-xml-
+                        report.xml)
+```
+
+
+### index
+
+```shell
+pipenv run link_checker index -h
+```
+```
+usage: link_checker index [-h] [-q] [--root-url ROOT_URL] [--limit LIMIT] [-v]
+                          [--local-index] [--output-errors [output_file]]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -q, --quiet           decrease verbosity (can be specified multiple times)
+  --root-url ROOT_URL   set root URL (default: 'https://creativecommons.org')
+  --limit LIMIT         Limit check lists to specified integer (default: 10)
+  -v, --verbose         increase verbosity (can be specified multiple times)
+  --local-index         process local filesystem index.rdf (uses
+                        INDEX_RDF_LOCAL_PATH environment variable and falls back
+                        to default: './index.rdf')
+  --output-errors [output_file]
+                        output all link errors to file (default: errorlog.txt) and
+                        create junit-xml type summary (test-summary/junit-xml-
+                        report.xml)
+```
+
+
+### combined
+
+```shell
+pipenv run link_checker combined -h
+```
+```
+usage: link_checker combined [-h] [-q] [--root-url ROOT_URL] [--limit LIMIT] [-v]
+                             [--local] [--local-index]
+                             [--output-errors [output_file]]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -q, --quiet           decrease verbosity (can be specified multiple times)
+  --root-url ROOT_URL   set root URL (default: 'https://creativecommons.org')
+  --limit LIMIT         Limit check lists to specified integer (default: 10)
+  -v, --verbose         increase verbosity (can be specified multiple times)
+  --local               process local filesystem legalcode files to determine
+                        valid license paths (uses LICENSE_LOCAL_PATH environment
+                        variable and falls back to default:
+                        '../creativecommons.org/docroot/legalcode')
+  --local-index         process local filesystem index.rdf (uses
+                        INDEX_RDF_LOCAL_PATH environment variable and falls back
+                        to default: './index.rdf')
+  --output-errors [output_file]
+                        output all link errors to file (default: errorlog.txt) and
+                        create junit-xml type summary (test-summary/junit-xml-
+                        report.xml)
+```
+
+
+### canonical
+
+```shell
+pipenv run link_checker canonical -h
+```
+```
+usage: link_checker canonical [-h] [-q] [--root-url ROOT_URL] [--limit LIMIT] [-v]
+                              [--local] [--include-gnu]
+
+optional arguments:
+  -h, --help           show this help message and exit
+  -q, --quiet          decrease verbosity (can be specified multiple times)
+  --root-url ROOT_URL  set root URL (default: 'https://creativecommons.org')
+  --limit LIMIT        Limit check lists to specified integer (default: 10)
+  -v, --verbose        increase verbosity (can be specified multiple times)
+  --local              process local filesystem legalcode files to determine valid
+                       license paths (uses LICENSE_LOCAL_PATH environment variable
+                       and falls back to default:
+                       '../creativecommons.org/docroot/legalcode')
+  --include-gnu        include GNU licenses in addition to Creative Commons
+                       licenses
 ```
 
 

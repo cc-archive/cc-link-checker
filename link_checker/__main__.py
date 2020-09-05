@@ -45,7 +45,7 @@ from link_checker.utils import (
 )
 
 
-def parse_arguments():
+def parse_arguments(arguments):
     """parse arguments from CLI
 
     Args:
@@ -209,7 +209,7 @@ def parse_arguments():
         help="include GNU licenses in addition to Creative Commons licenses",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(arguments)
     args.log_level = WARNING
     if args.verbosity:
         for v in args.verbosity:
@@ -558,7 +558,7 @@ def print_canonical(args):
 
 
 def main():
-    args = parse_arguments()
+    args = parse_arguments(sys.argv[1:])
     license_names, errors_total, exit_status = args.func(args)
     output_summaries(args, license_names, errors_total)
     if args.log_level <= INFO:

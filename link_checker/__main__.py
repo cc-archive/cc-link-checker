@@ -27,7 +27,6 @@ from link_checker.constants import (
     INFO,
     DEBUG,
 )
-
 from link_checker.utils import (
     CheckerError,
     get_legalcode,
@@ -47,129 +46,165 @@ from link_checker.utils import (
 )
 
 
-def parse_argument(arguments):
+def parse_arguments():
     """parse arguments from cli
 
     Args:
         args (list): list of arguments parsed from command line
     """
-    # Setup argument parser
+
+    # Primary argument parser and sub-parser (for subcommands)
     parser = argparse.ArgumentParser(
-        prog="link_checker.py", description=__doc__
+        prog="link_checker",
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog="Also see the help output each subcommand",
     )
-    parser.add_argument(
-        "--legalcode",
-        help="Runs link_checker for legalcode only. (Note: --licenses is"
-        " deprecated and will be dropped from a future release. Please use"
-        " --legalcode instead.)",
-        action="store_true",
+    subparsers = parser.add_subparsers(
+        title="subcommands (a single subcomamnd is required)",
+        dest="subcommand",
+        required=True,
     )
-    parser.add_argument(
-        "--deeds",
-        help="Runs link_checker for deeds only (the legalcode files will still"
-        " be scraped, but not checked for broken links)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--rdf", help="Runs link_checker for rdf only", action="store_true"
-    )
-    parser.add_argument(
-        "--index",
-        help="Runs link_checker for index.rdf only",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--local",
-        help="Scrapes legalcode files from local file system",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--output-errors",
-        help="Outputs all link errors to file (default: errorlog.txt) and"
-        " creates junit-xml type summary(test-summary/junit-xml-report.xml)",
-        metavar="output_file",
-        const="errorlog.txt",
-        nargs="?",
-        type=argparse.FileType("w", encoding="utf-8"),
-    )
-    parser.add_argument(
+
+    # Shared Parsers
+
+    # Shared parser (optional arguments used by all subcommands)
+    parser_shared = argparse.ArgumentParser()
+    parser_shared.add_argument(
         "-q",
         "--quiet",
         action="append_const",
         const=10,
+        help="decrease verbosity (can be specified multiple times)",
         dest="verbosity",
-        help="Decrease verbosity. Can be specified multiple times.",
     )
-    parser.add_argument(
-        "--root-url", help=f"Set root URL (default: {DEFAULT_ROOT_URL})",
-    )
-    parser.add_argument(
+    parser_shared.add_argument(
         "-v",
         "--verbose",
         action="append_const",
         const=-10,
+        help="increase verbosity (can be specified multiple times)",
         dest="verbosity",
-        help="Increase verbosity. Can be specified multiple times.",
     )
-    # Sub-Parser Section
-    subparsers = parser.add_subparsers(help="sub-command help")
-    # legalcode section: link_checker legalcode -h
-    parser_legalcode = subparsers.add_parser(
-        "legalcode", help="legalcode help"
+    parser_shared.add_argument(
+        "--root-url",
+        default=DEFAULT_ROOT_URL,
+        help=f"set root URL (default: '{DEFAULT_ROOT_URL}')",
     )
-    parser_legalcode.add_argument(
+
+    # Shared licenses parser (optional arguments used by all license
+    # subcommands)
+    parser_shared_licenses = argparse.ArgumentParser(add_help=False)
+    parser_shared_licenses.add_argument(
         "--local",
-        help=(
-            "Scrapes legalcode files from local file system.\n"
-            "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
-            "otherwise this tool will search for legalcode files\n"
-            f"in '{LICENSES_DIR}'."
-        ),
         action="store_true",
+        help="process local filesystem legalcode files to determine valid"
+        " license paths (uses LICENSE_LOCAL_PATH environment variable and"
+        f" falls back to default: '{LICENSES_DIR}')",
     )
-    parser_legalcode.set_defaults(func=check_legalcode)
-    # deeds section: link_checker deeds -h
-    parser_deeds = subparsers.add_parser("deeds", help="deeds help")
-    parser_deeds.add_argument(
-        "--local",
-        help=(
-            "Scrapes deed files based on the legalcode files "
-            "found on the local file system.\n"
-            "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
-            "otherwise this tool will search for legalcode files\n"
-            f"in '{LICENSES_DIR}'."
-        ),
+
+    # Shared reporting parser (optional arguments used by all reporting
+    # subcommands)
+    parser_shared_reporting = argparse.ArgumentParser(add_help=False)
+    parser_shared_reporting.add_argument(
+        "--output-errors",
+        nargs="?",
+        const="errorlog.txt",
+        type=argparse.FileType("w", encoding="utf-8"),
+        help="output all link errors to file (default: errorlog.txt) and"
+        " create junit-xml type summary (test-summary/junit-xml-report.xml)",
+        metavar="output_file",
+    )
+
+    # Shared RDF parser (optional arguments used by all RDF subcommands)
+    parser_shared_rdf = argparse.ArgumentParser(add_help=False)
+    parser_shared_rdf.add_argument(
+        "--local-index",
         action="store_true",
+        help="process local filesystem index.rdf (uses INDEX_RDF_LOCAL_PATH"
+        " environment variable and falls back to default: './index.rdf')",
+    )
+
+    # Subcommands
+
+    # Deeds subcommand: link_checker deeds -h
+    parser_deeds = subparsers.add_parser(
+        "deeds",
+        add_help=False,
+        help="check the links for each license's deed",
+        parents=[
+            parser_shared,
+            parser_shared_licenses,
+            parser_shared_reporting,
+        ],
     )
     parser_deeds.set_defaults(func=check_deeds)
-    # rdf section: link_checker rdf -h
-    parser_rdf = subparsers.add_parser("rdf", help="rdf help")
-    parser_rdf.add_argument(
-        "--local",
-        help=(
-            "Scrapes rdf files based on the legalcode files "
-            "found on the local file system.\n"
-            "Add 'LICENSE_LOCAL_PATH' to your environment,\n"
-            "otherwise this tool will search for legalcode files\n"
-            f"in '{LICENSES_DIR}'."
-        ),
-        action="store_true",
+
+    # Legalcode subcommand: link_checker legalcode -h
+    parser_legalcode = subparsers.add_parser(
+        "legalcode",
+        add_help=False,
+        help="check the links for each license's legalcode",
+        parents=[
+            parser_shared,
+            parser_shared_licenses,
+            parser_shared_reporting,
+        ],
     )
-    parser_rdf.add_argument(
-        "--index",
-        help=(
-            "Checks index.rdf file instead of checking rdf files.\n"
-            "If you want to check the index.rdf file locally add\n"
-            "'INDEX_RDF_LOCAL_PATH' to your environment; otherwise this\n"
-            "variable defaults to './index.rdf'."
-        ),
-        action="store_true",
+    parser_legalcode.set_defaults(func=check_legalcode)
+
+    # RDF subcommand: link_checker rdf -h
+    parser_rdf = subparsers.add_parser(
+        "rdf",
+        add_help=False,
+        help="check the links for each license's RDF",
+        parents=[
+            parser_shared,
+            parser_shared_licenses,
+            parser_shared_rdf,
+            parser_shared_reporting,
+        ],
     )
     parser_rdf.set_defaults(func=check_rdfs)
 
-    args = parser.parse_args(arguments)
-    if args.root_url is None:
-        args.root_url = DEFAULT_ROOT_URL
+    # index.rdf subcommand: link_checker index -h
+    parser_index = subparsers.add_parser(
+        "index",
+        add_help=False,
+        help="check the links within index.rdf",
+        parents=[parser_shared, parser_shared_rdf, parser_shared_reporting],
+    )
+    parser_index.set_defaults(func=check_index_rdf)
+
+    # complete subcommand: link_checker complete -h
+    parser_complete = subparsers.add_parser(
+        "complete",
+        add_help=False,
+        help="Complete check (deeds, legalcode, rdf, and index)",
+        parents=[
+            parser_shared,
+            parser_shared_licenses,
+            parser_shared_rdf,
+            parser_shared_reporting,
+        ],
+    )
+    parser_complete.set_defaults(func=check_complete)
+
+    # Canonical License URLs subcommand: link_checker canonical -h
+    parser_canonical = subparsers.add_parser(
+        "canonical",
+        add_help=False,
+        help="print canonical license URLs",
+        parents=[parser_shared, parser_shared_licenses],
+    )
+    parser_canonical.set_defaults(func=print_canonical)
+    parser_canonical.add_argument(
+        "--include-gnu",
+        action="store_true",
+        help="include GNU licenses in addition to Creative Commons licenses",
+    )
+
+    args = parser.parse_args()
     args.log_level = WARNING
     if args.verbosity:
         for v in args.verbosity:
@@ -178,91 +213,14 @@ def parse_argument(arguments):
             args.log_level = DEBUG
         elif args.log_level > CRITICAL:
             args.log_level = CRITICAL
-    if not args.output_errors:
+    del args.verbosity
+    if "output_errors" not in args or not args.output_errors:
         args.output_errors = None
+
+    if args.log_level == DEBUG:
+        print(f"DEBUG: args: {args}")
+
     return args
-
-
-def check_legalcode(args):
-    print("\n\nChecking LegalCode License...\n\n")
-    license_names = get_legalcode(args)
-    if args.log_level <= INFO:
-        print("Number of files to be checked:", len(license_names))
-    errors_total = 0
-    exit_status = 0
-    for license_name in license_names:
-        caught_errors = 0
-        context_printed = False
-        filename = license_name[: -len(".html")]
-        base_url = create_base_link(args, filename)
-        context = f"\n\nChecking: {license_name}\nURL: {base_url}"
-        if args.local:
-            source_html = request_local_text(LICENSE_LOCAL_PATH, license_name)
-        else:
-            page_url = "{}{}".format(LICENSE_GITHUB_BASE, license_name)
-            source_html = request_text(page_url)
-        license_soup = BeautifulSoup(source_html, "lxml")
-        links_found = license_soup.find_all("a")
-        link_count = len(links_found)
-        if args.log_level <= INFO:
-            print(f"{context}\nNumber of links found: {link_count}")
-            context_printed = True
-        valid_anchors, valid_links, context_printed = get_scrapable_links(
-            args, base_url, links_found, context, context_printed
-        )
-        if valid_links:
-            memoized_results = get_memoized_result(valid_links, valid_anchors)
-            stored_links = memoized_results[0]
-            stored_anchors = memoized_results[1]
-            stored_result = memoized_results[2]
-            check_links = memoized_results[3]
-            check_anchors = memoized_results[4]
-            if check_links:
-                rs = (
-                    # Since we're only checking for validity, we can retreive
-                    # only the headers/metadata
-                    grequests.head(link, timeout=REQUESTS_TIMEOUT)
-                    for link in check_links
-                )
-                responses = list()
-                # Explicitly close connections to free up file handles and
-                # avoid Connection Errors per:
-                # https://stackoverflow.com/a/22839550
-                for response in grequests.map(
-                    rs, exception_handler=exception_handler
-                ):
-                    try:
-                        responses.append(response.status_code)
-                        response.close()
-                    except AttributeError:
-                        responses.append(response)
-                memoize_result(check_links, responses)
-                stored_anchors += check_anchors
-                stored_result += responses
-            stored_links += check_links
-            caught_errors = write_response(
-                args,
-                stored_links,
-                stored_result,
-                base_url,
-                license_name,
-                stored_anchors,
-                context,
-                context_printed,
-            )
-
-        if caught_errors:
-            errors_total += caught_errors
-            exit_status = 1
-
-    print("\nCompleted in: {}".format(time.time() - START_TIME))
-
-    if args.output_errors:
-        output_summary(args, license_names, errors_total)
-        print("\nError file present at: ", args.output_errors.name)
-        output_test_summary(errors_total)
-
-    return [exit_status, 0, 0]
 
 
 def check_deeds(args):
@@ -354,8 +312,90 @@ def check_deeds(args):
     return [0, exit_status, 0]
 
 
-def check_rdfs(args):
-    if args.index:
+def check_legalcode(args):
+    print("\n\nChecking LegalCode License...\n\n")
+    license_names = get_legalcode(args)
+    if args.log_level <= INFO:
+        print("Number of files to be checked:", len(license_names))
+    errors_total = 0
+    exit_status = 0
+    for license_name in license_names:
+        caught_errors = 0
+        context_printed = False
+        filename = license_name[: -len(".html")]
+        base_url = create_base_link(args, filename)
+        context = f"\n\nChecking: {license_name}\nURL: {base_url}"
+        if args.local:
+            source_html = request_local_text(LICENSE_LOCAL_PATH, license_name)
+        else:
+            page_url = "{}{}".format(LICENSE_GITHUB_BASE, license_name)
+            source_html = request_text(page_url)
+        license_soup = BeautifulSoup(source_html, "lxml")
+        links_found = license_soup.find_all("a")
+        link_count = len(links_found)
+        if args.log_level <= INFO:
+            print(f"{context}\nNumber of links found: {link_count}")
+            context_printed = True
+        valid_anchors, valid_links, context_printed = get_scrapable_links(
+            args, base_url, links_found, context, context_printed
+        )
+        if valid_links:
+            memoized_results = get_memoized_result(valid_links, valid_anchors)
+            stored_links = memoized_results[0]
+            stored_anchors = memoized_results[1]
+            stored_result = memoized_results[2]
+            check_links = memoized_results[3]
+            check_anchors = memoized_results[4]
+            if check_links:
+                rs = (
+                    # Since we're only checking for validity, we can retreive
+                    # only the headers/metadata
+                    grequests.head(link, timeout=REQUESTS_TIMEOUT)
+                    for link in check_links
+                )
+                responses = list()
+                # Explicitly close connections to free up file handles and
+                # avoid Connection Errors per:
+                # https://stackoverflow.com/a/22839550
+                for response in grequests.map(
+                    rs, exception_handler=exception_handler
+                ):
+                    try:
+                        responses.append(response.status_code)
+                        response.close()
+                    except AttributeError:
+                        responses.append(response)
+                memoize_result(check_links, responses)
+                stored_anchors += check_anchors
+                stored_result += responses
+            stored_links += check_links
+            caught_errors = write_response(
+                args,
+                stored_links,
+                stored_result,
+                base_url,
+                license_name,
+                stored_anchors,
+                context,
+                context_printed,
+            )
+
+        if caught_errors:
+            errors_total += caught_errors
+            exit_status = 1
+
+    print("\nCompleted in: {}".format(time.time() - START_TIME))
+
+    if args.output_errors:
+        output_summary(args, license_names, errors_total)
+        print("\nError file present at: ", args.output_errors.name)
+        output_test_summary(errors_total)
+
+    return [exit_status, 0, 0]
+
+
+def check_rdfs(args, index=False):
+    if index:
         print("\n\nChecking index.rdf...\n\n")
         rdf_obj_list = get_index_rdf(args)
     else:
@@ -446,44 +486,81 @@ def check_rdfs(args):
     return [0, 0, exit_status]
 
 
+def check_index_rdf(args):
+    exit_status_list = check_rdfs(args, index=True)
+    return exit_status_list
+
+
+def check_complete(args):
+    print(
+        "Running Full Inspection:"
+        " Checking links for LegalCode, Deeds, RDF, and index.rdf"
+    )
+    exit_status_legalcode, _, _ = check_legalcode(args)
+    _, exit_status_deeds, _ = check_deeds(args)
+    _, _, exit_status_rdf = check_rdfs(args)
+    _, _, exit_status_index_rdf = check_rdfs(args, index=True)
+    exit_status_list = [
+        exit_status_legalcode,
+        exit_status_deeds,
+        exit_status_rdf,
+        exit_status_index_rdf,
+    ]
+    return exit_status_list
+
+
+def print_canonical(args):
+    license_names = get_legalcode(args)
+    grouped = [
+        set(),  # 0: by* 4.0 licenses
+        set(),  # 1: by* 3.0 licenses
+        set(),  # 2: by* 2.5 licenses
+        set(),  # 3: by* 2.1 licenses
+        set(),  # 4: by* 2.0 licenses
+        set(),  # 5: by* 1.x licenes
+        set(),  # 6: miscellanious licenses
+        set(),  # 7: zero 1.0 public domain
+        set(),  # 8: miscellanious public domain
+    ]
+    for license_name in license_names:
+        if not args.include_gnu:
+            testname = license_name.lower()
+            if testname.startswith("gpl") or testname.startswith("lgpl"):
+                continue
+        filename = license_name[: -len(".html")]
+        url = create_base_link(args, filename, for_canonical=True)
+        parts = url.split("/")
+        bystar_starts = ("by", "nc", "nd", "sa")
+        if parts[3] == "licenses" and parts[4].startswith(bystar_starts):
+            if parts[5].startswith("4"):
+                grouped[0].add(url)
+            elif parts[5].startswith("3"):
+                grouped[1].add(url)
+            elif parts[5] == "2.5":
+                grouped[2].add(url)
+            elif parts[5] == "2.1":
+                grouped[3].add(url)
+            elif parts[5] == "2.0":
+                grouped[4].add(url)
+            elif parts[5].startswith("1"):
+                grouped[5].add(url)
+            else:
+                grouped[6].add(url)
+        elif parts[3] == "publicdomain" and parts[4] == "zero":
+            grouped[7].add(url)
+        else:
+            grouped[8].add(url)
+    for urls in grouped:
+        urls = list(urls)
+        urls.sort()
+        for url in urls:
+            print(url)
+    return [0, 0, 0]
+
+
 def main():
-    args = parse_argument(sys.argv[1:])
-    args_dict = vars(args)
-    run_sub_command = args_dict.get("func", False)
-    no_parser_args = not any(
-        [args.legalcode, args.deeds, args.rdf, run_sub_command]
-    )
-    all_parser_args_but_no_subparser_args = (
-        all([args.legalcode, args.deeds, args.rdf]) and not run_sub_command
-    )
-    run_full_inspection = (
-        no_parser_args or all_parser_args_but_no_subparser_args
-    )
-    exit_status_list = []
-    if run_sub_command:
-        exit_status_list = args.func(args)
-    if args.legalcode and not all_parser_args_but_no_subparser_args:
-        exit_status_list = check_legalcode(args)
-    if args.deeds and not all_parser_args_but_no_subparser_args:
-        exit_status_list = check_deeds(args)
-    if args.rdf and not all_parser_args_but_no_subparser_args:
-        exit_status_list = check_rdfs(args)
-    if run_full_inspection:
-        print(
-            "\nRunning Full Inspection:"
-            " Checking Links for LegalCode, Deed, RDF, and index.rdf files"
-        )
-        exit_status_legalcode, y, z = check_legalcode(args)
-        x, exit_status_deeds, z = check_deeds(args)
-        x, y, exit_status_rdf = check_rdfs(args)
-        args.index = True
-        x, y, exit_status_index_rdf = check_rdfs(args)
-        exit_status_list = [
-            exit_status_legalcode,
-            exit_status_deeds,
-            exit_status_rdf,
-            exit_status_index_rdf,
-        ]
+    args = parse_arguments()
+    exit_status_list = args.func(args)
     if 1 in exit_status_list:
         return sys.exit(1)
     return sys.exit(0)

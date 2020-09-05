@@ -84,9 +84,9 @@ def parse_arguments():
     )
     parser_shared.add_argument(
         "--limit",
-        default=10,
+        default=0,
         type=int,
-        help="Limit check lists to specified integer (default: 10)",
+        help="Limit check lists to specified integer",
     )
     parser_shared.add_argument(
         "-v",

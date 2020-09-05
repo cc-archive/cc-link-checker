@@ -254,7 +254,7 @@ optional arguments:
   -h, --help           show this help message and exit
   -q, --quiet          decrease verbosity (can be specified multiple times)
   --root-url ROOT_URL  set root URL (default: 'https://creativecommons.org')
-  --limit LIMIT        Limit check lists to specified integer (default: 10)
+  --limit LIMIT        Limit check lists to specified integer
   -v, --verbose        increase verbosity (can be specified multiple times)
   --local              process local filesystem legalcode files to determine valid
                        license paths (uses LICENSE_LOCAL_PATH environment variable

@@ -302,7 +302,6 @@ def check_deeds(args):
                 errors_total += caught_errors
                 exit_status = 1
 
-    print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if args.output_errors:
         output_summary(args, license_names, errors_total)
@@ -383,8 +382,6 @@ def check_legalcode(args):
         if caught_errors:
             errors_total += caught_errors
             exit_status = 1
-
-    print("\nCompleted in: {}".format(time.time() - START_TIME))
 
     if args.output_errors:
         output_summary(args, license_names, errors_total)
@@ -474,8 +471,6 @@ def check_rdfs(args, index=False):
             errors_total += caught_errors
             exit_status = 1
 
-    print("\nCompleted in: {}".format(time.time() - START_TIME))
-
     if args.output_errors:
         output_summary(args, rdf_obj_list, errors_total)
         print("\nError file present at: ", args.output_errors.name)
@@ -559,6 +554,9 @@ def print_canonical(args):
 def main():
     args = parse_arguments()
     exit_status_list = args.func(args)
+    if args.log_level <= INFO:
+        print()
+        print(f"Completed in: {time.time() - START_TIME:.2f} seconds")
     if 1 in exit_status_list:
         return sys.exit(1)
     return sys.exit(0)

@@ -46,10 +46,10 @@ from link_checker.utils import (
 
 
 def parse_arguments():
-    """parse arguments from cli
+    """parse arguments from CLI
 
     Args:
-        args (list): list of arguments parsed from command line
+        args (list): list of arguments parsed from command line interface
     """
 
     # Primary argument parser and sub-parser (for subcommands)
@@ -78,17 +78,23 @@ def parse_arguments():
         dest="verbosity",
     )
     parser_shared.add_argument(
+        "--root-url",
+        default=DEFAULT_ROOT_URL,
+        help=f"set root URL (default: '{DEFAULT_ROOT_URL}')",
+    )
+    parser_shared.add_argument(
+        "--limit",
+        default=10,
+        type=int,
+        help=f"Limit check lists to specified integer (default: 10)",
+    )
+    parser_shared.add_argument(
         "-v",
         "--verbose",
         action="append_const",
         const=-10,
         help="increase verbosity (can be specified multiple times)",
         dest="verbosity",
-    )
-    parser_shared.add_argument(
-        "--root-url",
-        default=DEFAULT_ROOT_URL,
-        help=f"set root URL (default: '{DEFAULT_ROOT_URL}')",
     )
 
     # Shared licenses parser (optional arguments used by all license
@@ -239,7 +245,7 @@ def check_deeds(args):
         # cc/engine/templates/legalcode/standard_deed.html
         # Scrapping the html found on the active site
         if deed_base_url:
-            context = f"\n\nChecking: \nURL: {deed_base_url}"
+            context = f"\n\nChecking: deed\nURL: {deed_base_url}"
             page_url = deed_base_url
             source_html = request_text(page_url)
             license_soup = BeautifulSoup(source_html, "lxml")
@@ -316,7 +322,7 @@ def check_legalcode(args):
         context_printed = False
         filename = license_name[: -len(".html")]
         base_url = create_base_link(args, filename)
-        context = f"\n\nChecking: {license_name}\nURL: {base_url}"
+        context = f"\n\nChecking: legalcode\nURL: {base_url}"
         if args.local:
             source_html = request_local_text(LICENSE_LOCAL_PATH, license_name)
         else:
@@ -388,10 +394,10 @@ def check_rdfs(args, index=False):
         rdf_obj_list = get_rdf(args)
     if args.log_level <= INFO:
         if not index:
-            print("Number of rdf files to be checked:", len(rdf_obj_list))
+            print("Number of RDF files to be checked:", len(rdf_obj_list))
         else:
             print(
-                "Number of rdf objects/sections to be checked in index.rdf:",
+                "Number of RDF objects/sections to be checked in index.rdf:",
                 len(rdf_obj_list),
             )
     errors_total = 0
@@ -467,7 +473,7 @@ def check_index_rdf(args):
     return license_names, errors_total, exit_status_list
 
 
-def check_complete(args):
+def check_combined(args):
     print(
         "Running Full Inspection:"
         " Checking links for LegalCode, Deeds, RDF, and index.rdf"

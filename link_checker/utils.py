@@ -27,6 +27,8 @@ from .constants import (
     TEST_ORDER,
     ERROR,
     WARNING,
+    INFO,
+    DEBUG,
 )
 
 
@@ -92,9 +94,15 @@ def get_legalcode(args):
         str[]: The list of license/deeds files found in the repository
     """
     if args.local:
+        if args.log_level == DEBUG:
+            print("DEBUG: processing local legacode files")
         license_names = get_local_legalcode()
     else:
+        if args.log_level == DEBUG:
+            print("DEBUG: processing GitHub legacode files")
         license_names = get_github_legalcode()
+    if args.limit and args.subcommand != "rdf":
+        license_names = license_names[0:args.limit]
     return license_names
 
 
@@ -175,8 +183,12 @@ def get_rdf(args):
     for license_name in license_names:
         filename = license_name[: -len(".html")]
         rdf_base_url = create_base_link(args, filename, for_rdfs=True)
+        if not rdf_base_url:
+            continue
         rdf_urls.append(rdf_base_url)
     unique_rdf_urls = list(set(rdf_urls))
+    if args.limit:
+        unique_rdf_urls = unique_rdf_urls[0:args.limit]
     for url in unique_rdf_urls:
         if url:
             page_text = request_text(url)
@@ -198,6 +210,8 @@ def get_index_rdf(args, local_path=""):
         rdf_obj_list = get_local_index_rdf(local_path)
     else:
         rdf_obj_list = get_remote_index_rdf()
+    if args.limit:
+        rdf_obj_list = rdf_obj_list[0:args.limit]
     return rdf_obj_list
 
 
@@ -353,6 +367,7 @@ def get_scrapable_links(
                     # )
                     continue
         else:
+            link_text = str(link).replace("\n", "")
             try:
                 href = link["href"]
             except KeyError:
@@ -362,20 +377,15 @@ def get_scrapable_links(
                     try:
                         assert link["name"]
                         warnings.append(
-                            "  {:<24}{}".format("Anchor uses name",
-                            str(link).replace("\n", ""))
+                            f"  {'Anchor uses name':<24}{link_text}"
                         )
                     except:
                         warnings.append(
-                            "  {:<24}{}".format("Anchor w/o href or id",
-                            str(link).replace("\n", ""))
+                            f"  {'Anchor w/o href or id':<24}{link_text}"
                         )
                 continue
             if href == "":
-                warnings.append(
-                    "  {:<24}{}".format("Empty href",
-                    str(link).replace("\n", ""))
-                )
+                warnings.append(f"  {'Empty href':<24}{link_text}")
                 continue
             elif href.startswith("#"):
                 # anchor links are valid, but out of scope
@@ -674,5 +684,5 @@ def output_summaries(args, license_names, errors_total):
         return
     output_issues_summary(args, license_names, errors_total)
     if args.log_level <= INFO:
-        print("\nOutput to error file: ", args.output_errors.name)
+        print("\nOutput to error file:", args.output_errors.name)
     output_test_summary(errors_total)

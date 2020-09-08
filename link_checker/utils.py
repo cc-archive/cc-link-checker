@@ -95,11 +95,11 @@ def get_legalcode(args):
     """
     if args.local:
         if args.log_level == DEBUG:
-            print("DEBUG: processing local legacode files")
+            print("DEBUG: processing local legalcode files")
         license_names = get_local_legalcode()
     else:
         if args.log_level == DEBUG:
-            print("DEBUG: processing GitHub legacode files")
+            print("DEBUG: processing GitHub legalcode files")
         license_names = get_github_legalcode()
     if args.limit and args.subcommand != "rdf":
         license_names = license_names[0 : args.limit]  # noqa: E203

@@ -89,7 +89,7 @@ def test_parser_shared_reporting(tmpdir):
         args = link_checker.parse_arguments([subcmd])
         assert bool(args.output_errors) is False
 
-    # Test argumetns
+    # Test arguments
     for subcmd in subcmds:
         # Test --output-errors with default value
         args = link_checker.parse_arguments([subcmd, "--output-errors"])

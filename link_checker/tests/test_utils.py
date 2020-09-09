@@ -24,7 +24,7 @@ from ..utils import (
     map_links_file,
     memoize_result,
     write_response,
-    output_summary,
+    output_issues_summary,
     output_write,
     output_test_summary,
 )
@@ -43,52 +43,6 @@ def test_get_github_legalcode():
     assert len(all_links) > 0
 
 
-license_url_data = [
-    # 2 part URL
-    (
-        "by-nc-nd_2.0",
-        "https://creativecommons.org/licenses/by-nc-nd/2.0/legalcode",
-        "https://creativecommons.org/licenses/by-nc-nd/2.0/",
-        "https://creativecommons.org/licenses/by-nc-nd/2.0/rdf",
-    ),
-    # 3 part URL
-    (
-        "by-nc-nd_4.0_cs",
-        "https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.cs",
-        "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.cs",
-        "https://creativecommons.org/licenses/by-nc-nd/4.0/rdf",
-    ),
-    # 4 part URL
-    (
-        "by-nc-nd_3.0_rs_sr-Latn",
-        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/"
-        "legalcode.sr-Latn",
-        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/",
-        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/rdf",
-    ),
-    # Special case - samplingplus
-    (
-        "samplingplus_1.0",
-        "https://creativecommons.org/licenses/sampling+/1.0/legalcode",
-        "https://creativecommons.org/licenses/sampling+/1.0/",
-        "https://creativecommons.org/licenses/sampling+/1.0/rdf",
-    ),
-    (
-        "samplingplus_1.0_br",
-        "https://creativecommons.org/licenses/sampling+/1.0/br/legalcode",
-        "https://creativecommons.org/licenses/sampling+/1.0/br/",
-        "https://creativecommons.org/licenses/sampling+/1.0/br/rdf",
-    ),
-    # Special case - CC0
-    (
-        "zero_1.0",
-        "https://creativecommons.org/publicdomain/zero/1.0/legalcode",
-        "https://creativecommons.org/publicdomain/zero/1.0/",
-        "https://creativecommons.org/publicdomain/zero/1.0/rdf",
-    ),
-]
-
-
 def id_generator(data):
     id_list = []
     for license in data:
@@ -96,17 +50,68 @@ def id_generator(data):
     return id_list
 
 
+license_url_data = [
+    # 2 part URL
+    [
+        "by-nc-nd_2.0",
+        "https://creativecommons.org/licenses/by-nc-nd/2.0/",
+        "https://creativecommons.org/licenses/by-nc-nd/2.0/legalcode",
+        "https://creativecommons.org/licenses/by-nc-nd/2.0/rdf",
+    ],
+    # 3 part URL
+    [
+        "by-nc-nd_4.0_cs",
+        "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.cs",
+        "https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.cs",
+        "https://creativecommons.org/licenses/by-nc-nd/4.0/rdf",
+    ],
+    # 4 part URL
+    [
+        "by-nc-nd_3.0_rs_sr-Latn",
+        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/",
+        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/"
+        "legalcode.sr-Latn",
+        "https://creativecommons.org/licenses/by-nc-nd/3.0/rs/rdf",
+    ],
+    # Special case - samplingplus
+    [
+        "samplingplus_1.0",
+        "https://creativecommons.org/licenses/sampling+/1.0/",
+        "https://creativecommons.org/licenses/sampling+/1.0/legalcode",
+        "https://creativecommons.org/licenses/sampling+/1.0/rdf",
+    ],
+    [
+        "samplingplus_1.0_br",
+        "https://creativecommons.org/licenses/sampling+/1.0/br/",
+        "https://creativecommons.org/licenses/sampling+/1.0/br/legalcode",
+        "https://creativecommons.org/licenses/sampling+/1.0/br/rdf",
+    ],
+    # Special case - CC0
+    [
+        "zero_1.0",
+        "https://creativecommons.org/publicdomain/zero/1.0/",
+        "https://creativecommons.org/publicdomain/zero/1.0/legalcode",
+        "https://creativecommons.org/publicdomain/zero/1.0/rdf",
+    ],
+]
+
+
 @pytest.mark.parametrize(
-    "filename, result, deed_result, rdf_result",
+    "filename, deed_result, legalcode_result, rdf_result",
     license_url_data,
     ids=id_generator(license_url_data),
 )
-def test_create_base_link(filename, result, deed_result, rdf_result):
-    args = link_checker.parse_argument([])
-    baseURL = create_base_link(args, filename)
-    assert baseURL == result
+def test_create_base_link(filename, deed_result, legalcode_result, rdf_result):
+    # deeds
+    args = link_checker.parse_arguments(["deeds"])
     baseURL = create_base_link(args, filename, for_deeds=True)
     assert baseURL == deed_result
+    # legalcode
+    args = link_checker.parse_arguments(["legalcode"])
+    baseURL = create_base_link(args, filename)
+    assert baseURL == legalcode_result
+    # rdf
+    args = link_checker.parse_arguments(["rdf"])
     baseURL = create_base_link(args, filename, for_rdfs=True)
     assert baseURL == rdf_result
 
@@ -114,19 +119,19 @@ def test_create_base_link(filename, result, deed_result, rdf_result):
 def test_output_write(tmpdir):
     # output_errors is set and written to
     output_file = tmpdir.join("errorlog.txt")
-    args = link_checker.parse_argument(
-        ["--output-errors", output_file.strpath]
+    args = link_checker.parse_arguments(
+        ["deeds", "--output-errors", output_file.strpath]
     )
     output_write(args, "Output enabled")
     args.output_errors.flush()
     assert output_file.read() == "Output enabled\n"
 
 
-def test_output_summary(reset_global, tmpdir):
+def test_output_issues_summary(reset_global, tmpdir):
     # output_errors is set and written to
     output_file = tmpdir.join("errorlog.txt")
-    args = link_checker.parse_argument(
-        ["--output-errors", output_file.strpath]
+    args = link_checker.parse_arguments(
+        ["deeds", "--output-errors", output_file.strpath]
     )
     utils.MAP_BROKEN_LINKS = {
         "https://link1.demo": [
@@ -136,7 +141,7 @@ def test_output_summary(reset_global, tmpdir):
         "https://link2.demo": ["https://file4.url/here"],
     }
     all_links = ["some link"] * 5
-    output_summary(args, all_links, 3)
+    output_issues_summary(args, all_links, 3)
     args.output_errors.flush()
     lines = output_file.readlines()
     i = 0
@@ -198,7 +203,7 @@ def test_create_absolute_link(link, result):
 
 
 def test_get_scrapable_links():
-    args = link_checker.parse_argument([])
+    args = link_checker.parse_arguments(["deeds"])
     test_file = (
         "<a name='hello'>without href</a>,"
         " <a href='#hello'>internal link</a>,"
@@ -221,7 +226,7 @@ def test_get_scrapable_links():
         == "['https://creativecommons.ca', 'https://www.demourl.com/index']"
     )
     # Testing RDF
-    args = link_checker.parse_argument(["--local"])
+    args = link_checker.parse_arguments(["index", "--local-index"])
     rdf_obj_list = get_index_rdf(
         args, local_path=constants.TEST_RDF_LOCAL_PATH
     )
@@ -231,7 +236,7 @@ def test_get_scrapable_links():
     valid_anchors, valid_links, _ = get_scrapable_links(
         args, base_url, links_found, None, False, rdf=True,
     )
-    assert str(valid_anchors) == (
+    expected_anchors = (
         "[<cc:permits "
         'rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>, '
         "<cc:permits "
@@ -264,22 +269,26 @@ def test_get_scrapable_links():
         "<cc:requires "
         'rdf:resource="http://creativecommons.org/ns#Notice"/>]'
     )
-    assert str(valid_links) == (
-        "['http://creativecommons.org/ns#DerivativeWorks', "
-        "'http://creativecommons.org/ns#Reproduction', "
-        "'http://creativecommons.org/ns#Distribution', "
-        "'http://creativecommons.org/international/ch/', "
-        "'https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png', "
-        "'https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png', "
-        "'http://creativecommons.org/licenses/by-nc-sa/2.5/ch/legalcode.de', "
-        "'http://creativecommons.org/licenses/by-nc-sa/2.5/', "
-        "'http://creativecommons.org', "
-        "'http://creativecommons.org/ns#CommercialUse', "
-        "'http://creativecommons.org/license/', "
-        "'http://creativecommons.org/ns#ShareAlike', "
-        "'http://creativecommons.org/ns#Attribution', "
-        "'http://creativecommons.org/ns#Notice']"
-    )
+    assert str(valid_anchors) == expected_anchors
+    valid_links.sort()
+    expected_links = [
+        "http://creativecommons.org",
+        "http://creativecommons.org/international/ch/",
+        "http://creativecommons.org/license/",
+        "http://creativecommons.org/licenses/by-nc-sa/2.5/",
+        "http://creativecommons.org/licenses/by-nc-sa/2.5/ch/legalcode.de",
+        "http://creativecommons.org/ns#Attribution",
+        "http://creativecommons.org/ns#CommercialUse",
+        "http://creativecommons.org/ns#DerivativeWorks",
+        "http://creativecommons.org/ns#Distribution",
+        "http://creativecommons.org/ns#Notice",
+        "http://creativecommons.org/ns#Reproduction",
+        "http://creativecommons.org/ns#ShareAlike",
+        "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png",
+        "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png",
+    ]
+    expected_links.sort()
+    assert valid_links == expected_links
 
 
 def test_exception_handler():
@@ -307,8 +316,8 @@ def test_map_links_file(reset_global):
 def test_write_response(tmpdir):
     # Set config
     output_file = tmpdir.join("errorlog.txt")
-    args = link_checker.parse_argument(
-        ["--output-errors", output_file.strpath]
+    args = link_checker.parse_arguments(
+        ["deeds", "--output-errors", output_file.strpath]
     )
 
     # Text to extract valid_anchors

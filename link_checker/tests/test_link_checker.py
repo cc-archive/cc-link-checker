@@ -2,75 +2,103 @@
 from link_checker import __main__ as link_checker
 
 
-def test_parse_argument(tmpdir):
-    # Test default options
-    args = link_checker.parse_argument([])
-    assert args.log_level == 30
-    assert bool(args.output_errors) is False
-    assert args.local is False
-    assert args.root_url == "https://creativecommons.org"
-    # Test --licenses
-    args = link_checker.parse_argument(["--legalcode"])
-    assert args.legalcode is True
-    args = link_checker.parse_argument(["legalcode"])
-    assert args.func.__name__ == "check_legalcode"
-    args = link_checker.parse_argument(["legalcode", "--local"])
-    assert args.local is True
-    # Test --deeds
-    args = link_checker.parse_argument(["--deeds"])
-    assert args.deeds is True
-    args = link_checker.parse_argument(["deeds"])
-    assert args.func.__name__ == "check_deeds"
-    args = link_checker.parse_argument(["deeds", "--local"])
-    assert args.local is True
-    # Test --rdf
-    args = link_checker.parse_argument(["--rdf"])
-    assert args.rdf is True
-    args = link_checker.parse_argument(["rdf"])
-    assert args.func.__name__ == "check_rdfs"
-    args = link_checker.parse_argument(["rdf", "--index"])
-    assert args.index is True
-    args = link_checker.parse_argument(["rdf", "--local"])
-    assert args.local is True
-    # Test --index
-    args = link_checker.parse_argument(["--index"])
-    assert args.index is True
-    # Test --local
-    args = link_checker.parse_argument(["--local"])
-    assert args.local is True
-    # Test Logging Levels -q/--quiet
-    args = link_checker.parse_argument(["-q"])
-    assert args.log_level == 40
-    args = link_checker.parse_argument(["-qq"])
-    assert args.log_level == 50
-    args = link_checker.parse_argument(["-qqq"])
-    assert args.log_level == 50
-    args = link_checker.parse_argument(["-q", "--quiet"])
-    assert args.log_level == 50
-    # Test Logging Levels -v/--verbose
-    args = link_checker.parse_argument(["-v"])
-    assert args.log_level == 20
-    args = link_checker.parse_argument(["-vv"])
-    assert args.log_level == 10
-    args = link_checker.parse_argument(["-vvv"])
-    assert args.log_level == 10
-    args = link_checker.parse_argument(["-v", "--verbose"])
-    assert args.log_level == 10
-    # Test Logging Levels with both -v and -q
-    args = link_checker.parse_argument(["-vq"])
-    assert args.log_level == 30
-    args = link_checker.parse_argument(["-vvq"])
-    assert args.log_level == 20
-    args = link_checker.parse_argument(["-vqq"])
-    assert args.log_level == 40
-    # Test default value of --output-errors
-    args = link_checker.parse_argument(["--output-errors"])
-    assert bool(args.output_errors) is True
-    assert args.output_errors.name == "errorlog.txt"
-    # Test custom value of --output-errors
-    output_file = tmpdir.join("errorlog.txt")
-    args = link_checker.parse_argument(
-        ["--output-errors", output_file.strpath]
-    )
-    assert bool(args.output_errors) is True
-    assert args.output_errors.name == output_file.strpath
+def test_parser_shared():
+    subcmds = ["deeds", "legalcode", "rdf", "index", "combined", "canonical"]
+
+    # Test defaults
+    for subcmd in subcmds:
+        args = link_checker.parse_arguments([subcmd])
+        assert args.limit == 0
+        assert args.log_level == 30
+        assert args.root_url == "https://creativecommons.org"
+
+    # Test arguments
+    for subcmd in subcmds:
+        # Test --limit
+        args = link_checker.parse_arguments([subcmd, "--limit", "10"])
+        assert args.limit == 10
+        args = link_checker.parse_arguments([subcmd, "--limit=100"])
+        assert args.limit == 100
+        # Test Logging Levels -q/--quiet
+        args = link_checker.parse_arguments([subcmd, "-q"])
+        assert args.log_level == 40
+        args = link_checker.parse_arguments([subcmd, "-qq"])
+        assert args.log_level == 50
+        args = link_checker.parse_arguments([subcmd, "-qqq"])
+        assert args.log_level == 50
+        args = link_checker.parse_arguments([subcmd, "-q", "--quiet"])
+        assert args.log_level == 50
+        # Test Logging Levels -v/--verbose
+        args = link_checker.parse_arguments([subcmd, "-v"])
+        assert args.log_level == 20
+        args = link_checker.parse_arguments([subcmd, "-vv"])
+        assert args.log_level == 10
+        args = link_checker.parse_arguments([subcmd, "-vvv"])
+        assert args.log_level == 10
+        args = link_checker.parse_arguments([subcmd, "-v", "--verbose"])
+        assert args.log_level == 10
+        # Test Logging Levels with both -v and -q
+        args = link_checker.parse_arguments([subcmd, "-vq"])
+        assert args.log_level == 30
+        args = link_checker.parse_arguments([subcmd, "-vvq"])
+        assert args.log_level == 20
+        args = link_checker.parse_arguments([subcmd, "-vqq"])
+        assert args.log_level == 40
+        # Test --root-url
+        args = link_checker.parse_arguments(
+            [subcmd, "--root-url", "https://pytest.creativecommons.org"]
+        )
+        assert args.root_url == "https://pytest.creativecommons.org"
+
+
+def test_parser_shared_licenses():
+    subcmds = ["deeds", "legalcode", "rdf", "combined", "canonical"]
+
+    # Test defaults
+    for subcmd in subcmds:
+        args = link_checker.parse_arguments([subcmd])
+        assert args.local is False
+
+    # Test argumetns
+    for subcmd in subcmds:
+        # Test --local
+        args = link_checker.parse_arguments([subcmd, "--local"])
+        assert args.local is True
+
+
+def test_parser_shared_rdf():
+    subcmds = ["rdf", "index"]
+
+    # Test defaults
+    for subcmd in subcmds:
+        args = link_checker.parse_arguments([subcmd])
+        assert args.local_index is False
+
+    # Test argumetns
+    for subcmd in subcmds:
+        # Test --local
+        args = link_checker.parse_arguments([subcmd, "--local-index"])
+        assert args.local_index is True
+
+
+def test_parser_shared_reporting(tmpdir):
+    subcmds = ["deeds", "legalcode", "rdf", "index", "combined"]
+
+    # Test defaults
+    for subcmd in subcmds:
+        args = link_checker.parse_arguments([subcmd])
+        assert bool(args.output_errors) is False
+
+    # Test arguments
+    for subcmd in subcmds:
+        # Test --output-errors with default value
+        args = link_checker.parse_arguments([subcmd, "--output-errors"])
+        assert bool(args.output_errors) is True
+        assert args.output_errors.name == "errorlog.txt"
+        # Test --output-errors with custom value
+        output_file = tmpdir.join("errorlog.txt")
+        args = link_checker.parse_arguments(
+            [subcmd, "--output-errors", output_file.strpath]
+        )
+        assert bool(args.output_errors) is True
+        assert args.output_errors.name == output_file.strpath

@@ -27,6 +27,8 @@ from .constants import (
     TEST_ORDER,
     ERROR,
     WARNING,
+    INFO,
+    DEBUG,
 )
 
 
@@ -92,9 +94,15 @@ def get_legalcode(args):
         str[]: The list of license/deeds files found in the repository
     """
     if args.local:
+        if args.log_level == DEBUG:
+            print("DEBUG: processing local legalcode files")
         license_names = get_local_legalcode()
     else:
+        if args.log_level == DEBUG:
+            print("DEBUG: processing GitHub legalcode files")
         license_names = get_github_legalcode()
+    if args.limit and args.subcommand != "rdf":
+        license_names = license_names[0 : args.limit]  # noqa: E203
     return license_names
 
 
@@ -162,7 +170,7 @@ def get_local_legalcode():
 
 
 def get_rdf(args):
-    """Helper function that determines rdf urls
+    """Helper function that determines RDF urls
     from license_names found locally or on github and
     returns a list of valid rdf objects.
 
@@ -175,8 +183,12 @@ def get_rdf(args):
     for license_name in license_names:
         filename = license_name[: -len(".html")]
         rdf_base_url = create_base_link(args, filename, for_rdfs=True)
+        if not rdf_base_url:
+            continue
         rdf_urls.append(rdf_base_url)
     unique_rdf_urls = list(set(rdf_urls))
+    if args.limit:
+        unique_rdf_urls = unique_rdf_urls[0 : args.limit]  # noqa: E203
     for url in unique_rdf_urls:
         if url:
             page_text = request_text(url)
@@ -188,21 +200,23 @@ def get_rdf(args):
 
 
 def get_index_rdf(args, local_path=""):
-    """Determine if local rdf files or remote rdf files
-    should be parsed and call the appropriate function.
+    """Determine if local index.rdf file or remote index.rdf file
+    should be parsed and then call the appropriate function.
 
     Returns:
-        rdf_obj_list: list of rdf objects found in index.rdf
+        rdf_obj_list: list of RDF objects found in index.rdf
     """
-    if args.local:
+    if args.local_index:
         rdf_obj_list = get_local_index_rdf(local_path)
     else:
         rdf_obj_list = get_remote_index_rdf()
+    if args.limit:
+        rdf_obj_list = rdf_obj_list[0 : args.limit]  # noqa: E203
     return rdf_obj_list
 
 
 def get_remote_index_rdf():
-    """This function reads rdfs found at
+    """This function reads RDFs found at
     https://creativecommons.org/licenses/index.rdf
 
     Returns:
@@ -220,12 +234,12 @@ def get_local_index_rdf(local_path=""):
     """This function reads from index.rdf stored locally
 
     Parameters:
-        local_path: path to rdf file. If not supplied
-        the INDEX_RDF_LOCAL_PATH constant is used
-        (which uses your environment or defaults to
-        "./index.rdf"; see constants.py)
+        local_path: path to index.rdf file. If not supplied
+                    the INDEX_RDF_LOCAL_PATH constant is used
+                    (which uses your environment or defaults to
+                    "./index.rdf"; see constants.py)
     Returns:
-        rdf_obj_list: list of rdf objects found in index.rdf
+        rdf_obj_list: list of RDF objects found in index.rdf
     """
     try:
         local_path = local_path or INDEX_RDF_LOCAL_PATH
@@ -244,11 +258,11 @@ def get_local_index_rdf(local_path=""):
 
 
 def get_links_from_rdf(rdf_obj):
-    """This function parses an rdf and returns links found
+    """This function parses an RDF and returns links found
     Parameters:
         rdf_obj: soup object
     Returns:
-        links_found: list of link dictionaries found in rdf soup object
+        links_found: list of link dictionaries found in RDF soup object
     """
     tags = rdf_obj.findChildren()
     links_found = []
@@ -326,8 +340,9 @@ def get_scrapable_links(
         links_found (list): List of all the links found in file
 
     Returns:
-        set: valid_anchors - list of all scrapable anchor tags
-                valid_links - list of all absolute scrapable links
+        list: valid_anchors - list of all scrapable anchor tags
+        list: valid_links - list of all absolute scrapable links
+        bool: context_printed
     """
     valid_links = []
     valid_anchors = []
@@ -337,14 +352,14 @@ def get_scrapable_links(
             try:
                 href = link["href"]
             except KeyError:
-                if href[0] == "#":
+                if href.startswith("#"):
                     # anchor links are valid, but out of scope
                     # No need to report non-issue (not actionable)
                     # warnings.append(
                     #     "  {:<24}{}".format("Skipping internal link ", link)
                     # )
                     continue
-                if href.startswith("mailto:"):
+                elif href.startswith("mailto:"):
                     # mailto links are valid, but out of scope
                     # No need to report non-issue (not actionable)
                     # warnings.append
@@ -352,6 +367,7 @@ def get_scrapable_links(
                     # )
                     continue
         else:
+            link_text = str(link).replace("\n", "")
             try:
                 href = link["href"]
             except KeyError:
@@ -361,21 +377,24 @@ def get_scrapable_links(
                     try:
                         assert link["name"]
                         warnings.append(
-                            "  {:<24}{}".format("Anchor uses name", link)
+                            f"  {'Anchor uses name':<24}{link_text}"
                         )
                     except:
                         warnings.append(
-                            "  {:<24}{}".format("Anchor w/o href or id", link)
+                            f"  {'Anchor w/o href or id':<24}{link_text}"
                         )
                 continue
-            if href != "" and href[0] == "#":
+            if href == "":
+                warnings.append(f"  {'Empty href':<24}{link_text}")
+                continue
+            elif href.startswith("#"):
                 # anchor links are valid, but out of scope
                 # No need to report non-issue (not actionable)
                 # warnings.append(
                 #     "  {:<24}{}".format("Skipping internal link ", link)
                 # )
                 continue
-            if href.startswith("mailto:"):
+            elif href.startswith("mailto:"):
                 # mailto links are valid, but out of scope
                 # No need to report non-issue (not actionable)
                 # warnings.append
@@ -397,7 +416,9 @@ def get_scrapable_links(
     return (valid_anchors, valid_links, context_printed)
 
 
-def create_base_link(args, filename, for_deeds=False, for_rdfs=False):
+def create_base_link(
+    args, filename, for_deeds=False, for_rdfs=False, for_canonical=False
+):
     """Generates base URL on which the license file will be displayed
 
     Args:
@@ -437,7 +458,10 @@ def create_base_link(args, filename, for_deeds=False, for_rdfs=False):
     if jurisdiction:
         url = posixpath.join(url, jurisdiction)
 
-    url = posixpath.join(url, legalcode)
+    if for_canonical:
+        url = posixpath.join(url, "")
+    else:
+        url = posixpath.join(url, legalcode)
     if for_deeds:
         url = get_url_from_legalcode_url(url)
     if for_rdfs:
@@ -580,12 +604,10 @@ def write_response(
                     if not context_printed:
                         print(context)
                     print("Errors:")
-                output_write(
-                    args, "\n{}\nURL: {}".format(license_name, base_url)
-                )
-            result = "  {:<24}{}\n{}{}".format(
-                str(status), all_links[idx], " " * 26, valid_anchors[idx]
-            )
+                output_write(args, f"\n{license_name}\nURL: {base_url}")
+            link = all_links[idx]
+            anchor = str(valid_anchors[idx]).replace("\n", "").strip()
+            result = f"  {str(status):<24}{link}\n{'':<26}{anchor}"
             if args.log_level <= ERROR:
                 print(result)
             output_write(args, result)
@@ -613,7 +635,7 @@ def output_write(args, *args_, **kwargs):
         print(*args_, **kwargs)
 
 
-def output_summary(args, license_names, num_errors):
+def output_issues_summary(args, license_names, num_errors):
     """Prints short summary of broken links in the output error file
 
     Args:
@@ -655,3 +677,12 @@ def output_test_summary(errors_total):
             )
         ts = TestSuite("cc-link-checker", [test_case])
         to_xml_report_file(test_summary, [ts])
+
+
+def output_summaries(args, license_names, errors_total):
+    if not args.output_errors:
+        return
+    output_issues_summary(args, license_names, errors_total)
+    if args.log_level <= INFO:
+        print("\nOutput to error file:", args.output_errors.name)
+    output_test_summary(errors_total)

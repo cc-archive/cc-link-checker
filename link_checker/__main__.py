@@ -241,7 +241,7 @@ def check_deeds(args):
         filename = license_name[: -len(".html")]
         deed_base_url = create_base_link(args, filename, for_deeds=True)
         # Deeds template:
-        # https://github.com/creativecommons/cc.engine/blob/master/cc/engine/templates/legalcode/standard_deed.html
+        # https://github.com/creativecommons/cc.engine/blob/master/cc/engine/templates/licenses/standard_deed.html
 
         # Scrapping the html found on the active site
         if deed_base_url:

@@ -156,6 +156,12 @@ def parse_arguments(arguments):
             parser_shared_reporting,
         ],
     )
+    parser_legalcode.add_argument(
+        "--plaintext",
+        type=bool,
+        default=False,
+        help="Adding plaintext in check",
+    )
     parser_legalcode.set_defaults(func=check_legalcode)
 
     # RDF subcommand: link_checker rdf -h
@@ -337,6 +343,16 @@ def check_legalcode(args):
         valid_anchors, valid_links, context_printed = get_scrapable_links(
             args, base_url, links_found, context, context_printed
         )
+        if ".txt" in license_name:
+            plaintext_license = license_name.replace(".txt", "")
+            print(plaintext_license)
+            licenses = plaintext_license.split("_")
+            if len(licenses) == 2:
+                plaintext_url = "{}/licenses/{}/{}/legalcode.txt".format(
+                    DEFAULT_ROOT_URL, licenses[0], licenses[1]
+                )
+                valid_links.append(plaintext_url)
+                valid_anchors.append("")
         if valid_links:
             memoized_results = get_memoized_result(valid_links, valid_anchors)
             stored_links = memoized_results[0]

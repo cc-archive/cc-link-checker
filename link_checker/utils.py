@@ -96,17 +96,17 @@ def get_legalcode(args):
     if args.local:
         if args.log_level == DEBUG:
             print("DEBUG: processing local legalcode files")
-        license_names = get_local_legalcode(args.plaintext)
+        license_names = get_local_legalcode()
     else:
         if args.log_level == DEBUG:
             print("DEBUG: processing GitHub legalcode files")
-        license_names = get_github_legalcode(args.plaintext)
+        license_names = get_github_legalcode()
     if args.limit and args.subcommand != "rdf":
         license_names = license_names[0 : args.limit]  # noqa: E203
     return license_names
 
 
-def get_github_legalcode(plaintext=False):
+def get_github_legalcode():
     """This function scrapes all the license file in the repo:
     https://github.com/creativecommons/creativecommons.org/tree/master/docroot/legalcode
 
@@ -133,24 +133,20 @@ def get_github_legalcode(plaintext=False):
             if (
                 ".html" in name.string
                 and version in name.string
-                or (
-                    plaintext
-                    and ".txt" in name.string
-                    and version in name.string
-                )
+                or (".txt" in name.string and version in name.string)
             ):
                 license_names.append(name)
     for name in license_names_unordered:
         if (
             ".html" in name.string
             and name not in license_names
-            or (plaintext and ".txt" in name.string and version in name.string)
+            or (".txt" in name.string and version in name.string)
         ):
             license_names.append(name)
     return license_names
 
 
-def get_local_legalcode(plaintext=False):
+def get_local_legalcode():
     """This function get all the legalcode stored locally
 
     Returns:
@@ -176,18 +172,14 @@ def get_local_legalcode(plaintext=False):
             if (
                 ".html" in name
                 and version in name
-                or (
-                    plaintext
-                    and ".txt" in name.string
-                    and version in name.string
-                )
+                or (".txt" in name.string and version in name.string)
             ):
                 license_names.append(name)
     for name in license_names_unordered:
         if (
             ".html" in name
             and name not in license_names
-            or (plaintext and ".txt" in name.string and version in name.string)
+            or (".txt" in name.string and version in name.string)
         ):
             license_names.append(name)
     return license_names

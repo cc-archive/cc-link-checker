@@ -202,16 +202,72 @@ def test_create_absolute_link(link, result):
     assert res == result
 
 
-def test_get_scrapable_links():
+def test_get_links_found_test_rdf():
+    args = link_checker.parse_arguments(["index", "--local-index"])
+    rdf_obj_list = get_index_rdf(
+        args, local_path=constants.TEST_RDF_LOCAL_PATH
+    )
+    rdf_obj = rdf_obj_list[0]
+    links_found = get_links_from_rdf(rdf_obj)
+    links_expected = [
+        {
+            "href": "http://creativecommons.org/ns#DerivativeWorks",
+            "tag": (
+                "<cc:permits rdf:resource="
+                '"http://creativecommons.org/ns#DerivativeWorks"/>'
+            ),
+        },
+        {
+            "href": "http://creativecommons.org/ns#Reproduction",
+            "tag": (
+                "<cc:permits rdf:resource="
+                '"http://creativecommons.org/ns#Reproduction"/>'
+            ),
+        },
+        {
+            "href": "http://creativecommons.org/ns#Distribution",
+            "tag": (
+                "<cc:permits rdf:resource="
+                '"http://creativecommons.org/ns#Distribution"/>'
+            ),
+        },
+        {
+            "href": "http://creativecommons.org/international/ch/",
+            "tag": (
+                "<cc:jurisdiction rdf:resource="
+                '"http://creativecommons.org/international/ch/"/>'
+            ),
+        },
+        {
+            "href": "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png",
+            "tag": (
+                "<foaf:logo rdf:resource="
+                '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png"/>'
+            ),
+        },
+        {
+            "href": "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png",
+            "tag": (
+                "<foaf:logo rdf:resource="
+                '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png"/>'
+            ),
+        },
+    ]
+    for key, pair_dict in enumerate(links_found):
+        links_found[key]["tag"] = str(pair_dict["tag"])
+    assert links_found == links_expected
+
+
+def test_get_scrapable_links_sample_html():
     args = link_checker.parse_arguments(["deeds"])
-    test_file = (
+    sample_html = (
         "<a name='hello'>without href</a>,"
         " <a href='#hello'>internal link</a>,"
         " <a href='mailto:abc@gmail.com'>mailto protocol</a>,"
         " <a href='https://creativecommons.ca'>Absolute link</a>,"
         " <a href='/index'>Relative Link</a>"
     )
-    soup = BeautifulSoup(test_file, "lxml")
+    soup = BeautifulSoup(sample_html, "lxml")
     test_case = soup.find_all("a")
     base_url = "https://www.demourl.com/dir1/dir2"
     valid_anchors, valid_links, _ = get_scrapable_links(
@@ -225,67 +281,48 @@ def test_get_scrapable_links():
         str(valid_links)
         == "['https://creativecommons.ca', 'https://www.demourl.com/index']"
     )
-    # Testing RDF
+
+
+def test_get_scrapable_links_test_rdf():
     args = link_checker.parse_arguments(["index", "--local-index"])
     rdf_obj_list = get_index_rdf(
         args, local_path=constants.TEST_RDF_LOCAL_PATH
     )
     rdf_obj = rdf_obj_list[0]
-    base_url = rdf_obj["rdf:about"]
     links_found = get_links_from_rdf(rdf_obj)
+    base_url = rdf_obj["rdf:about"]
     valid_anchors, valid_links, _ = get_scrapable_links(
-        args, base_url, links_found, None, False, rdf=True,
+        args, base_url, links_found, None, False, rdf=True
     )
-    expected_anchors = (
-        "[<cc:permits "
-        'rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>, '
-        "<cc:permits "
-        'rdf:resource="http://creativecommons.org/ns#Reproduction"/>, '
-        "<cc:permits "
-        'rdf:resource="http://creativecommons.org/ns#Distribution"/>, '
-        "<cc:jurisdiction "
-        'rdf:resource="http://creativecommons.org/international/ch/"/>, '
-        "<foaf:logo "
-        'rdf:resource="https://i.creativecommons.org/'
-        'l/by-nc-sa/2.5/ch/88x31.png"/>, '
-        "<foaf:logo "
-        'rdf:resource="https://i.creativecommons.org/'
-        'l/by-nc-sa/2.5/ch/80x15.png"/>, '
-        "<cc:legalcode "
-        'rdf:resource="http://creativecommons.org/'
-        'licenses/by-nc-sa/2.5/ch/legalcode.de"/>, '
-        "<dc:source "
-        'rdf:resource="http://creativecommons.org/licenses/by-nc-sa/2.5/"/>, '
-        "<dc:creator "
-        'rdf:resource="http://creativecommons.org"/>, '
-        "<cc:prohibits "
-        'rdf:resource="http://creativecommons.org/ns#CommercialUse"/>, '
-        "<cc:licenseClass "
-        'rdf:resource="http://creativecommons.org/license/"/>, '
-        "<cc:requires "
-        'rdf:resource="http://creativecommons.org/ns#ShareAlike"/>, '
-        "<cc:requires "
-        'rdf:resource="http://creativecommons.org/ns#Attribution"/>, '
-        "<cc:requires "
-        'rdf:resource="http://creativecommons.org/ns#Notice"/>]'
-    )
-    assert str(valid_anchors) == expected_anchors
+    for key, value in enumerate(valid_anchors):
+        valid_anchors[key] = str(value)
+    valid_anchors.sort()
     valid_links.sort()
+
+    expected_anchors = [
+        "<cc:permits rdf:resource="
+        '"http://creativecommons.org/ns#DerivativeWorks"/>',
+        "<cc:permits rdf:resource="
+        '"http://creativecommons.org/ns#Reproduction"/>',
+        "<cc:permits rdf:resource="
+        '"http://creativecommons.org/ns#Distribution"/>',
+        "<cc:jurisdiction rdf:resource="
+        '"http://creativecommons.org/international/ch/"/>',
+        "<foaf:logo rdf:resource="
+        '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png"/>',
+        "<foaf:logo rdf:resource="
+        '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png"/>',
+    ]
+    expected_anchors.sort()
+    assert valid_anchors == expected_anchors
+
     expected_links = [
-        "http://creativecommons.org",
-        "http://creativecommons.org/international/ch/",
-        "http://creativecommons.org/license/",
-        "http://creativecommons.org/licenses/by-nc-sa/2.5/",
-        "http://creativecommons.org/licenses/by-nc-sa/2.5/ch/legalcode.de",
-        "http://creativecommons.org/ns#Attribution",
-        "http://creativecommons.org/ns#CommercialUse",
         "http://creativecommons.org/ns#DerivativeWorks",
-        "http://creativecommons.org/ns#Distribution",
-        "http://creativecommons.org/ns#Notice",
         "http://creativecommons.org/ns#Reproduction",
-        "http://creativecommons.org/ns#ShareAlike",
-        "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png",
+        "http://creativecommons.org/ns#Distribution",
+        "http://creativecommons.org/international/ch/",
         "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png",
+        "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png",
     ]
     expected_links.sort()
     assert valid_links == expected_links

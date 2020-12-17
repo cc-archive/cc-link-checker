@@ -239,14 +239,18 @@ def test_get_links_found_test_rdf():
             ),
         },
         {
-            "href": "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png",
+            "href": (
+                "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png"
+            ),
             "tag": (
                 "<foaf:logo rdf:resource="
                 '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/88x31.png"/>'
             ),
         },
         {
-            "href": "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png",
+            "href": (
+                "https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png"
+            ),
             "tag": (
                 "<foaf:logo rdf:resource="
                 '"https://i.creativecommons.org/l/by-nc-sa/2.5/ch/80x15.png"/>'

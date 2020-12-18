@@ -11,6 +11,7 @@ link_checker = "python -m link_checker"
 black = "==19.10b0"
 flake8 = "*"
 pytest = "*"
+typing_extensions = {version = "*", markers="python_version < '3.9'"}
 
 [packages]
     [packages.link_checker]

@@ -10,6 +10,7 @@ link_checker = "python -m link_checker"
 # See https://github.com/pypa/pipenv/issues/1760
 black = "==20.8b1"
 flake8 = "*"
+isort = "*"
 pytest = "*"
 typing_extensions = {version = "*", markers="python_version < '3.9'"}
 

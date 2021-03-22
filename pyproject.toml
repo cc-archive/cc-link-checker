@@ -1,20 +1,14 @@
 [tool.black]
 line-length = 79
-include = '\.pyi?$'
-exclude = '''
+force-exclude = '''
 /(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.pytest_cache
-  | \.tox
-  | \.venv
-  | \.vscode
+  \.pytest_cache
   | __pycache__
-  | _build
-  | buck-out
-  | build
-  | dist
   | venv
 )/
 '''
+
+
+# [tool.flake8]
+#   config: .flake8
+# also see: https://gitlab.com/pycqa/flake8/-/issues/428

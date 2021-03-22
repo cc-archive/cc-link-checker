@@ -417,7 +417,12 @@ def check_rdfs(args, index=False):
             context_printed = True
         base_url = rdf_url
         valid_anchors, valid_links, context_printed = get_scrapable_links(
-            args, base_url, links_found, context, context_printed, rdf=True,
+            args,
+            base_url,
+            links_found,
+            context,
+            context_printed,
+            rdf=True,
         )
         if valid_links:
             memoized_results = get_memoized_result(valid_links, valid_anchors)

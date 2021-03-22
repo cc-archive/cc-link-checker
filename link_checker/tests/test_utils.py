@@ -234,7 +234,12 @@ def test_get_scrapable_links():
     base_url = rdf_obj["rdf:about"]
     links_found = get_links_from_rdf(rdf_obj)
     valid_anchors, valid_links, _ = get_scrapable_links(
-        args, base_url, links_found, None, False, rdf=True,
+        args,
+        base_url,
+        links_found,
+        None,
+        False,
+        rdf=True,
     )
     expected_anchors = (
         "[<cc:permits "

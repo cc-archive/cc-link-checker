@@ -2,33 +2,33 @@
 from urllib.parse import urlsplit
 
 # Third-party
-from bs4 import BeautifulSoup
 import grequests
 import pytest
+from bs4 import BeautifulSoup
 
+# First-party/Local
 # Local/library specific
-from link_checker import utils
 from link_checker import __main__ as link_checker
+from link_checker import constants, utils
 from ..utils import (
     CheckerError,
+    create_absolute_link,
+    create_base_link,
+    exception_handler,
     get_github_legalcode,
     get_index_rdf,
     get_links_from_rdf,
-    request_text,
-    request_local_text,
-    get_scrapable_links,
-    create_base_link,
-    create_absolute_link,
     get_memoized_result,
-    exception_handler,
+    get_scrapable_links,
     map_links_file,
     memoize_result,
-    write_response,
     output_issues_summary,
-    output_write,
     output_test_summary,
+    output_write,
+    request_local_text,
+    request_text,
+    write_response,
 )
-from link_checker import constants
 
 
 @pytest.fixture

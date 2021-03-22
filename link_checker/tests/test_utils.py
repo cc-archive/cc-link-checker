@@ -45,6 +45,7 @@ def test_get_github_legalcode():
     # As of 2021-03-22 there are 950 items
     assert abs(950 - len(all_links)) <= 10
 
+
 def id_generator(data):
     id_list = []
     for license in data:

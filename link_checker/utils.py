@@ -120,7 +120,7 @@ def get_github_legalcode():
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
     license_names_unordered = []
-    for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
+    for link in soup.find_all("a", class_="js-navigation-open Link--primary"):
         license_names_unordered.append(link.string)
     # Although license_names_unordered is sorted below, is not ordered
     # according to TEST_ORDER.

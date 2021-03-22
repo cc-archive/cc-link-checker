@@ -12,7 +12,7 @@ on:
       - "Pipfile"
       - "Pipfile.lock"
     branches:
-      - master
+      - main
   pull_request:
     # Only run if,
     paths:
@@ -24,7 +24,7 @@ on:
       - "Pipfile"
       - "Pipfile.lock"
     branches:
-      - master
+      - main
 
 jobs:
   unitTest:

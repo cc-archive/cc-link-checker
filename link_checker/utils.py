@@ -2,33 +2,33 @@
 """
 
 # Standard library
-from urllib.parse import urljoin, urlsplit
 import os
 import posixpath
 import re
 import time
+from urllib.parse import urljoin, urlsplit
 
 # Third-party
+import requests
 from bs4 import BeautifulSoup
 from junit_xml import TestCase, TestSuite, to_xml_report_file
-import requests
 
 # Local
 from .constants import (
-    START_TIME,
-    HEADER,
-    MEMOIZED_LINKS,
-    MAP_BROKEN_LINKS,
-    GOOD_RESPONSE,
-    REQUESTS_TIMEOUT,
-    LICENSE_LOCAL_PATH,
-    INDEX_RDF_LOCAL_PATH,
-    LANGUAGE_CODE_REGEX,
-    TEST_ORDER,
-    ERROR,
-    WARNING,
-    INFO,
     DEBUG,
+    ERROR,
+    GOOD_RESPONSE,
+    HEADER,
+    INDEX_RDF_LOCAL_PATH,
+    INFO,
+    LANGUAGE_CODE_REGEX,
+    LICENSE_LOCAL_PATH,
+    MAP_BROKEN_LINKS,
+    MEMOIZED_LINKS,
+    REQUESTS_TIMEOUT,
+    START_TIME,
+    TEST_ORDER,
+    WARNING,
 )
 
 
@@ -120,7 +120,7 @@ def get_github_legalcode():
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
     license_names_unordered = []
-    for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
+    for link in soup.find_all("a", class_="js-navigation-open Link--primary"):
         license_names_unordered.append(link.string)
     # Although license_names_unordered is sorted below, is not ordered
     # according to TEST_ORDER.

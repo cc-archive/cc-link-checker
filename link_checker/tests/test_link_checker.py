@@ -1,4 +1,5 @@
 # Local/library specific
+# First-party/Local
 from link_checker import __main__ as link_checker
 
 

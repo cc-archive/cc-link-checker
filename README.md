@@ -60,23 +60,22 @@ environment and install dependencies
     git clone https://github.com/creativecommons/cc-link-checker.git
     ```
 2. Create virtual environment and install all dependencies
-
+   - macOS with Homebrew
+        ```shell
+        pipenv install --dev --python /usr/local/opt/python@3.7/libexec/bin/python
+        ```
+   - General
+        ```shell
+        pipenv install --dev
+        ```
+    - Use `sync` to install last successful environment. For example:
+        ```shell
+        pipenv sync --dev --python /usr/local/opt/python@3.7/libexec/bin/python
+        ```
+3. Run the script:
     ```shell
-    pipenv install --dev
+    pipenv run link_checker
     ```
-
-    - To install last successful environment:
-      `pipenv install --dev --ignore-pipfile`
-
-3. Either:
-    - Activate project's virtual environment:
-        ```shell
-        pipenv shell
-        ```
-    - Run the script:
-        ```shell
-        pipenv run link_checker.py
-        ```
 
 
 ## Usage
@@ -292,13 +291,31 @@ Unit tests have been written using [pytest](https://docs.pytest.org/en/latest/)
 framework. The tests can be run using:
 
 1. Install dev dependencies
-    ```shell
-    pipenv install --dev
-    ```
+   - macOS with Homebrew
+        ```shell
+        pipenv install --dev --python /usr/local/opt/python@3.7/libexec/bin/python
+        ```
+   - General
+        ```shell
+        pipenv install --dev
+        ```
 2. Run unit tests
     ```shell
     pipenv run pytest -v
     ```
+
+### Tooling
+
+- **[Python Guidelines — Creative Commons Open Source][ccospyguide]**
+- [Black][black]: the uncompromising Python code formatter
+- [flake8][flake8]: a python tool that glues together pep8, pyflakes, mccabe,
+  and third-party plugins to check the style and quality of some python code.
+- [isort][isort]: A Python utility / library to sort imports.
+
+[ccospyguide]: https://opensource.creativecommons.org/contributing-code/python-guidelines/
+[black]: https://github.com/psf/black
+[flake8]: https://gitlab.com/pycqa/flake8
+[isort]: https://pycqa.github.io/isort/
 
 
 ## Troubleshooting
@@ -309,15 +326,15 @@ framework. The tests can be run using:
 
 -   Failing **Lint** build:
 
-    Currently we follow customised [black](https://github.com/python/black) code
-    style alongwith [flake8](https://gitlab.com/pycqa/flake8). The [black
-    configuration](pyproject.toml) and [flake8 configuration](.flake8) are
-    present in the repo. Do follow them to pass the CI build:
+    Ensure style/syntax is correct:
     ```shell
-    black ./
+    pipenv run black .
+    ```
+    ```shell
+    pipenv run isort .
     ```
     ```
-    flake8 ./
+    pipenv run flake8 .
     ```
 
 

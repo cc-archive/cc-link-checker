@@ -2,33 +2,33 @@
 from urllib.parse import urlsplit
 
 # Third-party
-from bs4 import BeautifulSoup
 import grequests
 import pytest
+from bs4 import BeautifulSoup
 
+# First-party/Local
 # Local/library specific
-from link_checker import utils
 from link_checker import __main__ as link_checker
+from link_checker import constants, utils
 from ..utils import (
     CheckerError,
+    create_absolute_link,
+    create_base_link,
+    exception_handler,
     get_github_legalcode,
     get_index_rdf,
     get_links_from_rdf,
-    request_text,
-    request_local_text,
-    get_scrapable_links,
-    create_base_link,
-    create_absolute_link,
     get_memoized_result,
-    exception_handler,
+    get_scrapable_links,
     map_links_file,
     memoize_result,
-    write_response,
     output_issues_summary,
-    output_write,
     output_test_summary,
+    output_write,
+    request_local_text,
+    request_text,
+    write_response,
 )
-from link_checker import constants
 
 
 @pytest.fixture
@@ -40,7 +40,10 @@ def reset_global():
 
 def test_get_github_legalcode():
     all_links = get_github_legalcode()
-    assert len(all_links) > 0
+    # Ensure we are within 10 of expected item count (so that this test does
+    # not need to be updated with every single translation, etc.).
+    # As of 2021-03-22 there are 950 items
+    assert abs(950 - len(all_links)) <= 10
 
 
 def id_generator(data):
@@ -234,7 +237,12 @@ def test_get_scrapable_links():
     base_url = rdf_obj["rdf:about"]
     links_found = get_links_from_rdf(rdf_obj)
     valid_anchors, valid_links, _ = get_scrapable_links(
-        args, base_url, links_found, None, False, rdf=True,
+        args,
+        base_url,
+        links_found,
+        None,
+        False,
+        rdf=True,
     )
     expected_anchors = (
         "[<cc:permits "

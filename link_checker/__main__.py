@@ -11,37 +11,37 @@ import time
 import traceback
 
 # Third-party
-from bs4 import BeautifulSoup
 import grequests  # WARNING: Always import grequests before requests
+from bs4 import BeautifulSoup
 
-# Local
+# First-party/Local
 from link_checker.constants import (
-    REQUESTS_TIMEOUT,
-    START_TIME,
+    CRITICAL,
+    DEBUG,
+    DEFAULT_ROOT_URL,
+    INFO,
     LICENSE_GITHUB_BASE,
     LICENSE_LOCAL_PATH,
     LICENSES_DIR,
-    DEFAULT_ROOT_URL,
-    CRITICAL,
+    REQUESTS_TIMEOUT,
+    START_TIME,
     WARNING,
-    INFO,
-    DEBUG,
 )
 from link_checker.utils import (
     CheckerError,
-    get_legalcode,
-    get_rdf,
-    get_index_rdf,
-    request_text,
-    request_local_text,
-    get_scrapable_links,
-    get_links_from_rdf,
     create_base_link,
-    get_memoized_result,
     exception_handler,
+    get_index_rdf,
+    get_legalcode,
+    get_links_from_rdf,
+    get_memoized_result,
+    get_rdf,
+    get_scrapable_links,
     memoize_result,
-    write_response,
     output_summaries,
+    request_local_text,
+    request_text,
+    write_response,
 )
 
 
@@ -417,7 +417,12 @@ def check_rdfs(args, index=False):
             context_printed = True
         base_url = rdf_url
         valid_anchors, valid_links, context_printed = get_scrapable_links(
-            args, base_url, links_found, context, context_printed, rdf=True,
+            args,
+            base_url,
+            links_found,
+            context,
+            context_printed,
+            rdf=True,
         )
         if valid_links:
             memoized_results = get_memoized_result(valid_links, valid_anchors)

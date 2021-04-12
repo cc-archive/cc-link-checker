@@ -2,33 +2,33 @@
 """
 
 # Standard library
-from urllib.parse import urljoin, urlsplit
 import os
 import posixpath
 import re
 import time
+from urllib.parse import urljoin, urlsplit
 
 # Third-party
+import requests
 from bs4 import BeautifulSoup
 from junit_xml import TestCase, TestSuite, to_xml_report_file
-import requests
 
 # Local
 from .constants import (
-    START_TIME,
-    HEADER,
-    MEMOIZED_LINKS,
-    MAP_BROKEN_LINKS,
-    GOOD_RESPONSE,
-    REQUESTS_TIMEOUT,
-    LICENSE_LOCAL_PATH,
-    INDEX_RDF_LOCAL_PATH,
-    LANGUAGE_CODE_REGEX,
-    TEST_ORDER,
-    ERROR,
-    WARNING,
-    INFO,
     DEBUG,
+    ERROR,
+    GOOD_RESPONSE,
+    HEADER,
+    INDEX_RDF_LOCAL_PATH,
+    INFO,
+    LANGUAGE_CODE_REGEX,
+    LICENSE_LOCAL_PATH,
+    MAP_BROKEN_LINKS,
+    MEMOIZED_LINKS,
+    REQUESTS_TIMEOUT,
+    START_TIME,
+    TEST_ORDER,
+    WARNING,
 )
 
 
@@ -120,7 +120,7 @@ def get_github_legalcode():
     page_text = request_text(URL)
     soup = BeautifulSoup(page_text, "lxml")
     license_names_unordered = []
-    for link in soup.find_all("a", class_="js-navigation-open link-gray-dark"):
+    for link in soup.find_all("a", class_="js-navigation-open Link--primary"):
         license_names_unordered.append(link.string)
     # Although license_names_unordered is sorted below, is not ordered
     # according to TEST_ORDER.
@@ -259,8 +259,8 @@ def get_local_index_rdf(local_path=""):
     """
     try:
         local_path = local_path or INDEX_RDF_LOCAL_PATH
-        index_rdf = open(local_path, "r")
-        rdf_text = index_rdf.read()
+        with open(local_path, "rb") as index_rdf:
+            rdf_text = index_rdf.read()
     except FileNotFoundError:
         raise CheckerError(
             f"Local index.rdf path({local_path}) does not exist"
@@ -282,15 +282,15 @@ def get_links_from_rdf(rdf_obj):
     """
     tags = rdf_obj.findChildren()
     links_found = []
-    for t in tags:
+    for tag in tags:
         # check link to deed and resources
-        el = {"tag": t, "href": ""}
-        if t.has_attr("rdf:resource"):
-            el["href"] = t["rdf:resource"]
-            links_found.append(el)
-        if t.has_attr("rdf:about"):
-            el["href"] = t["rdf:resource"]
-            links_found.append(el)
+        link = {"tag": tag, "href": ""}
+        if tag.has_attr("rdf:resource"):
+            link["href"] = tag["rdf:resource"]
+            links_found.append(link)
+        if tag.has_attr("rdf:about"):
+            link["href"] = tag["rdf:resource"]
+            links_found.append(link)
     return links_found
 
 

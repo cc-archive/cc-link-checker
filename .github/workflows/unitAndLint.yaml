@@ -2,9 +2,8 @@ name: unitAndLint
 
 on:
   push:
-    # Only run if,
+    # Only run if there are changes to Python code or related configurations
     paths:
-      # Changes in python, yaml(github actions), toml(black config), .flake8(flake8 config) or Pipfile
       - "**.py"
       - "**.yaml"
       - "**.toml"
@@ -14,9 +13,8 @@ on:
     branches:
       - main
   pull_request:
-    # Only run if,
+    # Only run if there are changes to Python code or related configurations
     paths:
-      # Changes in python, yaml(github actions), toml(black config), .flake8(flake8 config) or Pipfile
       - "**.py"
       - "**.yaml"
       - "**.toml"
@@ -31,16 +29,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Set up Python 3.7
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: 3.7
       - name: Install pipenv
         uses: dschep/install-pipenv-action@v1
       - name: Install dependencies
         run: |
-          pipenv install --dev
+          pipenv sync --dev
       - name: Test with pytest
         run: |
           mkdir test-reports
@@ -50,23 +48,24 @@ jobs:
         with:
           name: unitTest-report
           path: test-reports/junit.xml
-        # Use always() to always run this step to publish test results when there are test failures
+        # Use always() to always run this step to publish test results when
+        # there are test failures
         if: always()
 
   lint:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Set up Python 3.7
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: 3.7
       - name: Install pipenv
         uses: dschep/install-pipenv-action@v1
       - name: Install dependencies
         run: |
-          pipenv install --dev
+          pipenv sync --dev
       - name: Testing with flake8
         run: |
           mkdir test-reports

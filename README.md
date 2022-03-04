@@ -60,17 +60,13 @@ environment and install dependencies
     git clone https://github.com/creativecommons/cc-link-checker.git
     ```
 2. Create virtual environment and install all dependencies
-   - macOS with Homebrew
-        ```shell
-        pipenv install --dev --python /usr/local/opt/python@3.7/libexec/bin/python
-        ```
-   - General
+   - Normal
         ```shell
         pipenv install --dev
         ```
     - Use `sync` to install last successful environment. For example:
         ```shell
-        pipenv sync --dev --python /usr/local/opt/python@3.7/libexec/bin/python
+        pipenv sync --dev
         ```
 3. Run the script:
     ```shell

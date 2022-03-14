@@ -247,10 +247,6 @@
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'",
             "version": "==2.27.1"
         },
-        "sanitized-package": {
-            "editable": true,
-            "path": "."
-        },
         "setuptools": {
             "hashes": [
                 "sha256:2347b2b432c891a863acadca2da9ac101eae6169b1d3dfee2ec605ecd50dbfe5",

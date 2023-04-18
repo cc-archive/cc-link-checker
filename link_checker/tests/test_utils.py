@@ -42,8 +42,8 @@ def test_get_github_legalcode():
     all_links = get_github_legalcode()
     # Ensure we are within 10 of expected item count (so that this test does
     # not need to be updated with every single translation, etc.).
-    # As of 2021-03-22 there are 950 items
-    assert abs(950 - len(all_links)) <= 10
+    # As of 2023-04-18 there are 963 items
+    assert abs(963 - len(all_links)) <= 10
 
 
 def id_generator(data):

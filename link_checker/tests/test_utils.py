@@ -414,9 +414,9 @@ def test_get_memoized_result(reset_global):
 def test_memoize_result(reset_global):
     check_links = [
         # Good response
-        "https://httpbin.org/status/200",
+        "http://httpbin.org/status/200",
         # Bad response
-        "https://httpbin.org/status/400",
+        "http://httpbin.org/status/400",
         # Invalid schema - Caught by exception handler
         "file://hh",
     ]
@@ -425,11 +425,11 @@ def test_memoize_result(reset_global):
     memoize_result(check_links, response)
     assert len(utils.MEMOIZED_LINKS.keys()) == 3
     assert (
-        utils.MEMOIZED_LINKS["https://httpbin.org/status/200"].status_code
+        utils.MEMOIZED_LINKS["http://httpbin.org/status/200"].status_code
         == 200
     )
     assert (
-        utils.MEMOIZED_LINKS["https://httpbin.org/status/400"].status_code
+        utils.MEMOIZED_LINKS["http://httpbin.org/status/400"].status_code
         == 400
     )
     assert utils.MEMOIZED_LINKS["file://hh"] == "Invalid Schema"

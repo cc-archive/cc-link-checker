@@ -279,13 +279,13 @@ def get_links_from_rdf(rdf_obj):
 
 
 def request_json(page_url):
-    """This function makes a requests get and returns the text result
+    """This function makes a requests get and returns the json result
 
     Args:
         page_url (str): URL to perform a GET request for
 
     Returns:
-        str: request response text
+        str: request response json
     """
     try:
         r = requests.get(page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT)

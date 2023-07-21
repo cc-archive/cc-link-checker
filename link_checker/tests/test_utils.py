@@ -423,8 +423,6 @@ def test_memoize_result(reset_global):
     rs = (grequests.get(link, timeout=3) for link in check_links)
     response = grequests.map(rs, exception_handler=exception_handler)
     memoize_result(check_links, response)
-    from pprint import pprint #DEBUG
-    pprint(utils.MEMOIZED_LINKS)  #DEBUG
     assert len(utils.MEMOIZED_LINKS.keys()) == 3
     assert (
         utils.MEMOIZED_LINKS["http://httpbin.org/status/200"].status_code

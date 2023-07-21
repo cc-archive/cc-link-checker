@@ -114,14 +114,14 @@ def get_github_legalcode():
         str[]: The list of license/deeds files found in the repository
     """
     URL = (
-        "https://github.com/creativecommons/creativecommons.org/tree/master"
+        "https://github.com/creativecommons/creativecommons.org/tree/main"
         "/docroot/legalcode"
     )
-    page_text = request_text(URL)
-    soup = BeautifulSoup(page_text, "lxml")
+    page_json = request_json(URL)
     license_names_unordered = []
-    for link in soup.find_all("a", class_="js-navigation-open Link--primary"):
-        license_names_unordered.append(link.string)
+    for item in page_json["payload"]["tree"]["items"]:
+        name = os.path.basename(item["path"])
+        license_names_unordered.append(name)
     # Although license_names_unordered is sorted below, is not ordered
     # according to TEST_ORDER.
     license_names_unordered.sort()
@@ -130,10 +130,10 @@ def get_github_legalcode():
     # non-.html files
     for version in TEST_ORDER:
         for name in license_names_unordered:
-            if ".html" in name.string and version in name.string:
+            if ".html" in name and version in name:
                 license_names.append(name)
     for name in license_names_unordered:
-        if ".html" in name.string and name not in license_names:
+        if ".html" in name and name not in license_names:
             license_names.append(name)
     return license_names
 
@@ -276,6 +276,35 @@ def get_links_from_rdf(rdf_obj):
             link["href"] = tag["rdf:resource"]
             links_found.append(link)
     return links_found
+
+
+def request_json(page_url):
+    """This function makes a requests get and returns the text result
+
+    Args:
+        page_url (str): URL to perform a GET request for
+
+    Returns:
+        str: request response text
+    """
+    try:
+        r = requests.get(page_url, headers=HEADER, timeout=REQUESTS_TIMEOUT)
+        fetched_json = r.json()
+    except requests.exceptions.ConnectionError:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " ConnectionError".format(page_url),
+            1,
+        )
+    except requests.exceptions.Timeout:
+        raise CheckerError(
+            "FAILED to retreive source HTML ({}) due to"
+            " Timeout".format(page_url),
+            1,
+        )
+    except:
+        raise
+    return fetched_json
 
 
 def request_text(page_url):

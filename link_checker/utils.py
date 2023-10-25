@@ -574,11 +574,11 @@ def exception_handler(request, exception):
     Returns:
         str: Exception occured in string format
     """
-    if type(exception) == requests.exceptions.ConnectionError:
+    if isinstance(exception, requests.exceptions.ConnectionError):
         return "Connection Error"
-    elif type(exception) == requests.exceptions.ConnectTimeout:
+    elif isinstance(exception, requests.exceptions.ConnectTimeout):
         return "Timeout Error"
-    elif type(exception) == requests.exceptions.InvalidSchema:
+    elif isinstance(exception, requests.exceptions.InvalidSchema):
         return "Invalid Schema"
     else:
         return type(exception).__name__

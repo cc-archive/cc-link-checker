@@ -377,10 +377,6 @@
             "markers": "python_version >= '3.7'",
             "version": "==2.31.0"
         },
-        "sanitized-package": {
-            "editable": true,
-            "path": "."
-        },
         "setuptools": {
             "hashes": [
                 "sha256:4ac1475276d2f1c48684874089fefcd83bd7162ddaafb81fac866ba0db282a87",

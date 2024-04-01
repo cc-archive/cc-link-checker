@@ -334,24 +334,25 @@ framework. The tests can be run using:
     ```
 
 
-## Code of Conduct
+## Code of conduct
 
-[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md):
-
+[`CODE_OF_CONDUCT.md`][org-coc]:
 > The Creative Commons team is committed to fostering a welcoming community.
 > This project and all other Creative Commons open source projects are governed
 > by our [Code of Conduct][code_of_conduct]. Please report unacceptable
 > behavior to [conduct@creativecommons.org](mailto:conduct@creativecommons.org)
 > per our [reporting guidelines][reporting_guide].
 
+[org-coc]: https://github.com/creativecommons/.github/blob/main/CODE_OF_CONDUCT.md
 [code_of_conduct]: https://opensource.creativecommons.org/community/code-of-conduct/
 [reporting_guide]: https://opensource.creativecommons.org/community/code-of-conduct/enforcement/
 
 
 ## Contributing
 
-We welcome contributions for bug fixes, enhancement and documentation. Please
-follow [`CONTRIBUTING.md`](CONTRIBUTING.md) while contributing.
+We welcome contributions for bug fixes, enhancement and documentation. Please see [`CONTRIBUTING.md`][org-contrib] while contributing..
+
+[org-contrib]: https://github.com/creativecommons/.github/blob/main/CONTRIBUTING.md
 
 
 ## License

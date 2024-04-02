@@ -1,4 +1,4 @@
-name: unitAndLint
+name: unitTestsAndLint
 
 on:
   push:
@@ -24,27 +24,38 @@ on:
     branches:
       - main
 
-jobs:
-  unitTest:
-    runs-on: ubuntu-latest
 
+jobs:
+
+  unitTests:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+      # https://github.com/actions/setup-python
+      - name: Install Python 3.9
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
+
       - name: Install pipenv
-        uses: dschep/install-pipenv-action@v1
-      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pipenv
+
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v4
+
+      - name: Install Python dependencies
         run: |
           pipenv sync --dev
+
       - name: Test with pytest
         run: |
           mkdir test-reports
           pipenv run pytest -v --junitxml=test-reports/junit.xml
+
+      # https://github.com/actions/upload-artifact
       - name: Upload pytest test results
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: unitTest-report
           path: test-reports/junit.xml
@@ -52,29 +63,41 @@ jobs:
         # there are test failures
         if: always()
 
+
   lint:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+
+      # https://github.com/actions/setup-python
+      - name: Install Python 3.9
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
+
       - name: Install pipenv
-        uses: dschep/install-pipenv-action@v1
-      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pipenv
+
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v4
+
+      - name: Install Python dependencies
         run: |
           pipenv sync --dev
+
       - name: Testing with flake8
         run: |
           mkdir test-reports
           pipenv run flake8 ./ --output-file test-reports/flake8
+
       - name: Testing with black
         run: |
           pipenv run black --check ./
+
+      # https://github.com/actions/upload-artifact
       - name: Upload flake test results
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: flake-report
           path: test-reports/flake8
